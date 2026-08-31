@@ -1,0 +1,425 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ==========================================================================
+   TT Commons Pro Font Family - Local & Web Font Registrations
+   ========================================================================== */
+
+/* Regular 400 */
+@font-face {
+  font-family: 'TT Commons Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('TT Commons Pro Regular'),
+       local('TT Commons Pro-Regular'),
+       local('TT Commons Pro'),
+       local('TT Commons Regular'),
+       local('TT Commons-Regular'),
+       local('TT Commons'),
+       url('/fonts/TTCommonsPro-Regular.woff2') format('woff2'),
+       url('/fonts/TTCommonsPro-Regular.otf') format('opentype'),
+       url('/fonts/TTCommonsPro-Regular.ttf') format('truetype');
+}
+
+/* Medium 500 */
+@font-face {
+  font-family: 'TT Commons Pro';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local('TT Commons Pro Medium'),
+       local('TT Commons Pro-Medium'),
+       local('TT Commons Medium'),
+       local('TT Commons-Medium'),
+       url('/fonts/TTCommonsPro-Medium.woff2') format('woff2'),
+       url('/fonts/TTCommonsPro-Medium.otf') format('opentype'),
+       url('/fonts/TTCommonsPro-Medium.ttf') format('truetype');
+}
+
+/* SemiBold / DemiBold 600 */
+@font-face {
+  font-family: 'TT Commons Pro';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('TT Commons Pro DemiBold'),
+       local('TT Commons Pro SemiBold'),
+       local('TT Commons Pro-DemiBold'),
+       local('TT Commons DemiBold'),
+       local('TT Commons SemiBold'),
+       url('/fonts/TTCommonsPro-DemiBold.woff2') format('woff2'),
+       url('/fonts/TTCommonsPro-DemiBold.otf') format('opentype'),
+       url('/fonts/TTCommonsPro-SemiBold.ttf') format('truetype');
+}
+
+/* Bold 700 */
+@font-face {
+  font-family: 'TT Commons Pro';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('TT Commons Pro Bold'),
+       local('TT Commons Pro-Bold'),
+       local('TT Commons Bold'),
+       local('TT Commons-Bold'),
+       url('/fonts/TTCommonsPro-Bold.woff2') format('woff2'),
+       url('/fonts/TTCommonsPro-Bold.otf') format('opentype'),
+       url('/fonts/TTCommonsPro-Bold.ttf') format('truetype');
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Primary TT Commons Pro Font Stack */
+  --font-sans: 'TT Commons Pro', 'TT Commons', 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  color-scheme: light;
+
+  --background: #f5f6f8;
+  --foreground: #14171a;
+
+  --card: #ffffff;
+  --card-foreground: #14171a;
+
+  --popover: #ffffff;
+  --popover-foreground: #14171a;
+
+  --primary: #14171a;
+  --primary-foreground: #ffffff;
+
+  --secondary: #eff1f3;
+  --secondary-foreground: #14171a;
+
+  --muted: #eff1f3;
+  --muted-foreground: #656d76;
+
+  /* ==========================================================================
+     Unified Semantic Color Tokens (10 Shades per family)
+     Primary, Neutral, Success, Warning, Information, Error
+     ========================================================================== */
+
+  /* 1. Primary (Brand Teal / Cyan #00C2CB) */
+  --primary-50: #E5F6F7;
+  --primary-100: #C7ECEE;
+  --primary-200: #92DCDF;
+  --primary-300: #5DCCD1;
+  --primary-400: #28BBC2;
+  --primary-500: #00C2CB;
+  --primary-600: #00A4AC;
+  --primary-700: #00848B;
+  --primary-800: #00656A;
+  --primary-900: #00484B;
+
+  /* 2. Neutral (Slate / Charcoal / Gray) */
+  --neutral-50: #F8F9FA;
+  --neutral-100: #EFF1F3;
+  --neutral-200: #E4E7EB;
+  --neutral-300: #D3D5D7;
+  --neutral-400: #9DA4AE;
+  --neutral-500: #6F777F;
+  --neutral-600: #4B5563;
+  --neutral-700: #344054;
+  --neutral-800: #1F2327;
+  --neutral-900: #14171A;
+
+  /* 3. Success (Emerald / Green) */
+  --success-50: #ECFDF3;
+  --success-100: #DFEFE8;
+  --success-200: #A6F4C5;
+  --success-300: #6CE9A6;
+  --success-400: #32D583;
+  --success-500: #17B26A;
+  --success-600: #129255;
+  --success-700: #0E7242;
+  --success-800: #095230;
+  --success-900: #05331E;
+
+  /* 4. Warning (Amber / Gold / Orange) */
+  --warning-50: #FFFAEB;
+  --warning-100: #FEF0C7;
+  --warning-200: #FEDF89;
+  --warning-300: #FEC84B;
+  --warning-400: #FDB022;
+  --warning-500: #F79009;
+  --warning-600: #DC6803;
+  --warning-700: #B54708;
+  --warning-800: #93370D;
+  --warning-900: #7A2E0E;
+
+  /* 5. Information (Azure / Blue) */
+  --info-50: #F0F6FE;
+  --info-100: #E0EDFD;
+  --info-200: #BADAFB;
+  --info-300: #84BFF8;
+  --info-400: #489EF4;
+  --info-500: #1A7FF0;
+  --info-600: #0B62CC;
+  --info-700: #0A4EA7;
+  --info-800: #0B4389;
+  --info-900: #0D3A71;
+
+  /* 6. Error (Rose / Crimson) */
+  --error-50: #FEF3F2;
+  --error-100: #FEE4E2;
+  --error-200: #FECDCA;
+  --error-300: #FDA29B;
+  --error-400: #F97066;
+  --error-500: #F04438;
+  --error-600: #D92D20;
+  --error-700: #B42318;
+  --error-800: #912018;
+  --error-900: #771D1D;
+
+  --accent: #E5F6F7;
+  --accent-foreground: #00C2CB;
+
+  --destructive: #F04438;
+  --destructive-foreground: #ffffff;
+
+  --success: #17B26A;
+  --success-foreground: #ffffff;
+
+  --brand: #00C2CB;
+  --brand-foreground: #ffffff;
+
+  --border: #d3d5d7;
+  --input: #d3d5d7;
+  --ring: #00C2CB;
+
+  --chart-1: #00C2CB;
+  --chart-2: #17B26A;
+  --chart-3: #F04438;
+  --chart-4: #6F777F;
+  --chart-5: #1F2327;
+
+  --radius: 0.75rem;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #14171a;
+  --sidebar-primary: #14171a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eff1f3;
+  --sidebar-accent-foreground: #14171a;
+  --sidebar-border: #dbe0e5;
+  --sidebar-ring: #00C2CB;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   Ant Design (AntD) Motion & Interaction System
+   - Cubic-bezier curves & physics
+   - Wave ripple effects on button / clickable active state
+   - Status pulsing radar effects
+   - Modal zoom & Drawer slide transitions
+   - Input glow & focus waves
+   ========================================================================== */
+
+:root {
+  --ant-ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
+  --ant-ease-out: cubic-bezier(0.08, 0.82, 0.17, 1);
+  --ant-ease-in: cubic-bezier(0.6, 0.04, 0.98, 0.34);
+  --ant-ease-out-quint: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* AntD Button & Click Wave Effect */
+@keyframes antWaveEffect {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 194, 203, 0.45);
+    opacity: 0.85;
+  }
+  100% {
+    box-shadow: 0 0 0 7px rgba(0, 194, 203, 0);
+    opacity: 0;
+  }
+}
+
+.ant-wave-btn {
+  position: relative;
+  transition: all 0.2s var(--ant-ease-in-out);
+}
+.ant-wave-btn:hover {
+  transform: translateY(-0.5px);
+}
+.ant-wave-btn:active {
+  transform: scale(0.98);
+  animation: antWaveEffect 0.4s var(--ant-ease-out);
+}
+
+/* AntD Status Processing Pulsing Dot */
+@keyframes antStatusProcessing {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.ant-status-dot-pulse {
+  position: relative;
+}
+.ant-status-dot-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: antStatusProcessing 1.6s infinite var(--ant-ease-out);
+}
+
+/* AntD Modal & Dialog Zoom In */
+@keyframes antZoomIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ant-modal-zoom {
+  animation: antZoomIn 0.22s var(--ant-ease-out) both;
+}
+
+/* AntD Drawer Slide In (From Right) */
+@keyframes antDrawerSlideRight {
+  0% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.ant-drawer-slide {
+  animation: antDrawerSlideRight 0.28s var(--ant-ease-out-quint) both;
+}
+
+/* AntD Dropdown / Popover Spring Slide Up */
+@keyframes antSlideUpIn {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.85) translateY(-6px);
+    transform-origin: top;
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1) translateY(0);
+    transform-origin: top;
+  }
+}
+
+.ant-dropdown-pop {
+  animation: antSlideUpIn 0.2s var(--ant-ease-out) both;
+}
+
+/* AntD Smooth Fade In */
+@keyframes antFadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.ant-fade-in {
+  animation: antFadeIn 0.2s var(--ant-ease-in-out) both;
+}
+
+/* AntD Input Focus Wave */
+.ant-input-glow {
+  transition: all 0.2s var(--ant-ease-in-out);
+}
+.ant-input-glow:focus {
+  border-color: #00C2CB !important;
+  box-shadow: 0 0 0 3px rgba(0, 194, 203, 0.18) !important;
+}
+
+/* AntD Table Row Smooth Hover */
+.ant-table-row {
+  transition: background-color 0.2s var(--ant-ease-in-out);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+

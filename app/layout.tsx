@@ -1,0 +1,36 @@
+import type { Metadata, Viewport } from 'next'
+import { Geist } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
+import './globals.css'
+
+const geistSans = Geist({
+  subsets: ['latin'],
+  variable: '--font-geist-sans',
+})
+
+export const metadata: Metadata = {
+  title: 'Duseat — Admin Dashboard',
+  description:
+    'Monitor your Duseat marketplace and business performance in real time.',
+  generator: 'v0.app',
+}
+
+export const viewport: Viewport = {
+  colorScheme: 'light',
+  themeColor: '#f2f2f2',
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <html lang="en" className={`${geistSans.variable} bg-background`}>
+      <body className="font-sans antialiased">
+        {children}
+        {process.env.NODE_ENV === 'production' && <Analytics />}
+      </body>
+    </html>
+  )
+}
