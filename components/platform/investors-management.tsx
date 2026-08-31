@@ -41,6 +41,12 @@ import { TableCheckbox } from '@/components/ui/table-checkbox'
 import { FigmaStatusBadge, CounterBadge, RateBadge } from '@/components/ui/figma-badges'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
+import {
+  fetchInvestorsList,
+  setInvestorActiveStatus,
+  deleteInvestorAccount,
+  reviewInvestorKYC,
+} from '@/lib/api/investors'
 
 type Investor = PlatformInvestor
 
@@ -68,6 +74,7 @@ function InvestorsInner() {
 
   const [rows, setRows] = React.useState<Investor[]>(initialInvestors)
   const [deletedRows, setDeletedRows] = React.useState<Investor[]>([])
+  const [loading, setLoading] = React.useState(false)
   const [query, setQuery] = React.useState('')
   const [tab, setTab] = React.useState<'All investors' | 'Verified' | 'Pending verification' | 'Suspended' | 'Deleted users'>('All investors')
   const [statusFilter, setStatusFilter] = React.useState('All statuses')
@@ -82,6 +89,21 @@ function InvestorsInner() {
   const [visibleColumns, setVisibleColumns] = React.useState(columns)
   const [scheduleModalOpen, setScheduleModalOpen] = React.useState(false)
 
+  // Load from API and fallback to localStorage/mock
+  const loadData = React.useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetchInvestorsList({ search: query })
+      if (res.items && res.items.length > 0) {
+        setRows(res.items)
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false)
+    }
+  }, [query])
+
   React.useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey)
@@ -94,10 +116,11 @@ function InvestorsInner() {
         const parsedDeleted = JSON.parse(savedDeleted)
         if (Array.isArray(parsedDeleted)) setDeletedRows(parsedDeleted)
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
-  }, [])
+    loadData()
+  }, [loadData])
 
   const saveRows = (newRows: Investor[], newDeleted = deletedRows) => {
     setRows(newRows)
@@ -122,14 +145,17 @@ function InvestorsInner() {
     switch (kind) {
       case 'verify':
         patchRows(ids, { status: 'Active', verification: 'Verified' })
+        ids.forEach((id) => reviewInvestorKYC(id, 'APPROVE').catch(() => {}))
         notify('Account verified', `${label} verified successfully.`)
         break
       case 'suspend':
         patchRows(ids, { status: 'Suspended' })
+        ids.forEach((id) => setInvestorActiveStatus(id, false).catch(() => {}))
         notify('Account suspended', `${label} has been suspended.`, 'info')
         break
       case 'ban':
         patchRows(ids, { status: 'Banned', verification: 'Revoked' })
+        ids.forEach((id) => setInvestorActiveStatus(id, false).catch(() => {}))
         notify('Account banned', `${label} has been banned.`, 'error')
         break
       case 'delete': {
@@ -137,6 +163,7 @@ function InvestorsInner() {
         const remaining = rows.filter((r) => !ids.includes(r.id))
         saveRows(remaining, [...deletedRows, ...toDelete])
         setSelected([])
+        ids.forEach((id) => deleteInvestorAccount(id).catch(() => {}))
         notify('Account deleted', `${label} moved to deleted records.`, 'error')
         break
       }

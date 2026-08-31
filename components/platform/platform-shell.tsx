@@ -19,7 +19,9 @@ import { NotificationsPanel } from '@/components/notifications-panel'
 import { MessagingPanel } from '@/components/messaging-panel'
 import { Dropdown } from '@/components/dashboard/menu'
 import { ScheduleExportModal, type ScheduleExportData } from './schedule-export-modal'
+import { AdminAuthDialog } from './admin-auth-dialog'
 import { routeByNavId } from '@/lib/platform-modules'
+import { KeyRound } from 'lucide-react'
 
 interface PlatformShellProps {
   title: string
@@ -36,6 +38,7 @@ export function PlatformShell({ title, eyebrow, children, query = '', onQueryCha
   const [collapsed, setCollapsed] = React.useState(false)
   const [mobileOpen, setMobileOpen] = React.useState(false)
   const [scheduleExportOpen, setScheduleExportOpen] = React.useState(false)
+  const [adminAuthOpen, setAdminAuthOpen] = React.useState(false)
   const active = pathname === '/' ? 'dashboard' : pathname.split('/')[1]
 
   React.useEffect(() => {
@@ -179,12 +182,14 @@ export function PlatformShell({ title, eyebrow, children, query = '', onQueryCha
                 align="end"
                 floating
                 options={[
+                  { label: 'Connect Backend API', value: 'api-login', icon: <KeyRound className="size-4 text-[#00c2cb]" /> },
                   { label: 'Admin Profile', value: 'profile', icon: <User className="size-4" /> },
                   { label: 'Platform Settings', value: 'settings', icon: <Settings className="size-4" /> },
                   { label: 'Sign Out', value: 'signout', destructive: true, icon: <LogOut className="size-4" /> },
                 ]}
                 onSelect={(val) => {
-                  if (val === 'profile') router.push('/admin')
+                  if (val === 'api-login') setAdminAuthOpen(true)
+                  else if (val === 'profile') router.push('/admin')
                   else if (val === 'settings') router.push('/settings')
                   else if (val === 'signout') router.push('/sign-in')
                 }}
@@ -208,6 +213,14 @@ export function PlatformShell({ title, eyebrow, children, query = '', onQueryCha
           alert(`Scheduled ${data.frequency} export (${data.format.toUpperCase()}) to ${data.recipients.join(', ')}`)
         }}
         defaultName={`${title} - Weekly Export`}
+      />
+
+      <AdminAuthDialog
+        isOpen={adminAuthOpen}
+        onClose={() => setAdminAuthOpen(false)}
+        onSuccess={() => {
+          router.refresh()
+        }}
       />
     </div>
   )

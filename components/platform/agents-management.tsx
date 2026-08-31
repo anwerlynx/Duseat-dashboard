@@ -47,6 +47,12 @@ import { AgentPlanBadge, FigmaStatusBadge, RateBadge, CounterBadge } from '@/com
 import { Flag, getCountryCode } from '@/components/ui/flag'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
+import {
+  fetchAgentsList,
+  setAgentActiveStatus,
+  deleteAgentAccount,
+  reviewAgentLicense,
+} from '@/lib/api/agents'
 
 type Agent = PlatformAgent
 
@@ -76,6 +82,7 @@ function AgentsInner() {
   const [scheduleModalOpen, setScheduleModalOpen] = React.useState(false)
   const [dateRange, setDateRange] = React.useState('All Time')
   const [rowsPerPage, setRowsPerPage] = React.useState(50)
+  const [loading, setLoading] = React.useState(false)
 
   const [rows, setRows] = React.useState<Agent[]>(initialAgents)
   const [deletedRows, setDeletedRows] = React.useState<Agent[]>([
@@ -127,6 +134,21 @@ function AgentsInner() {
   const [visibleColumns, setVisibleColumns] = React.useState(columns.slice(0, -1))
   const [confirm, setConfirm] = React.useState<ConfirmRequest | null>(null)
 
+  // Load from API with fallback
+  const loadData = React.useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetchAgentsList({ search: query })
+      if (res.items && res.items.length > 0) {
+        setRows(res.items)
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false)
+    }
+  }, [query])
+
   // Load from local storage
   React.useEffect(() => {
     try {
@@ -140,10 +162,11 @@ function AgentsInner() {
         const parsedDel = JSON.parse(savedDeleted)
         if (Array.isArray(parsedDel)) setDeletedRows(parsedDel)
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
-  }, [])
+    loadData()
+  }, [loadData])
 
   const saveRows = (newRows: Agent[]) => {
     setRows(newRows)
@@ -200,14 +223,17 @@ function AgentsInner() {
       case 'approve':
       case 'verify':
         patchRows(ids, { status: 'Verified', verification: 'RERA + KYC' })
+        ids.forEach((id) => reviewAgentLicense(id, 'APPROVE').catch(() => {}))
         notify('Agent verified', `${label} approved and verified with RERA + KYC.`)
         break
       case 'reject':
         patchRows(ids, { status: 'Rejected' })
+        ids.forEach((id) => reviewAgentLicense(id, 'REJECT', 'Rejected by admin').catch(() => {}))
         notify('Agent rejected', `${label} application was rejected.`, 'error')
         break
       case 'suspend':
         patchRows(ids, { status: 'Suspended' })
+        ids.forEach((id) => setAgentActiveStatus(id, false).catch(() => {}))
         notify('Agent suspended', `${label} has been suspended.`, 'error')
         break
       case 'delete':
@@ -216,6 +242,7 @@ function AgentsInner() {
         saveRows(remaining)
         saveDeletedRows([...deletedRows, ...toDelete.map((a) => ({ ...a, status: 'Deleted' }))])
         setSelected([])
+        ids.forEach((id) => deleteAgentAccount(id).catch(() => {}))
         notify('Agent deleted', `${label} moved to Deleted Users archive.`, 'error')
         break
       case 'restore':
