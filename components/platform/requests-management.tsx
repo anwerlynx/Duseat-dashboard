@@ -161,9 +161,10 @@ export function RequestsManagementInner() {
   const handleDeleteRequest = (reqId: string) => {
     setConfirmDialog({
       title: 'Delete Request',
-      message: `Are you sure you want to permanently delete request ${reqId}? This will remove all associated offers.`,
+      description: `Are you sure you want to permanently delete request ${reqId}? This will remove all associated offers.`,
       confirmLabel: 'Delete Permanently',
-      danger: true,
+      tone: 'danger',
+      icon: 'delete',
       onConfirm: () => {
         const next = requests.filter((r) => r.id !== reqId)
         saveRequests(next)
@@ -207,13 +208,18 @@ export function RequestsManagementInner() {
   }
 
   return (
-    <PlatformShell>
-      <div className="mx-auto max-w-[1440px] space-y-6 p-4 sm:p-6 lg:p-8 font-sans">
+    <PlatformShell
+      title="Property Requests"
+      eyebrow="marketplace"
+      query={query}
+      onQueryChange={setQuery}
+    >
+      <div className="w-full min-w-0 space-y-4 sm:space-y-5 p-4 sm:p-6 lg:p-8 font-sans">
         {/* Top Header & Overview Bar */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-[28px] sm:text-[32px] leading-[38px] font-bold text-[#1f2327]">
+              <h1 className="text-[24px] sm:text-[32px] leading-[32px] sm:leading-[40px] font-bold text-[#1f2327]">
                 Property Requests
               </h1>
               <span className="rounded-full bg-[#00c2cb]/10 px-3 py-1 text-[13px] font-bold text-[#00848b]">
@@ -298,41 +304,41 @@ export function RequestsManagementInner() {
         </div>
 
         {/* 4 Summary Metric Cards */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-[14px] border border-[#d3d5d7] bg-white p-4 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05)] flex items-center justify-between">
+        <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3">
+          <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-3 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] flex items-center justify-between">
             <div>
-              <p className="text-[12px] font-medium text-[#6f777f]">Active Pipeline</p>
-              <p className="text-[24px] font-bold text-[#1f2327] mt-0.5">{stats.total}</p>
+              <p className="text-[13px] leading-[18px] text-[#6f777f]">Active Pipeline</p>
+              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#1f2327]">{stats.total}</p>
             </div>
             <div className="flex size-10 items-center justify-center rounded-[10px] bg-[#e5f6f7] text-[#00c2cb]">
               <Building2 className="size-5" />
             </div>
           </div>
 
-          <div className="rounded-[14px] border border-[#d3d5d7] bg-white p-4 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05)] flex items-center justify-between">
+          <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-3 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] flex items-center justify-between">
             <div>
-              <p className="text-[12px] font-medium text-[#6f777f]">Receiving Offers</p>
-              <p className="text-[24px] font-bold text-[#00848b] mt-0.5">{stats.openCount}</p>
+              <p className="text-[13px] leading-[18px] text-[#6f777f]">Receiving Offers</p>
+              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#00848b]">{stats.openCount}</p>
             </div>
             <div className="flex size-10 items-center justify-center rounded-[10px] bg-[#e5f6f7] text-[#00c2cb]">
               <Flame className="size-5" />
             </div>
           </div>
 
-          <div className="rounded-[14px] border border-[#d3d5d7] bg-white p-4 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05)] flex items-center justify-between">
+          <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-3 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] flex items-center justify-between">
             <div>
-              <p className="text-[12px] font-medium text-[#6f777f]">Matched & Negotiating</p>
-              <p className="text-[24px] font-bold text-[#17b26a] mt-0.5">{stats.matchedCount}</p>
+              <p className="text-[13px] leading-[18px] text-[#6f777f]">Matched & Negotiating</p>
+              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#17b26a]">{stats.matchedCount}</p>
             </div>
             <div className="flex size-10 items-center justify-center rounded-[10px] bg-[#ecfdf3] text-[#17b26a]">
               <CheckCircle2 className="size-5" />
             </div>
           </div>
 
-          <div className="rounded-[14px] border border-[#d3d5d7] bg-white p-4 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05)] flex items-center justify-between">
+          <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-3 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] flex items-center justify-between">
             <div>
-              <p className="text-[12px] font-medium text-[#6f777f]">Total Pitches Submitted</p>
-              <p className="text-[24px] font-bold text-[#b54708] mt-0.5">{stats.totalOffers}</p>
+              <p className="text-[13px] leading-[18px] text-[#6f777f]">Total Pitches Submitted</p>
+              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#b54708]">{stats.totalOffers}</p>
             </div>
             <div className="flex size-10 items-center justify-center rounded-[10px] bg-[#fff4e5] text-[#f79009]">
               <MessageSquare className="size-5" />
@@ -341,7 +347,7 @@ export function RequestsManagementInner() {
         </div>
 
         {/* Filter Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#d3d5d7] bg-white p-3.5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05)]">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
           {/* Search Box */}
           <div className="relative min-w-[260px] flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#6f777f]" />
@@ -448,8 +454,8 @@ export function RequestsManagementInner() {
               <span className="text-[13px] text-[#6f777f]">Showing {filteredRequests.length} matching briefs</span>
             </div>
 
-            {/* Feed Cards List (Exact Figma Layout) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {/* Feed Cards List (Expanded 4-Column Grid on Wide Monitors) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5">
               {filteredRequests.map((req) => (
                 <div
                   key={req.id}
