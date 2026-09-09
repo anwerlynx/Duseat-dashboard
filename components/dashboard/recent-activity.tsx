@@ -10,19 +10,22 @@ import {
   Inbox,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { recentActivity, type ActivityType } from './data'
+import { recentActivity, type LiveActivityItem } from './data'
 import { WidgetCard } from './widget-card'
 
-const typeConfig: Record<ActivityType, { icon: LucideIcon; tint: string }> = {
+const categoryConfig: Record<string, { icon: LucideIcon; tint: string }> = {
   deal: { icon: Handshake, tint: 'bg-success/10 text-success' },
   user: { icon: UserPlus, tint: 'bg-brand/10 text-brand' },
   report: { icon: ShieldAlert, tint: 'bg-destructive/10 text-destructive' },
   verification: { icon: BadgeCheck, tint: 'bg-brand/10 text-brand' },
   offer: { icon: ScrollText, tint: 'bg-amber-100 text-amber-600' },
+  request: { icon: ScrollText, tint: 'bg-brand/10 text-brand' },
+  subscription: { icon: BadgeCheck, tint: 'bg-purple-100 text-purple-600' },
+  admin: { icon: BadgeCheck, tint: 'bg-gray-100 text-gray-700' },
 }
 
 export function RecentActivity({ onViewAll }: { onViewAll: () => void }) {
-  const [items, setItems] = React.useState(recentActivity)
+  const [items, setItems] = React.useState<LiveActivityItem[]>(recentActivity)
 
   return (
     <WidgetCard title="Recent activity" onViewAll={onViewAll}>
@@ -31,19 +34,20 @@ export function RecentActivity({ onViewAll }: { onViewAll: () => void }) {
       ) : (
         <ul className="divide-y divide-border">
           {items.map((item, i) => {
-            const { icon: Icon, tint } = typeConfig[item.type]
+            const config = categoryConfig[item.category] || { icon: BadgeCheck, tint: 'bg-brand/10 text-brand' }
+            const Icon = config.icon
             return (
               <li
                 key={item.id}
                 style={{ animationDelay: `${i * 40}ms` }}
                 className="flex animate-fade-up items-start gap-3 py-2.5 transition-colors hover:bg-secondary/60 -mx-1 rounded-lg px-1"
               >
-                <span className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg ${tint}`}>
+                <span className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg ${config.tint}`}>
                   <Icon className="size-4" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[14px] leading-[20px] font-medium text-foreground">{item.title}</p>
-                  <p className="truncate text-[12px] leading-[16px] font-normal text-muted-foreground">{item.meta}</p>
+                  <p className="truncate text-[12px] leading-[16px] font-normal text-muted-foreground">{item.detail}</p>
                 </div>
                 <span className="shrink-0 whitespace-nowrap text-[12px] leading-[16px] text-muted-foreground">{item.time}</span>
               </li>

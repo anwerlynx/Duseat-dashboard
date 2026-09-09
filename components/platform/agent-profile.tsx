@@ -46,7 +46,7 @@ import { EditAgentProfileModal } from './edit-agent-profile-modal'
 import { OfferDetailsModal, type OfferDetail } from './offer-details-modal'
 import { ChatModerator } from './chat-moderator'
 import { AgentPlanBadge, FigmaStatusBadge, RateBadge } from '@/components/ui/figma-badges'
-import { Flag, getCountryCode } from '@/components/ui/flag'
+import { Flag, getCountryCode, AvatarFlagOverlay } from '@/components/ui/flag'
 import { cn } from '@/lib/utils'
 import type { ActivityItem, Conversation, PlatformAgent, VerificationDocument } from '@/lib/platform-users'
 
@@ -246,7 +246,7 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             {/* Left: Avatar + Identity + Status Badges */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="relative size-[72px] sm:size-[80px] shrink-0">
+              <AvatarFlagOverlay code={getCountryCode(agent.country || 'Egypt')}>
                 <div className="size-[72px] sm:size-[80px] rounded-[12px] overflow-hidden bg-gradient-to-br from-[#00c2cb] to-[#0a8288] flex items-center justify-center shadow-xs">
                   {agent.avatar ? (
                     <img src={agent.avatar} alt={agent.name} className="size-full object-cover" />
@@ -259,11 +259,7 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                     </span>
                   )}
                 </div>
-                <div className="absolute -top-1 -left-1">
-                  <Flag code={getCountryCode(agent.country || 'Egypt')} size="m" />
-                </div>
-                <div className="absolute -bottom-1 -right-1 size-[20px] sm:size-[24px] rounded-full bg-[#17b26a] border-2 border-white" />
-              </div>
+              </AvatarFlagOverlay>
 
               <div className="space-y-1 font-sans">
                 <div className="flex flex-wrap items-center gap-2.5">
@@ -389,7 +385,7 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
               className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer"
             >
               <p className="text-[14px] leading-[20px] text-[#6f777f]">Requests</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#1f2327]">8</p>
+              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#1f2327]">{agent.requestsWon?.length || 8}</p>
             </button>
             <button
               type="button"
@@ -422,7 +418,9 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
               className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer"
             >
               <p className="text-[14px] leading-[20px] text-[#6f777f]">Total score</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#00c2cb]">92</p>
+              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#00c2cb]">
+                {agent.rating ? Math.round(agent.rating * 10) + agent.accepted * 2 : 92}
+              </p>
             </button>
           </div>
         </header>
@@ -837,12 +835,12 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                               <span className="font-semibold text-[15px] text-[#010413]">{row.investor}</span>
                               <AgentPlanBadge plan={agent.subscription} />
                               <FigmaStatusBadge status="Verified" />
-                              <RateBadge rating="4.9" />
+                              <RateBadge rate="4.9" />
                             </div>
                             <div className="flex items-center gap-2 text-xs text-[#6f777f] mt-0.5">
                               <span>{agent.id}</span>
                               <span>•</span>
-                              <span>{agent.deals} Deals</span>
+                              <span>{agent.accepted} Deals</span>
                             </div>
                           </div>
                         </div>
@@ -909,7 +907,7 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                               id: `OFF-${8000 + i}`,
                               agentName: agent.name,
                               agentId: agent.id,
-                              agentDeals: agent.deals,
+                              agentDeals: agent.accepted,
                               agentRating: agent.rating,
                               agentSubscription: agent.subscription,
                               agentVerified: agent.verification === 'Verified' || agent.verification === 'RERA + KYC',
@@ -1088,14 +1086,14 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm font-sans">
+                <table className="w-full text-left text-sm font-sans whitespace-nowrap">
                   <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
-                    <tr>
-                      <th className="px-4 py-3 font-semibold text-[#1f2327]">ID</th>
-                      <th className="px-4 py-3 font-semibold text-[#1f2327]">Title</th>
-                      <th className="px-4 py-3 font-semibold text-[#1f2327]">Date</th>
-                      <th className="px-4 py-3 font-semibold text-[#1f2327]">Status</th>
-                      <th className="px-4 py-3 font-semibold text-[#1f2327]">Action</th>
+                    <tr className="whitespace-nowrap">
+                      <th className="px-4 py-3 font-semibold text-[#1f2327] whitespace-nowrap">ID</th>
+                      <th className="px-4 py-3 font-semibold text-[#1f2327] whitespace-nowrap">Title</th>
+                      <th className="px-4 py-3 font-semibold text-[#1f2327] whitespace-nowrap">Date</th>
+                      <th className="px-4 py-3 font-semibold text-[#1f2327] whitespace-nowrap">Status</th>
+                      <th className="px-4 py-3 font-semibold text-[#1f2327] whitespace-nowrap">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#d3d5d7]">
@@ -1104,18 +1102,18 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                       { id: 'RPT-1044', title: 'Spam report', date: '21/04/2026', status: 'Resolved' },
                       { id: 'RPT-1003', title: 'Verification request', date: '10/01/2026', status: 'Pending' },
                     ].map((rpt) => (
-                      <tr key={rpt.id} className="hover:bg-[#f8f9fa] transition-colors">
-                        <td className="px-4 py-3 font-mono font-semibold text-[#6f777f]">{rpt.id}</td>
-                        <td className="px-4 py-3 font-medium text-[#1f2327]">{rpt.title}</td>
-                        <td className="px-4 py-3 text-[#6f777f]">{rpt.date}</td>
-                        <td className="px-4 py-3">
+                      <tr key={rpt.id} className="hover:bg-[#f8f9fa] transition-colors whitespace-nowrap">
+                        <td className="px-4 py-3 font-mono font-semibold text-[#6f777f] whitespace-nowrap">{rpt.id}</td>
+                        <td className="px-4 py-3 font-medium text-[#1f2327] whitespace-nowrap">{rpt.title}</td>
+                        <td className="px-4 py-3 text-[#6f777f] whitespace-nowrap">{rpt.date}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <FigmaStatusBadge status={rpt.status === 'Resolved' ? 'Verified' : 'Pending'} />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => notify('Audit Report', `Viewing details for ${rpt.id}`)}
-                            className="rounded-[6px] border border-[#d3d5d7] bg-white px-3 py-1 text-xs font-semibold text-[#00c2cb] hover:bg-[#eff1f3] cursor-pointer"
+                            className="rounded-[6px] border border-[#d3d5d7] bg-white px-3 py-1 text-xs font-semibold text-[#00c2cb] hover:bg-[#eff1f3] cursor-pointer whitespace-nowrap"
                           >
                             View report
                           </button>

@@ -87,5 +87,6 @@ export const routeByNavId: Record<string, string> = {
   dashboard: '/',
   agents: '/agents',
   tools: '/all-tools',
+  'design-system': '/design-system',
   ...Object.fromEntries(platformModules.map((item) => [item.navId, `/${item.slug}`])),
 }

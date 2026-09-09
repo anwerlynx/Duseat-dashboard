@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import {
   Search,
   Filter,
@@ -34,53 +35,137 @@ import {
   Check,
   X,
   ExternalLink,
+  Archive,
+  UserCheck,
+  Calendar,
+  RefreshCw,
+  RotateCcw,
 } from 'lucide-react'
 import { PlatformShell } from './platform-shell'
 import { RequestCard } from './request-card'
 import { RequestDetailModal } from './request-detail-modal'
 import { EditRequestModal } from './edit-request-modal'
+import { AssignAdminModal } from './assign-admin-modal'
 import { ToastProvider, useToast } from '@/components/dashboard/toast'
 import { ConfirmDialog, type ConfirmRequest } from './confirm-dialog'
-import { Flag, getCountryCode } from '@/components/ui/flag'
+import { Flag, getCountryCode, AvatarFlagOverlay } from '@/components/ui/flag'
+import { FigmaStatusBadge } from '@/components/ui/figma-badges'
+import { FigmaTag } from '@/components/ui/figma-tag'
+import { MainButton } from '@/components/ui/main-button'
+import { StatusTag } from '@/components/ui/badge-tag'
+import { FilterTabs, MetricCard, SearchInput, Pagination, EmptyState, TableAvatar } from '@/components/ui'
+import { DateRangePicker, type DateRange } from './date-range-picker'
+import { TableCheckbox } from '@/components/ui/table-checkbox'
 import { cn } from '@/lib/utils'
 import type { PropertyRequest } from '@/lib/platform-users'
 import { allPlatformRequests } from '@/lib/platform-users'
 
 type ViewMode = 'timeline' | 'table' | 'kanban'
 
+// Request statuses specified in module requirement
+const REQUEST_STATUSES = [
+  'All',
+  'Draft',
+  'Open',
+  'Matched',
+  'Closed',
+  'Expired',
+  'Archived',
+] as const
+
+const BUDGET_OPTIONS = [
+  { label: 'All Budgets', value: 'All' },
+  { label: 'Under 2M AED', value: 'Under 2M' },
+  { label: '2M – 5M AED', value: '2M-5M' },
+  { label: '5M – 10M AED', value: '5M-10M' },
+  { label: '10M+ AED (Ultra-Luxury)', value: '10M+' },
+]
+
+const PROPERTY_TYPES = [
+  { label: 'All Types', value: 'All' },
+  { label: 'Villa', value: 'Villa' },
+  { label: 'Townhouse', value: 'Townhouse' },
+  { label: 'Apartment', value: 'Apartment' },
+  { label: 'Penthouse', value: 'Penthouse' },
+  { label: 'Office', value: 'Office' },
+  { label: 'Retail Shop', value: 'Retail Shop' },
+  { label: 'Warehouse', value: 'Warehouse' },
+]
+
+const COUNTRY_OPTIONS = [
+  { label: 'All Countries', value: 'All' },
+  { label: 'United Arab Emirates', value: 'United Arab Emirates' },
+  { label: 'Saudi Arabia', value: 'Saudi Arabia' },
+  { label: 'Egypt', value: 'Egypt' },
+  { label: 'United Kingdom', value: 'United Kingdom' },
+]
+
+const AREA_OPTIONS = [
+  { label: 'All Areas', value: 'All' },
+  { label: 'Dubai Hills Estate', value: 'Dubai Hills Estate' },
+  { label: 'Downtown Dubai', value: 'Downtown Dubai' },
+  { label: 'Palm Jumeirah', value: 'Palm Jumeirah' },
+  { label: 'Business Bay', value: 'Business Bay' },
+  { label: 'Nad Al Sheba', value: 'Nad Al Sheba' },
+  { label: 'Meydan', value: 'Meydan' },
+  { label: 'Dubai Marina', value: 'Dubai Marina' },
+]
+
 export function RequestsManagementInner() {
   const { toast } = useToast()
+  const searchParams = useSearchParams()
   const storageKey = 'duseat_platform_requests_records'
 
   const [requests, setRequests] = React.useState<PropertyRequest[]>(allPlatformRequests)
-  const [viewMode, setViewMode] = React.useState<ViewMode>('timeline')
+  const [viewMode, setViewMode] = React.useState<ViewMode>('table')
   const [query, setQuery] = React.useState('')
-  const [purposeFilter, setPurposeFilter] = React.useState<'All' | 'Living' | 'Investment'>('All')
-  const [unitStatusFilter, setUnitStatusFilter] = React.useState<'All' | 'Ready' | 'Offplan'>('All')
-  const [paymentFilter, setPaymentFilter] = React.useState<'All' | 'Cash' | 'Mortgage'>('All')
   const [statusFilter, setStatusFilter] = React.useState<string>('All')
+  const [budgetFilter, setBudgetFilter] = React.useState<string>('All')
+  const [countryFilter, setCountryFilter] = React.useState<string>('All')
+  const [areaFilter, setAreaFilter] = React.useState<string>('All')
+  const [propertyTypeFilter, setPropertyTypeFilter] = React.useState<string>('All')
+  const [investorFilter, setInvestorFilter] = React.useState<string>('All')
+  const [dateRange, setDateRange] = React.useState<string>('All Time')
+
   const [selectedIds, setSelectedIds] = React.useState<string[]>([])
   const [sortField, setSortField] = React.useState<'time' | 'budget' | 'offers'>('time')
   const [sortAsc, setSortAsc] = React.useState(false)
+  const [showFilters, setShowFilters] = React.useState(true)
+  const [currentPage, setCurrentPage] = React.useState(1)
+  const [rowsPerPage, setRowsPerPage] = React.useState(10)
 
   // Modals state
   const [selectedRequest, setSelectedRequest] = React.useState<PropertyRequest | null>(null)
   const [editingRequest, setEditingRequest] = React.useState<PropertyRequest | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false)
+  const [isAssignAdminOpen, setIsAssignAdminOpen] = React.useState(false)
+  const [assignAdminTargetRequests, setAssignAdminTargetRequests] = React.useState<PropertyRequest[]>([])
   const [confirmDialog, setConfirmDialog] = React.useState<ConfirmRequest | null>(null)
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount & check searchParams
   React.useEffect(() => {
+    let currentRequests = allPlatformRequests
     try {
       const saved = localStorage.getItem(storageKey)
       if (saved) {
         const parsed = JSON.parse(saved)
         if (Array.isArray(parsed) && parsed.length > 0) {
+          currentRequests = parsed
           setRequests(parsed)
         }
       }
     } catch {}
-  }, [])
+
+    const idFromUrl = searchParams?.get('id')
+    if (idFromUrl) {
+      const found = currentRequests.find((r) => r.id.toLowerCase() === idFromUrl.toLowerCase())
+      if (found) {
+        setSelectedRequest(found)
+      } else {
+        setQuery(idFromUrl)
+      }
+    }
+  }, [searchParams])
 
   const saveRequests = (newRequests: PropertyRequest[]) => {
     setRequests(newRequests)
@@ -89,11 +174,18 @@ export function RequestsManagementInner() {
     } catch {}
   }
 
-  // Filtered requests
+  // Unique investor names for filter
+  const uniqueInvestors = React.useMemo(() => {
+    const list = Array.from(new Set(requests.map((r) => r.investorName))).sort()
+    return [{ label: 'All Investors', value: 'All' }, ...list.map((name) => ({ label: name, value: name }))]
+  }, [requests])
+
+  // Filtered requests based on all 7 filter criteria
   const filteredRequests = React.useMemo(() => {
     const q = query.trim().toLowerCase()
     return requests
       .filter((req) => {
+        // Query search
         const matchesQuery =
           !q ||
           req.title.toLowerCase().includes(q) ||
@@ -102,16 +194,69 @@ export function RequestsManagementInner() {
           req.preferredAreas.some((a) => a.toLowerCase().includes(q)) ||
           req.propertyType.toLowerCase().includes(q)
 
-        const matchesPurpose = purposeFilter === 'All' || req.purpose === purposeFilter
-        const matchesUnitStatus =
-          unitStatusFilter === 'All' ||
-          (unitStatusFilter === 'Ready' && req.unitStatus === 'Ready') ||
-          (unitStatusFilter === 'Offplan' && (req.unitStatus === 'Offplan' || req.unitStatus === 'Off-plan'))
+        // Status Filter
+        let matchesStatus = true
+        if (statusFilter !== 'All') {
+          if (statusFilter === 'Open') {
+            matchesStatus = req.status === 'Open' || req.status === 'Receiving offers'
+          } else {
+            matchesStatus = req.status.toLowerCase() === statusFilter.toLowerCase()
+          }
+        }
 
-        const matchesPayment = paymentFilter === 'All' || req.paymentMethod === paymentFilter
-        const matchesStatus = statusFilter === 'All' || req.status.toLowerCase() === statusFilter.toLowerCase()
+        // Budget Filter
+        let matchesBudget = true
+        if (budgetFilter === 'Under 2M') {
+          matchesBudget = req.budget.includes('1.') || req.budget.includes('1M') || req.budget.includes('800K')
+        } else if (budgetFilter === '2M-5M') {
+          matchesBudget = req.budget.includes('2.') || req.budget.includes('3.') || req.budget.includes('4.') || req.budget.includes('4M')
+        } else if (budgetFilter === '5M-10M') {
+          matchesBudget = req.budget.includes('5.') || req.budget.includes('6M') || req.budget.includes('8M')
+        } else if (budgetFilter === '10M+') {
+          matchesBudget = req.budget.includes('10M') || req.budget.includes('12M') || req.budget.includes('15M') || req.budget.includes('20M')
+        }
 
-        return matchesQuery && matchesPurpose && matchesUnitStatus && matchesPayment && matchesStatus
+        // Country Filter
+        let matchesCountry = true
+        if (countryFilter !== 'All') {
+          if (countryFilter === 'United Arab Emirates') {
+            matchesCountry = !req.countryFlag || req.countryFlag === '🇦🇪'
+          } else if (countryFilter === 'Saudi Arabia') {
+            matchesCountry = req.countryFlag === '🇸🇦'
+          } else if (countryFilter === 'Egypt') {
+            matchesCountry = req.countryFlag === '🇪🇬'
+          } else if (countryFilter === 'United Kingdom') {
+            matchesCountry = req.countryFlag === '🇬🇧'
+          }
+        }
+
+        // Area Filter
+        let matchesArea = true
+        if (areaFilter !== 'All') {
+          matchesArea = req.preferredAreas.some((a) => a.toLowerCase().includes(areaFilter.toLowerCase()))
+        }
+
+        // Property Type Filter
+        let matchesType = true
+        if (propertyTypeFilter !== 'All') {
+          matchesType = req.propertyType.toLowerCase() === propertyTypeFilter.toLowerCase()
+        }
+
+        // Investor Filter
+        let matchesInvestor = true
+        if (investorFilter !== 'All') {
+          matchesInvestor = req.investorName === investorFilter
+        }
+
+        return (
+          matchesQuery &&
+          matchesStatus &&
+          matchesBudget &&
+          matchesCountry &&
+          matchesArea &&
+          matchesType &&
+          matchesInvestor
+        )
       })
       .sort((a, b) => {
         if (sortField === 'offers') {
@@ -119,19 +264,40 @@ export function RequestsManagementInner() {
         }
         return sortAsc ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id)
       })
-  }, [requests, query, purposeFilter, unitStatusFilter, paymentFilter, statusFilter, sortField, sortAsc])
+  }, [
+    requests,
+    query,
+    statusFilter,
+    budgetFilter,
+    countryFilter,
+    areaFilter,
+    propertyTypeFilter,
+    investorFilter,
+    sortField,
+    sortAsc,
+  ])
+
+  const totalPages = Math.max(1, Math.ceil(filteredRequests.length / rowsPerPage))
+  const paginatedRequests = React.useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage
+    return filteredRequests.slice(start, start + rowsPerPage)
+  }, [filteredRequests, currentPage, rowsPerPage])
 
   // KPIs
   const stats = React.useMemo(() => {
     const total = requests.length
+    const draftCount = requests.filter((r) => r.status === 'Draft').length
     const openCount = requests.filter((r) => r.status === 'Open' || r.status === 'Receiving offers').length
-    const matchedCount = requests.filter((r) => r.status === 'Matched').length
-    const confirmedCount = requests.filter((r) => r.status === 'Deal confirmed').length
+    const matchedCount = requests.filter((r) => r.status === 'Matched' || r.dealConfirmed).length
+    const closedCount = requests.filter((r) => r.status === 'Closed').length
+    const urgentCount = requests.filter((r) => (r.status as string) === 'Urgent' || (r as any).isUrgent).length
+    const expiredCount = requests.filter((r) => r.status === 'Expired').length
+    const archivedCount = requests.filter((r) => r.status === 'Archived').length
     const totalOffers = requests.reduce((acc, r) => acc + (r.offersCount || 0), 0)
-    return { total, openCount, matchedCount, confirmedCount, totalOffers }
+    return { total, draftCount, openCount, matchedCount, closedCount, urgentCount, expiredCount, archivedCount, totalOffers }
   }, [requests])
 
-  // Handlers
+  // Action Handlers
   const handleUpdateStatus = (requestId: string, newStatus: PropertyRequest['status']) => {
     const updated = requests.map((r) => (r.id === requestId ? { ...r, status: newStatus } : r))
     saveRequests(updated)
@@ -139,6 +305,35 @@ export function RequestsManagementInner() {
       variant: 'success',
       title: 'Status Updated',
       description: `Request ${requestId} status changed to ${newStatus}.`,
+    })
+  }
+
+  const handleCloseRequest = (reqId: string) => {
+    handleUpdateStatus(reqId, 'Closed')
+  }
+
+  const handleArchiveRequest = (reqId: string) => {
+    handleUpdateStatus(reqId, 'Archived')
+  }
+
+  const handleDeleteRequest = (reqId: string) => {
+    setConfirmDialog({
+      title: 'Delete Property Request',
+      description: `Are you sure you want to permanently delete request ${reqId}? This will remove all associated agent proposals and audit records.`,
+      confirmLabel: 'Delete Permanently',
+      tone: 'danger',
+      icon: 'delete',
+      onConfirm: () => {
+        const next = requests.filter((r) => r.id !== reqId)
+        saveRequests(next)
+        setSelectedIds((prev) => prev.filter((id) => id !== reqId))
+        toast({
+          variant: 'error',
+          title: 'Request Deleted',
+          description: `Request ${reqId} has been removed.`,
+        })
+        setConfirmDialog(null)
+      },
     })
   }
 
@@ -156,42 +351,60 @@ export function RequestsManagementInner() {
     if (selectedRequest && selectedRequest.id === updatedRequest.id) {
       setSelectedRequest(updatedRequest)
     }
+    toast({
+      variant: 'success',
+      title: exists ? 'Request Updated' : 'Request Created',
+      description: `Request ${updatedRequest.id} has been saved successfully.`,
+    })
   }
 
-  const handleDeleteRequest = (reqId: string) => {
-    setConfirmDialog({
-      title: 'Delete Request',
-      description: `Are you sure you want to permanently delete request ${reqId}? This will remove all associated offers.`,
-      confirmLabel: 'Delete Permanently',
-      tone: 'danger',
-      icon: 'delete',
-      onConfirm: () => {
-        const next = requests.filter((r) => r.id !== reqId)
-        saveRequests(next)
-        toast({
-          variant: 'error',
-          title: 'Request Deleted',
-          description: `Request ${reqId} has been removed.`,
-        })
-        setConfirmDialog(null)
-      },
+  const handleAssignAdminConfirm = (adminName: string, notes?: string) => {
+    const targetIds = assignAdminTargetRequests.map((r) => r.id)
+    const updated = requests.map((r) => {
+      if (targetIds.includes(r.id)) {
+        return {
+          ...r,
+          assignedAdmin: { name: adminName },
+        }
+      }
+      return r
+    })
+    saveRequests(updated)
+    setIsAssignAdminOpen(false)
+    setAssignAdminTargetRequests([])
+    toast({
+      variant: 'success',
+      title: 'Admin Assigned',
+      description: `Assigned ${targetIds.length} request(s) to ${adminName}.`,
     })
   }
 
   const handleExportCSV = () => {
-    const headers = ['ID', 'Investor', 'Purpose', 'Type', 'Bedrooms', 'Status', 'Budget', 'Locations', 'Payment', 'Offers', 'Date']
+    const headers = [
+      'Request ID',
+      'Investor',
+      'Budget',
+      'Property Type',
+      'Bedrooms',
+      'Area',
+      'Country',
+      'City',
+      'Offers Count',
+      'Status',
+      'Created Date',
+    ]
     const rows = filteredRequests.map((r) => [
       r.id,
       r.investorName,
-      r.purpose,
+      r.budget,
       r.propertyType,
       r.bedrooms,
-      r.unitStatus,
-      r.budget,
       `"${r.preferredAreas.join(', ')}"`,
-      r.paymentMethod,
+      r.countryFlag === '🇸🇦' ? 'Saudi Arabia' : r.countryFlag === '🇪🇬' ? 'Egypt' : r.countryFlag === '🇬🇧' ? 'United Kingdom' : 'United Arab Emirates',
+      r.preferredAreas[0] || 'Dubai',
       r.offersCount,
-      r.created,
+      r.status,
+      r.created || 'Today',
     ])
     const csv = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -207,6 +420,43 @@ export function RequestsManagementInner() {
     })
   }
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(filteredRequests.map((r) => r.id))
+    } else {
+      setSelectedIds([])
+    }
+  }
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds((prev) => [...prev, id])
+    } else {
+      setSelectedIds((prev) => prev.filter((item) => item !== id))
+    }
+  }
+
+  const resetAllFilters = () => {
+    setQuery('')
+    setStatusFilter('All')
+    setBudgetFilter('All')
+    setCountryFilter('All')
+    setAreaFilter('All')
+    setPropertyTypeFilter('All')
+    setInvestorFilter('All')
+    setDateRange('All Time')
+  }
+
+  const hasActiveFilters =
+    query !== '' ||
+    statusFilter !== 'All' ||
+    budgetFilter !== 'All' ||
+    countryFilter !== 'All' ||
+    areaFilter !== 'All' ||
+    propertyTypeFilter !== 'All' ||
+    investorFilter !== 'All' ||
+    dateRange !== 'All Time'
+
   return (
     <PlatformShell
       title="Property Requests"
@@ -214,607 +464,714 @@ export function RequestsManagementInner() {
       query={query}
       onQueryChange={setQuery}
     >
-      <div className="w-full min-w-0 space-y-4 sm:space-y-5 p-4 sm:p-6 lg:p-8 font-sans">
-        {/* Top Header & Overview Bar */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-[24px] sm:text-[32px] leading-[32px] sm:leading-[40px] font-bold text-[#1f2327]">
+      <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
+        {/* =========================================================================
+            1. TOP HEADER CARD
+           ========================================================================= */}
+        <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
                 Property Requests
               </h1>
-              <span className="rounded-full bg-[#00c2cb]/10 px-3 py-1 text-[13px] font-bold text-[#00848b]">
-                {requests.length} Total Requests
-              </span>
-            </div>
-            <p className="text-[14px] leading-[20px] text-[#6f777f] mt-1">
-              Live marketplace stream of verified investor acquisition briefs across the UAE network
-            </p>
-          </div>
-
-          {/* Top Actions */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* View Mode Switcher (Timeline vs Table vs Kanban) */}
-            <div className="flex items-center rounded-[10px] border border-[#d3d5d7] bg-white p-1 shadow-2xs">
-              <button
-                type="button"
-                onClick={() => setViewMode('timeline')}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-[13px] font-semibold transition-all cursor-pointer',
-                  viewMode === 'timeline'
-                    ? 'bg-[#00c2cb] text-white shadow-2xs'
-                    : 'text-[#6f777f] hover:text-[#1f2327]'
-                )}
-                title="Timeline Feed Mode (Figma App Flow)"
-              >
-                <Layers className="size-3.5" />
-                <span>Timeline Feed</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setViewMode('table')}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-[13px] font-semibold transition-all cursor-pointer',
-                  viewMode === 'table'
-                    ? 'bg-[#00c2cb] text-white shadow-2xs'
-                    : 'text-[#6f777f] hover:text-[#1f2327]'
-                )}
-                title="Table View (Data Grid)"
-              >
-                <List className="size-3.5" />
-                <span>Table</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setViewMode('kanban')}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-[13px] font-semibold transition-all cursor-pointer',
-                  viewMode === 'kanban'
-                    ? 'bg-[#00c2cb] text-white shadow-2xs'
-                    : 'text-[#6f777f] hover:text-[#1f2327]'
-                )}
-                title="Kanban Board View (Pipeline)"
-              >
-                <LayoutGrid className="size-3.5" />
-                <span>Pipeline</span>
-              </button>
+              <p className="mt-0.5 text-[14px] leading-[20px] text-[#6f777f]">
+                Monitor investor property briefs, track matching agents, manage proposal bids and pipeline closures.
+              </p>
             </div>
 
-            {/* Export Button */}
-            <button
-              type="button"
-              onClick={handleExportCSV}
-              className="flex h-[38px] items-center gap-1.5 rounded-[10px] border border-[#d3d5d7] bg-white px-3.5 text-[13px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
-            >
-              <Download className="size-3.5 text-[#6f777f]" />
-              <span>Export CSV</span>
-            </button>
-
-            {/* Add Request Button (Figma Flow) */}
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex h-[38px] items-center gap-1.5 rounded-[10px] bg-[#00c2cb] px-4 text-[13px] font-bold text-white hover:opacity-90 transition-opacity cursor-pointer ant-wave-btn shadow-2xs"
-            >
-              <Plus className="size-4" />
-              <span>+ Add Request / إضافة طلب</span>
-            </button>
-          </div>
-        </div>
-
-        {/* 4 Summary Metric Cards */}
-        <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3">
-          <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-3 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] flex items-center justify-between">
-            <div>
-              <p className="text-[13px] leading-[18px] text-[#6f777f]">Active Pipeline</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#1f2327]">{stats.total}</p>
-            </div>
-            <div className="flex size-10 items-center justify-center rounded-[10px] bg-[#e5f6f7] text-[#00c2cb]">
-              <Building2 className="size-5" />
-            </div>
-          </div>
-
-          <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-3 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] flex items-center justify-between">
-            <div>
-              <p className="text-[13px] leading-[18px] text-[#6f777f]">Receiving Offers</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#00848b]">{stats.openCount}</p>
-            </div>
-            <div className="flex size-10 items-center justify-center rounded-[10px] bg-[#e5f6f7] text-[#00c2cb]">
-              <Flame className="size-5" />
-            </div>
-          </div>
-
-          <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-3 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] flex items-center justify-between">
-            <div>
-              <p className="text-[13px] leading-[18px] text-[#6f777f]">Matched & Negotiating</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#17b26a]">{stats.matchedCount}</p>
-            </div>
-            <div className="flex size-10 items-center justify-center rounded-[10px] bg-[#ecfdf3] text-[#17b26a]">
-              <CheckCircle2 className="size-5" />
-            </div>
-          </div>
-
-          <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-3 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] flex items-center justify-between">
-            <div>
-              <p className="text-[13px] leading-[18px] text-[#6f777f]">Total Pitches Submitted</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#b54708]">{stats.totalOffers}</p>
-            </div>
-            <div className="flex size-10 items-center justify-center rounded-[10px] bg-[#fff4e5] text-[#f79009]">
-              <MessageSquare className="size-5" />
-            </div>
-          </div>
-        </div>
-
-        {/* Filter Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
-          {/* Search Box */}
-          <div className="relative min-w-[260px] flex-1">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#6f777f]" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by investor, title, location, ID..."
-              className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-3 text-[14px] text-[#1f2327] outline-none focus:border-[#00c2cb]"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6f777f] hover:text-[#1f2327]"
-              >
-                <X className="size-4" />
-              </button>
-            )}
-          </div>
-
-          {/* Purpose Filter */}
-          <div className="flex items-center gap-1">
-            {(['All', 'Living', 'Investment'] as const).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPurposeFilter(p)}
-                className={cn(
-                  'h-[34px] rounded-[8px] px-3 text-[13px] font-medium transition-colors cursor-pointer',
-                  purposeFilter === p
-                    ? 'bg-[#00c2cb] text-white font-semibold shadow-2xs'
-                    : 'bg-[#f8f9fa] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
-                )}
-              >
-                {p === 'All' ? 'All Purposes' : p}
-              </button>
-            ))}
-          </div>
-
-          {/* Unit Status Filter */}
-          <div className="flex items-center gap-1">
-            {(['All', 'Ready', 'Offplan'] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setUnitStatusFilter(s)}
-                className={cn(
-                  'h-[34px] rounded-[8px] px-3 text-[13px] font-medium transition-colors cursor-pointer',
-                  unitStatusFilter === s
-                    ? 'bg-[#1f2327] text-white font-semibold'
-                    : 'bg-[#f8f9fa] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
-                )}
-              >
-                {s === 'All' ? 'All Statuses' : s}
-              </button>
-            ))}
-          </div>
-
-          {/* Payment Method Filter */}
-          <select
-            value={paymentFilter}
-            onChange={(e) => setPaymentFilter(e.target.value as any)}
-            className="h-[34px] rounded-[8px] border border-[#d3d5d7] bg-white px-2.5 text-[13px] font-medium text-[#1f2327] outline-none cursor-pointer"
-          >
-            <option value="All">All Payments (Cash & Mortgage)</option>
-            <option value="Cash">Cash Only</option>
-            <option value="Mortgage">Mortgage Only</option>
-          </select>
-        </div>
-
-        {/* =========================================================================
-            VIEW 1: TIMELINE FEED MODE (Exact Figma App Flow - node 2061:3942)
-           ========================================================================= */}
-        {viewMode === 'timeline' && (
-          <div className="space-y-4">
-            {/* Top Add Request CTA Card (Figma node 2061:3942 Header Card) */}
-            <div className="rounded-[18px] bg-gradient-to-r from-[#050B20] via-[#09153a] to-[#0d1d4d] p-5 sm:p-6 text-white shadow-md flex items-center justify-between gap-4">
-              <div className="space-y-1 max-w-[600px]">
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-[#00c2cb]/20 px-2.5 py-0.5 text-[11px] font-bold text-[#00c2cb]">
-                    Investor Network
-                  </span>
-                  <h3 className="text-[18px] sm:text-[20px] font-bold text-white">Add new property request</h3>
-                </div>
-                <p className="text-[13px] sm:text-[14px] text-[#9da4ae]">
-                  Post your investment or residential brief and let verified RERA agents compete with tailored proposals.
-                </p>
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* View Switchers */}
+              <div className="flex items-center rounded-[8px] border border-[#d3d5d7] bg-[#fcfcfc] p-1 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  className={cn(
+                    'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-semibold transition-all cursor-pointer',
+                    viewMode === 'table'
+                      ? 'bg-[#1f2327] text-white shadow-2xs'
+                      : 'text-[#6f777f] hover:text-[#1f2327]'
+                  )}
+                  title="Data Table View"
+                >
+                  <List className="size-3.5" />
+                  <span>Table</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('timeline')}
+                  className={cn(
+                    'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-semibold transition-all cursor-pointer',
+                    viewMode === 'timeline'
+                      ? 'bg-[#1f2327] text-white shadow-2xs'
+                      : 'text-[#6f777f] hover:text-[#1f2327]'
+                  )}
+                  title="Timeline Feed Mode"
+                >
+                  <Layers className="size-3.5" />
+                  <span>Timeline</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('kanban')}
+                  className={cn(
+                    'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-semibold transition-all cursor-pointer',
+                    viewMode === 'kanban'
+                      ? 'bg-[#1f2327] text-white shadow-2xs'
+                      : 'text-[#6f777f] hover:text-[#1f2327]'
+                  )}
+                  title="Kanban Board Pipeline"
+                >
+                  <LayoutGrid className="size-3.5" />
+                  <span>Pipeline</span>
+                </button>
               </div>
 
-              <button
-                type="button"
+              {/* Export Action */}
+              <MainButton
+                variant="Secondary"
+                size="sm"
+                iconLeft={<Download className="size-[18px]" />}
+                label="Export CSV"
+                onClick={handleExportCSV}
+              />
+
+              {/* Add Request Action */}
+              <MainButton
+                variant="Primary"
+                size="sm"
+                iconLeft={<Plus className="size-[18px]" />}
+                label="+ Add Request"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#00c2cb] text-white shadow-lg hover:scale-105 transition-transform cursor-pointer"
-                title="Post new request"
-              >
-                <Plus className="size-6" />
-              </button>
-            </div>
-
-            {/* Timeline Heading */}
-            <div className="flex items-center justify-between pt-2">
-              <h3 className="text-[18px] leading-[26px] font-bold text-[#1f2327]">Investors' Requests Stream</h3>
-              <span className="text-[13px] text-[#6f777f]">Showing {filteredRequests.length} matching briefs</span>
-            </div>
-
-            {/* Feed Cards List (Expanded 4-Column Grid on Wide Monitors) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5">
-              {filteredRequests.map((req) => (
-                <div
-                  key={req.id}
-                  className="rounded-[18px] border border-[#d3d5d7] bg-white p-5 shadow-xs hover:border-[#00c2cb]/50 hover:shadow-md transition-all flex flex-col justify-between gap-4"
-                >
-                  {/* Top Row: User Avatar, Flag, Name, Verified, Time */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="relative size-11 shrink-0">
-                        <div className="size-11 rounded-full overflow-hidden border-2 border-white shadow-2xs bg-[#f0f2f5]">
-                          <img
-                            src={
-                              req.investorAvatar ||
-                              'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80'
-                            }
-                            alt={req.investorName}
-                            className="size-full object-cover"
-                          />
-                        </div>
-                        <div className="absolute -left-1 -top-1">
-                          <Flag code={getCountryCode(req.countryFlag === '🇦🇪' ? 'UAE' : 'Egypt')} size="s" />
-                        </div>
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-[15px] font-bold text-[#1f2327] truncate">{req.investorName}</p>
-                          <svg className="size-3.5 shrink-0 text-[#00c2cb]" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                          </svg>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[12px] text-[#9da4ae]">
-                          <span className="size-1.5 rounded-full bg-[#17b26a]" />
-                          <span>{req.onlineStatus || 'Online (Avg 10m)'}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 text-[12px] text-[#9da4ae] shrink-0">
-                      <Clock className="size-3.5" />
-                      <span>{req.timeAgo}</span>
-                    </div>
-                  </div>
-
-                  {/* Title & Note */}
-                  <div className="space-y-2">
-                    <p className="text-[15px] leading-[22px] font-bold text-[#1f2327] line-clamp-2">
-                      {req.title}
-                    </p>
-                    <div className="flex items-start gap-1.5 text-[13px] text-[#6f777f]">
-                      <FileText className="size-3.5 shrink-0 text-[#90969c] mt-0.5" />
-                      <p className="line-clamp-1 flex-1">
-                        <strong className="font-medium text-[#6f777f]">Note:</strong> {req.note || 'Family-friendly community preferred.'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* 3 Meta Info Capsules (Figma Style) */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="rounded-[10px] bg-[#f8f8f8] p-2 flex flex-col items-start min-w-0">
-                      <div className="flex items-center gap-1 text-[11px] text-[#9da4ae]">
-                        <TagIcon className="size-3 shrink-0" />
-                        <span>Budget</span>
-                      </div>
-                      <p className="text-[13px] font-bold text-[#1f2327] truncate w-full mt-0.5">{req.budget}</p>
-                    </div>
-
-                    <div className="rounded-[10px] bg-[#f8f8f8] p-2 flex flex-col items-start min-w-0">
-                      <div className="flex items-center gap-1 text-[11px] text-[#9da4ae]">
-                        <Home className="size-3 shrink-0" />
-                        <span>Type</span>
-                      </div>
-                      <p className="text-[13px] font-bold text-[#1f2327] truncate w-full mt-0.5">{req.purpose}</p>
-                    </div>
-
-                    <div className="rounded-[10px] bg-[#f8f8f8] p-2 flex flex-col items-start min-w-0">
-                      <div className="flex items-center gap-1 text-[11px] text-[#9da4ae]">
-                        <KeyRound className="size-3 shrink-0" />
-                        <span>Method</span>
-                      </div>
-                      <p className="text-[13px] font-bold text-[#1f2327] truncate w-full mt-0.5">{req.unitStatus}</p>
-                    </div>
-                  </div>
-
-                  {/* Offers Pill Badge */}
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="inline-flex items-center gap-1.5 rounded-[8px] bg-[#c7ecee] px-2.5 py-1 text-[12px] font-bold text-[#00848b]">
-                      <MessageSquare className="size-3.5" />
-                      <span>{req.offersCount} offers</span>
-                    </div>
-
-                    <span className={cn(
-                      'rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
-                      req.status === 'Deal confirmed' ? 'bg-[#dfefe8] text-[#17b26a]' : 'bg-[#eff1f3] text-[#6f777f]'
-                    )}>
-                      {req.status}
-                    </span>
-                  </div>
-
-                  {/* Action Buttons: View Details & Quick Edit */}
-                  <div className="flex items-center gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedRequest(req)}
-                      className="flex-1 h-[42px] rounded-[12px] bg-[#00c2cb] text-[14px] font-bold text-white hover:opacity-90 transition-opacity cursor-pointer shadow-2xs ant-wave-btn flex items-center justify-center gap-1"
-                    >
-                      <span>View details</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setEditingRequest(req)}
-                      className="flex size-[42px] shrink-0 items-center justify-center rounded-[12px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
-                      title="Edit specifications"
-                    >
-                      <Pencil className="size-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+              />
             </div>
           </div>
-        )}
+        </div>
 
         {/* =========================================================================
-            VIEW 2: TABLE MODE (Data Grid for Power Admins)
+            2. KPI STAT CARDS (5 Metrics)
            ========================================================================= */}
-        {viewMode === 'table' && (
-          <div className="overflow-hidden rounded-[16px] border border-[#d3d5d7] bg-white shadow-xs">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-[14px]">
-                <thead>
-                  <tr className="border-b border-[#d3d5d7] bg-[#f8fafc] text-left text-[12px] font-bold uppercase text-[#6f777f]">
-                    <th className="py-3.5 pl-4 pr-2">ID</th>
-                    <th className="py-3.5 px-3">Investor</th>
-                    <th className="py-3.5 px-3">Purpose & Specs</th>
-                    <th className="py-3.5 px-3">Budget</th>
-                    <th className="py-3.5 px-3">Locations</th>
-                    <th className="py-3.5 px-3">Payment</th>
-                    <th className="py-3.5 px-3">Offers</th>
-                    <th className="py-3.5 px-3">Status</th>
-                    <th className="py-3.5 pr-4 text-right">Actions</th>
+        <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-5 lg:gap-3">
+          <MetricCard
+            label="Total Requests"
+            value={stats.total}
+            tone="neutral"
+            active={statusFilter === 'All'}
+            onClick={() => setStatusFilter('All')}
+          />
+          <MetricCard
+            label="Open & Pitching"
+            value={stats.openCount}
+            tone="brand"
+            active={statusFilter === 'Open'}
+            onClick={() => setStatusFilter('Open')}
+          />
+          <MetricCard
+            label="Matched & Negotiating"
+            value={stats.matchedCount}
+            tone="success"
+            active={statusFilter === 'Matched'}
+            onClick={() => setStatusFilter('Matched')}
+          />
+          <MetricCard
+            label="Closed & Deals"
+            value={stats.closedCount}
+            tone="neutral"
+            active={statusFilter === 'Closed'}
+            onClick={() => setStatusFilter('Closed')}
+          />
+          <MetricCard
+            label="Urgent & Priority"
+            value={stats.urgentCount}
+            tone="warning"
+            active={statusFilter === 'Urgent'}
+            onClick={() => setStatusFilter('Urgent')}
+          />
+        </div>
+
+        {/* =========================================================================
+            3. MAIN CONTENT CONTAINER (Top Tabs + Filter Row + Views + Pagination)
+           ========================================================================= */}
+        <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)]">
+          {/* Top Tabs */}
+          <FilterTabs
+            tabs={[
+              { id: 'All', label: 'All Requests', count: stats.total },
+              { id: 'Open', label: 'Open', count: stats.openCount },
+              { id: 'Matched', label: 'Matched', count: stats.matchedCount },
+              { id: 'Closed', label: 'Closed', count: stats.closedCount },
+              { id: 'Urgent', label: 'Urgent', count: stats.urgentCount },
+              { id: 'Archived', label: 'Archived', count: requests.filter((r) => r.status === 'Archived').length },
+            ]}
+            activeTab={statusFilter}
+            onChange={(tabId) => {
+              setStatusFilter(tabId as any)
+              setCurrentPage(1)
+            }}
+          />
+
+          {/* Horizontal Filter Toolbar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#d3d5d7] p-3 sm:p-4 bg-white">
+            <div className="flex flex-1 flex-wrap items-center gap-2.5">
+              <SearchInput
+                value={query}
+                onChange={(v: string) => {
+                  setQuery(v)
+                  setCurrentPage(1)
+                }}
+                placeholder="Search requests by title, investor, or ID..."
+                className="w-full sm:w-[260px] lg:w-[300px]"
+              />
+
+              <div className="relative">
+                <select
+                  value={propertyTypeFilter}
+                  aria-label="Filter by Property Type"
+                  onChange={(e) => {
+                    setPropertyTypeFilter(e.target.value)
+                    setCurrentPage(1)
+                  }}
+                  className="h-[36px] appearance-none rounded-[6px] border border-[#d3d5d7] bg-white pl-3 pr-8 text-[13px] font-medium text-[#1f2327] outline-none transition-colors hover:border-[#00c2cb] focus:border-[#00c2cb] cursor-pointer"
+                >
+                  <option value="All">All Types</option>
+                  <option value="Residential">Residential</option>
+                  <option value="Commercial">Commercial</option>
+                  <option value="Land">Land</option>
+                  <option value="Hospitality">Hospitality</option>
+                  <option value="Industrial">Industrial</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#6f777f]" />
+              </div>
+
+              <div className="relative">
+                <select
+                  value={countryFilter}
+                  aria-label="Filter by Country"
+                  onChange={(e) => {
+                    setCountryFilter(e.target.value)
+                    setCurrentPage(1)
+                  }}
+                  className="h-[36px] appearance-none rounded-[6px] border border-[#d3d5d7] bg-white pl-3 pr-8 text-[13px] font-medium text-[#1f2327] outline-none transition-colors hover:border-[#00c2cb] focus:border-[#00c2cb] cursor-pointer"
+                >
+                  <option value="All">All Countries</option>
+                  <option value="Saudi Arabia">Saudi Arabia</option>
+                  <option value="Egypt">Egypt</option>
+                  <option value="United Arab Emirates">UAE</option>
+                  <option value="United Kingdom">United Kingdom</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#6f777f]" />
+              </div>
+
+              <div className="relative">
+                <select
+                  value={budgetFilter}
+                  aria-label="Filter by Budget Range"
+                  onChange={(e) => {
+                    setBudgetFilter(e.target.value)
+                    setCurrentPage(1)
+                  }}
+                  className="h-[36px] appearance-none rounded-[6px] border border-[#d3d5d7] bg-white pl-3 pr-8 text-[13px] font-medium text-[#1f2327] outline-none transition-colors hover:border-[#00c2cb] focus:border-[#00c2cb] cursor-pointer"
+                >
+                  <option value="All">All Budgets</option>
+                  <option value="Under $500k">Under $500k</option>
+                  <option value="$500k - $1M">$500k - $1M</option>
+                  <option value="$1M - $2M">$1M - $2M</option>
+                  <option value="$2M+">$2M+</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#6f777f]" />
+              </div>
+
+              <DateRangePicker
+                value={dateRange}
+                onChange={(val) => {
+                  setDateRange(val)
+                  setCurrentPage(1)
+                }}
+              />
+
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={resetAllFilters}
+                  className="flex items-center gap-1 text-[13px] font-semibold text-[#6f777f] hover:text-[#e02d3c] transition-colors cursor-pointer ml-1"
+                >
+                  <RotateCcw className="size-3.5" />
+                  <span>Reset filters</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* BULK SELECTION BAR */}
+          {selectedIds.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-[#e5f6f7] px-4 py-2.5 sm:px-6 border-b border-[#00c2cb]/30 ant-fade-in">
+              <span className="text-[13px] font-bold text-[#00848b]">
+                {selectedIds.length} request(s) selected
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targets = requests.filter((r) => selectedIds.includes(r.id))
+                    setAssignAdminTargetRequests(targets)
+                    setIsAssignAdminOpen(true)
+                  }}
+                  className="flex h-[32px] items-center gap-1 rounded-[6px] bg-white border border-[#00c2cb] px-3 text-[12px] font-bold text-[#00848b] hover:bg-[#00c2cb] hover:text-white transition-colors cursor-pointer shadow-2xs"
+                >
+                  <UserCheck className="size-3.5" />
+                  <span>Assign Admin</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = requests.map((r) => (selectedIds.includes(r.id) ? { ...r, status: 'Closed' as const } : r))
+                    saveRequests(updated)
+                    setSelectedIds([])
+                    toast({ variant: 'success', title: 'Batch Closed', description: `Closed ${selectedIds.length} requests.` })
+                  }}
+                  className="flex h-[32px] items-center gap-1 rounded-[6px] bg-[#1f2327] px-3 text-[12px] font-semibold text-white hover:bg-[#2e3338] transition-colors cursor-pointer shadow-2xs"
+                >
+                  <CheckCircle2 className="size-3.5 text-[#17b26a]" />
+                  <span>Close Selected</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = requests.map((r) => (selectedIds.includes(r.id) ? { ...r, status: 'Archived' as const } : r))
+                    saveRequests(updated)
+                    setSelectedIds([])
+                    toast({ variant: 'success', title: 'Batch Archived', description: `Archived ${selectedIds.length} requests.` })
+                  }}
+                  className="flex h-[32px] items-center gap-1 rounded-[6px] border border-[#d3d5d7] bg-white px-3 text-[12px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer shadow-2xs"
+                >
+                  <Archive className="size-3.5 text-[#6f777f]" />
+                  <span>Archive Selected</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* =========================================================================
+              VIEW 1: TABLE MODE (All 11 Columns matching Specification)
+             ========================================================================= */}
+          {viewMode === 'table' && (
+            <div className="overflow-x-auto table-scrollbar flex-1">
+              <table className="w-full min-w-[1300px] border-collapse text-left text-[14px] font-sans">
+                <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
+                  <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
+                    <th className="w-12 px-4 text-center">
+                      <TableCheckbox
+                        checked={
+                          filteredRequests.length > 0 && selectedIds.length === filteredRequests.length
+                        }
+                        onChange={() => handleSelectAll(selectedIds.length !== filteredRequests.length)}
+                        ariaLabel="Select all requests"
+                      />
+                    </th>
+                    <th className="px-4">Request ID</th>
+                    <th className="px-4">Investor</th>
+                    <th className="px-4">Budget</th>
+                    <th className="px-4">Property Type</th>
+                    <th className="px-4">Bedrooms</th>
+                    <th className="px-4">Area</th>
+                    <th className="px-4">Country</th>
+                    <th className="px-4">City</th>
+                    <th className="px-4">Offers Count</th>
+                    <th className="px-4">Status</th>
+                    <th className="px-4">Created Date</th>
+                    <th className="px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#e5e7eb]">
-                  {filteredRequests.map((req) => (
-                    <tr
-                      key={req.id}
-                      className="hover:bg-[#f8fcfd] transition-colors cursor-pointer"
-                      onClick={() => setSelectedRequest(req)}
-                    >
-                      <td className="py-3 pl-4 pr-2 font-mono text-[12px] font-semibold text-[#6f777f]">
-                        {req.id}
-                      </td>
-                      <td className="py-3 px-3">
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={
-                              req.investorAvatar ||
-                              'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80'
-                            }
-                            alt=""
-                            className="size-7 rounded-full object-cover shrink-0"
-                          />
-                          <div>
-                            <p className="font-bold text-[#1f2327] text-[13px]">{req.investorName}</p>
-                            <p className="text-[11px] text-[#9da4ae]">{req.timeAgo}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-3">
-                        <p className="font-semibold text-[#1f2327] text-[13px]">
-                          {req.bedrooms !== 'N/A' ? `${req.bedrooms} ` : ''}{req.propertyType}
-                        </p>
-                        <p className="text-[11px] text-[#00848b]">
-                          {req.purpose} • {req.unitStatus}
-                        </p>
-                      </td>
-                      <td className="py-3 px-3 font-bold text-[#00c2cb] text-[13px]">
-                        {req.budget}
-                      </td>
-                      <td className="py-3 px-3">
-                        <div className="flex flex-wrap gap-1 max-w-[200px]">
-                          {req.preferredAreas.slice(0, 2).map((a) => (
-                            <span key={a} className="rounded bg-[#f0f2f5] px-1.5 py-0.5 text-[11px] text-[#1f2327]">
-                              {a}
-                            </span>
-                          ))}
-                          {req.preferredAreas.length > 2 && (
-                            <span className="text-[11px] text-[#6f777f]">+{req.preferredAreas.length - 2}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className="inline-flex rounded-full bg-[#f8f9fa] border border-[#d3d5d7] px-2 py-0.5 text-[11px] font-medium text-[#1f2327]">
-                          {req.paymentMethod}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className="inline-flex items-center gap-1 rounded-[6px] bg-[#c7ecee] px-2 py-0.5 text-[12px] font-bold text-[#00848b]">
-                          <MessageSquare className="size-3" />
-                          {req.offersCount}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className={cn(
-                          'rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
-                          req.status === 'Deal confirmed'
-                            ? 'bg-[#dfefe8] text-[#17b26a]'
-                            : req.status === 'Matched'
-                            ? 'bg-[#e5f6f7] text-[#00848b]'
-                            : 'bg-[#f8f9fa] text-[#6f777f]'
-                        )}>
-                          {req.status}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedRequest(req)}
-                            className="rounded-[6px] p-1.5 text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]"
-                            title="View details"
-                          >
-                            <Eye className="size-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditingRequest(req)}
-                            className="rounded-[6px] p-1.5 text-[#00c2cb] hover:bg-[#e5f6f7]"
-                            title="Edit request"
-                          >
-                            <Pencil className="size-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteRequest(req.id)}
-                            className="rounded-[6px] p-1.5 text-[#f04438] hover:bg-[#fef3f2]"
-                            title="Delete request"
-                          >
-                            <Trash2 className="size-4" />
-                          </button>
-                        </div>
+
+                <tbody className="divide-y divide-[#d3d5d7]">
+                  {paginatedRequests.length === 0 ? (
+                    <tr>
+                      <td colSpan={13} className="py-8 text-center text-[#6f777f]">
+                        <EmptyState
+                          title="No property requests found"
+                          description="Try adjusting your search query or reset your active filters."
+                          actionLabel="Reset filters"
+                          onAction={resetAllFilters}
+                        />
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    paginatedRequests.map((req) => {
+                      const isSelected = selectedIds.includes(req.id)
+                      const countryName =
+                        req.countryFlag === '🇸🇦'
+                          ? 'Saudi Arabia'
+                          : req.countryFlag === '🇪🇬'
+                          ? 'Egypt'
+                          : req.countryFlag === '🇬🇧'
+                          ? 'United Kingdom'
+                          : 'United Arab Emirates'
+                      const cCode = getCountryCode(countryName)
+
+                      return (
+                        <tr
+                          key={req.id}
+                          className={cn(
+                            'h-[60px] transition-colors hover:bg-[#f8f9fa] whitespace-nowrap',
+                            isSelected && 'bg-[#e5f6f7]/40'
+                          )}
+                        >
+                          <td className="w-12 px-4 text-center">
+                            <TableCheckbox
+                              checked={isSelected}
+                              onChange={() => handleSelectRow(req.id, !isSelected)}
+                              ariaLabel={`Select request ${req.id}`}
+                            />
+                          </td>
+
+                          {/* 1. Request ID */}
+                          <td className="px-4">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedRequest(req)}
+                              className="font-mono text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer"
+                            >
+                              {req.id}
+                            </button>
+                          </td>
+
+                          {/* 2. Investor */}
+                          <td className="px-4">
+                            <div className="flex items-center gap-2.5">
+                              <Link href={`/investors/${req.investorId || 'IN-2048'}`} className="cursor-pointer">
+                                <TableAvatar
+                                  src={req.investorAvatar}
+                                  name={req.investorName}
+                                  countryCode={cCode}
+                                  size="md"
+                                  variant="brand"
+                                />
+                              </Link>
+                              <div className="min-w-0">
+                                <Link
+                                  href={`/investors/${req.investorId || 'IN-2048'}`}
+                                  className="font-medium text-[#1f2327] text-[14px] hover:text-[#00c2cb] hover:underline transition-colors whitespace-nowrap block"
+                                >
+                                  {req.investorName}
+                                </Link>
+                                <span className="text-[11px] text-[#17b26a] font-medium whitespace-nowrap">Verified Buyer</span>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* 3. Budget */}
+                          <td className="px-4 py-3.5 font-bold text-[#00c2cb] text-[14px] whitespace-nowrap">
+                            {req.budget}
+                          </td>
+
+                          {/* 4. Property Type */}
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            <span className="font-medium text-[#1f2327] whitespace-nowrap">{req.propertyType}</span>
+                            <span className="block text-[12px] text-[#6f777f] whitespace-nowrap">{req.purpose}</span>
+                          </td>
+
+                          {/* 5. Bedrooms */}
+                          <td className="px-4 py-3.5 font-medium text-[#1f2327] whitespace-nowrap">
+                            {req.bedrooms}
+                          </td>
+
+                          {/* 6. Area */}
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            <div className="flex items-center gap-1 whitespace-nowrap">
+                              {req.preferredAreas.slice(0, 2).map((a) => (
+                                <span
+                                  key={a}
+                                  className="rounded-[4px] bg-[#eff1f3] px-2 py-0.5 text-[11px] font-medium text-[#1f2327] whitespace-nowrap"
+                                >
+                                  {a}
+                                </span>
+                              ))}
+                              {req.preferredAreas.length > 2 && (
+                                <span className="text-[11px] text-[#6f777f] font-medium whitespace-nowrap">
+                                  +{req.preferredAreas.length - 2}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* 7. Country */}
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                              <Flag code={cCode} size="s" />
+                              <span className="text-[13px] text-[#1f2327] whitespace-nowrap">{countryName}</span>
+                            </div>
+                          </td>
+
+                          {/* 8. City */}
+                          <td className="px-4 py-3.5 text-[13px] text-[#1f2327] whitespace-nowrap">
+                            {req.preferredAreas[0] ? 'Dubai' : 'Dubai'}
+                          </td>
+
+                          {/* 9. Offers Count */}
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            <FigmaTag
+                              status="Active"
+                              size="sm"
+                              label={`${req.offersCount} offers`}
+                              leftIcon={<MessageSquare className="size-[16px]" />}
+                            />
+                          </td>
+
+                          {/* 10. Status */}
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            <FigmaStatusBadge status={req.status} />
+                          </td>
+
+                          {/* 11. Created Date */}
+                          <td className="px-4 py-3.5 text-[13px] text-[#6f777f] whitespace-nowrap">
+                            {req.created || '28 May 2026'}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedRequest(req)}
+                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] cursor-pointer"
+                                title="View Details"
+                              >
+                                <Eye className="size-4 text-[#00c2cb]" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingRequest(req)}
+                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] cursor-pointer"
+                                title="Edit Request"
+                              >
+                                <Pencil className="size-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAssignAdminTargetRequests([req])
+                                  setIsAssignAdminOpen(true)
+                                }}
+                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] cursor-pointer"
+                                title="Assign Admin"
+                              >
+                                <UserCheck className="size-4 text-[#17b26a]" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleArchiveRequest(req.id)}
+                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] cursor-pointer"
+                                title="Archive"
+                              >
+                                <Archive className="size-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteRequest(req.id)}
+                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] text-[#6f777f] hover:bg-[#f3e1e0] hover:text-[#d92d20] cursor-pointer"
+                                title="Delete"
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* =========================================================================
-            VIEW 3: KANBAN PIPELINE VIEW (Details of Details)
-           ========================================================================= */}
-        {viewMode === 'kanban' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4">
-            {(
-              [
-                { status: 'Open', color: 'bg-blue-500', title: 'Open for Pitches' },
-                { status: 'Receiving offers', color: 'bg-amber-500', title: 'Receiving Offers' },
-                { status: 'Matched', color: 'bg-teal-500', title: 'Matched & Negotiating' },
-                { status: 'Deal confirmed', color: 'bg-emerald-500', title: 'Deal Confirmed' },
-                { status: 'Closed', color: 'bg-slate-500', title: 'Closed / Archived' },
-              ] as const
-            ).map((column) => {
-              const colRequests = filteredRequests.filter((r) => r.status.toLowerCase() === column.status.toLowerCase())
-              return (
-                <div key={column.status} className="rounded-[16px] border border-[#d3d5d7] bg-[#f8fafc] p-3 space-y-3 flex flex-col min-h-[500px]">
-                  {/* Column Header */}
-                  <div className="flex items-center justify-between pb-2 border-b border-[#e2e8f0]">
-                    <div className="flex items-center gap-1.5">
-                      <span className={cn('size-2 rounded-full', column.color)} />
-                      <h4 className="text-[13px] font-bold text-[#1f2327]">{column.title}</h4>
+          {/* =========================================================================
+              VIEW 2: TIMELINE FEED MODE
+             ========================================================================= */}
+          {viewMode === 'timeline' && (
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredRequests.map((req) => (
+                  <div
+                    key={req.id}
+                    className="rounded-[12px] border border-[#d3d5d7] bg-white p-5 space-y-4 hover:border-[#00c2cb] transition-colors shadow-2xs"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <img
+                          src={req.investorAvatar || 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80'}
+                          alt={req.investorName}
+                          className="size-10 rounded-full object-cover border border-[#d3d5d7]"
+                        />
+                        <div>
+                          <p className="font-bold text-[14px] text-[#1f2327]">{req.investorName}</p>
+                          <p className="text-[12px] text-[#6f777f]">{req.timeAgo || 'Recently'}</p>
+                        </div>
+                      </div>
+                      <FigmaStatusBadge status={req.status} />
                     </div>
-                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-[#6f777f] border border-[#d3d5d7]">
-                      {colRequests.length}
-                    </span>
-                  </div>
 
-                  {/* Column Cards */}
-                  <div className="space-y-2.5 flex-1 overflow-y-auto max-h-[700px]">
-                    {colRequests.map((req) => (
-                      <div
-                        key={req.id}
+                    <div>
+                      <p className="font-bold text-[15px] text-[#1f2327] line-clamp-2">{req.title}</p>
+                      <p className="text-[13px] text-[#6f777f] mt-1 line-clamp-1">📄 {req.note || 'Family-friendly layout preferred.'}</p>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 rounded-[8px] bg-[#fcfcfc] border border-[#d3d5d7] p-2 text-center text-[12px]">
+                      <div>
+                        <span className="text-[#6f777f] block">Budget</span>
+                        <strong className="text-[#00c2cb] truncate block">{req.budget}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[#6f777f] block">Type</span>
+                        <strong className="text-[#1f2327] truncate block">{req.propertyType}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[#6f777f] block">Offers</span>
+                        <strong className="text-[#17b26a] truncate block">{req.offersCount} bids</strong>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        type="button"
                         onClick={() => setSelectedRequest(req)}
-                        className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 shadow-2xs hover:border-[#00c2cb] hover:shadow-xs transition-all cursor-pointer space-y-2.5"
+                        className="flex-1 h-[36px] rounded-[8px] bg-[#00c2cb] text-[13px] font-bold text-white hover:bg-[#00a8b0] transition-colors cursor-pointer shadow-2xs ant-wave-btn"
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono text-[11px] text-[#6f777f]">{req.id}</span>
-                          <span className="text-[11px] text-[#9da4ae]">{req.timeAgo}</span>
-                        </div>
-
-                        <p className="font-bold text-[13px] text-[#1f2327] leading-snug line-clamp-2">
-                          {req.title}
-                        </p>
-
-                        <div className="flex items-center justify-between pt-1 text-[12px]">
-                          <span className="font-bold text-[#00c2cb]">{req.budget}</span>
-                          <span className="rounded bg-[#c7ecee] px-1.5 py-0.5 text-[11px] font-bold text-[#00848b]">
-                            {req.offersCount} offers
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-1 border-t border-[#f0f2f5] text-[11px] text-[#6f777f]">
-                          <span>{req.investorName}</span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setEditingRequest(req)
-                            }}
-                            className="text-[#00c2cb] font-semibold hover:underline"
-                          >
-                            Edit
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-
-                    {colRequests.length === 0 && (
-                      <div className="py-8 text-center text-[12px] text-[#9da4ae]">
-                        No requests in this stage
-                      </div>
-                    )}
+                        View Details
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingRequest(req)}
+                        className="flex size-9 items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] cursor-pointer"
+                      >
+                        <Pencil className="size-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* =========================================================================
+              VIEW 3: KANBAN BOARD PIPELINE
+             ========================================================================= */}
+          {viewMode === 'kanban' && (
+            <div className="p-5 overflow-x-auto">
+              <div className="flex items-start gap-4 min-w-[1000px]">
+                {(['Open', 'Matched', 'Closed', 'Archived'] as const).map((stage) => {
+                  const stageRequests = requests.filter((r) => {
+                    if (stage === 'Open') return r.status === 'Open' || r.status === 'Receiving offers'
+                    return r.status === stage
+                  })
+
+                  return (
+                    <div key={stage} className="flex-1 rounded-[12px] bg-[#fcfcfc] border border-[#d3d5d7] p-3 space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-[#d3d5d7]">
+                        <h4 className="text-[14px] font-bold text-[#1f2327]">{stage}</h4>
+                        <span className="rounded-full bg-[#eff1f3] px-2 py-0.5 text-[12px] font-bold text-[#1f2327]">
+                          {stageRequests.length}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2.5">
+                        {stageRequests.map((req) => (
+                          <div
+                            key={req.id}
+                            onClick={() => setSelectedRequest(req)}
+                            className="rounded-[8px] border border-[#d3d5d7] bg-white p-3 space-y-2 shadow-2xs hover:border-[#00c2cb] transition-colors cursor-pointer"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono text-[11px] font-bold text-[#6f777f]">{req.id}</span>
+                              <span className="text-[11px] font-bold text-[#00c2cb]">{req.budget}</span>
+                            </div>
+                            <p className="font-bold text-[13px] text-[#1f2327] line-clamp-2">{req.title}</p>
+                            <div className="flex items-center justify-between text-[11px] text-[#6f777f] pt-1 border-t border-[#d3d5d7]/50">
+                              <span>{req.investorName}</span>
+                              <span className="text-[#17b26a] font-semibold">{req.offersCount} offers</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Global Pagination Bar */}
+          <div className="p-3 border-t border-[#d3d5d7] bg-[#fcfcfc] mt-auto">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredRequests.length}
+              rowsPerPage={rowsPerPage}
+              rowsOptions={[10, 20, 30]}
+              onPageChange={setCurrentPage}
+              onRowsPerPageChange={(rows) => {
+                setRowsPerPage(rows)
+                setCurrentPage(1)
+              }}
+              itemLabel="requests"
+            />
           </div>
-        )}
-
-        {/* Selected Request Detail Modal */}
-        {selectedRequest && (
-          <RequestDetailModal
-            request={selectedRequest}
-            onClose={() => setSelectedRequest(null)}
-            onUpdateStatus={(reqId, newStatus) => handleUpdateStatus(reqId, newStatus)}
-            onUpdateRequest={(updatedReq) => handleSaveRequest(updatedReq)}
-          />
-        )}
-
-        {/* Edit / Create Request Modal */}
-        {(editingRequest || isCreateModalOpen) && (
-          <EditRequestModal
-            request={editingRequest}
-            mode={isCreateModalOpen ? 'create' : 'edit'}
-            isOpen={!!editingRequest || isCreateModalOpen}
-            onClose={() => {
-              setEditingRequest(null)
-              setIsCreateModalOpen(false)
-            }}
-            onSave={(savedReq) => handleSaveRequest(savedReq)}
-          />
-        )}
-
-        {/* Confirmation Dialog */}
-        <ConfirmDialog request={confirmDialog} onClose={() => setConfirmDialog(null)} />
+        </section>
       </div>
+
+      {/* =========================================================================
+          MODALS
+         ========================================================================= */}
+      {/* 1. Request Detail Modal (Full 360 review) */}
+      {selectedRequest && (
+        <RequestDetailModal
+          request={selectedRequest}
+          onClose={() => setSelectedRequest(null)}
+          onUpdateStatus={handleUpdateStatus}
+          onUpdateRequest={handleSaveRequest}
+          onDeleteRequest={handleDeleteRequest}
+          onArchiveRequest={handleArchiveRequest}
+        />
+      )}
+
+      {/* 2. Edit Request Modal */}
+      {editingRequest && (
+        <EditRequestModal
+          isOpen={true}
+          request={editingRequest}
+          onClose={() => setEditingRequest(null)}
+          onSave={handleSaveRequest}
+        />
+      )}
+
+      {/* 3. Create Request Modal */}
+      {isCreateModalOpen && (
+        <EditRequestModal
+          isOpen={true}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSave={handleSaveRequest}
+        />
+      )}
+
+      {/* 4. Assign Admin Modal */}
+      {isAssignAdminOpen && (
+        <AssignAdminModal
+          requests={assignAdminTargetRequests}
+          onClose={() => {
+            setIsAssignAdminOpen(false)
+            setAssignAdminTargetRequests([])
+          }}
+          onAssign={handleAssignAdminConfirm}
+        />
+      )}
+
+      {/* 5. Confirm Dialog */}
+      {confirmDialog && (
+        <ConfirmDialog
+          request={confirmDialog}
+          onClose={() => setConfirmDialog(null)}
+        />
+      )}
     </PlatformShell>
   )
 }
@@ -822,7 +1179,9 @@ export function RequestsManagementInner() {
 export function RequestsManagement() {
   return (
     <ToastProvider>
-      <RequestsManagementInner />
+      <React.Suspense fallback={null}>
+        <RequestsManagementInner />
+      </React.Suspense>
     </ToastProvider>
   )
 }

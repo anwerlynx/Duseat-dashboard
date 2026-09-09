@@ -43,16 +43,12 @@ import { ScheduleExportModal } from './schedule-export-modal'
 import { DateRangePicker } from './date-range-picker'
 import { agents as initialAgents, type PlatformAgent } from '@/lib/platform-users'
 import { TableCheckbox } from '@/components/ui/table-checkbox'
+
 import { AgentPlanBadge, FigmaStatusBadge, RateBadge, CounterBadge } from '@/components/ui/figma-badges'
-import { Flag, getCountryCode } from '@/components/ui/flag'
+import { Flag, getCountryCode, AvatarFlagOverlay } from '@/components/ui/flag'
+import { FilterTabs, MetricCard, SearchInput, Pagination, EmptyState, TableAvatar } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
-import {
-  fetchAgentsList,
-  setAgentActiveStatus,
-  deleteAgentAccount,
-  reviewAgentLicense,
-} from '@/lib/api/agents'
 
 type Agent = PlatformAgent
 
@@ -81,8 +77,8 @@ function AgentsInner() {
   const [editProfileAgent, setEditProfileAgent] = React.useState<Agent | null>(null)
   const [scheduleModalOpen, setScheduleModalOpen] = React.useState(false)
   const [dateRange, setDateRange] = React.useState('All Time')
-  const [rowsPerPage, setRowsPerPage] = React.useState(50)
-  const [loading, setLoading] = React.useState(false)
+  const [rowsPerPage, setRowsPerPage] = React.useState(10)
+  const [currentPage, setCurrentPage] = React.useState(1)
 
   const [rows, setRows] = React.useState<Agent[]>(initialAgents)
   const [deletedRows, setDeletedRows] = React.useState<Agent[]>([
@@ -122,32 +118,19 @@ function AgentsInner() {
   ])
 
   const [query, setQuery] = React.useState('')
-  const [tab, setTab] = React.useState<'All agents' | 'Verified' | 'Pending approval' | 'Suspended' | 'Deleted users'>('All agents')
+  const [tab, setTab] = React.useState<'All agents' | 'Verified' | 'Pending verification' | 'Suspended' | 'Expired license' | 'Deleted users'>('All agents')
   const [agencyFilter, setAgencyFilter] = React.useState('All agencies')
   const [subscriptionFilter, setSubscriptionFilter] = React.useState('All subscriptions')
   const [countryFilter, setCountryFilter] = React.useState('All countries')
   const [verificationFilter, setVerificationFilter] = React.useState('All verifications')
   const [statusFilter, setStatusFilter] = React.useState('All statuses')
+  const [showFilters, setShowFilters] = React.useState(true)
+  const [sortOption, setSortOption] = React.useState('newest')
 
   const [selected, setSelected] = React.useState<string[]>([])
   const [columnsOpen, setColumnsOpen] = React.useState(false)
   const [visibleColumns, setVisibleColumns] = React.useState(columns.slice(0, -1))
   const [confirm, setConfirm] = React.useState<ConfirmRequest | null>(null)
-
-  // Load from API with fallback
-  const loadData = React.useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await fetchAgentsList({ search: query })
-      if (res.items && res.items.length > 0) {
-        setRows(res.items)
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false)
-    }
-  }, [query])
 
   // Load from local storage
   React.useEffect(() => {
@@ -162,11 +145,10 @@ function AgentsInner() {
         const parsedDel = JSON.parse(savedDeleted)
         if (Array.isArray(parsedDel)) setDeletedRows(parsedDel)
       }
-    } catch {
+    } catch (e) {
       // ignore
     }
-    loadData()
-  }, [loadData])
+  }, [])
 
   const saveRows = (newRows: Agent[]) => {
     setRows(newRows)
@@ -204,11 +186,18 @@ function AgentsInner() {
     const matchesTab =
       tab === 'All agents' ||
       (tab === 'Verified' && agent.status === 'Verified') ||
-      (tab === 'Pending approval' && ['Pending', 'Under review'].includes(agent.status)) ||
-      (tab === 'Suspended' && agent.status === 'Suspended')
+      (tab === 'Pending verification' && ['Pending', 'Under review'].includes(agent.status)) ||
+      (tab === 'Suspended' && agent.status === 'Suspended') ||
+      (tab === 'Expired license' && (agent.tradeLicense?.status === 'Expired' || agent.status === 'Rejected'))
 
     return matchesQuery && matchesAgency && matchesSubscription && matchesCountry && matchesVerification && matchesStatus && matchesTab
   })
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage))
+  const paginatedAgents = React.useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage
+    return filtered.slice(start, start + rowsPerPage)
+  }, [filtered, currentPage, rowsPerPage])
 
   const notify = (title: string, description: string, variant: 'success' | 'info' | 'error' = 'success') =>
     toast({ variant, title, description })
@@ -223,17 +212,14 @@ function AgentsInner() {
       case 'approve':
       case 'verify':
         patchRows(ids, { status: 'Verified', verification: 'RERA + KYC' })
-        ids.forEach((id) => reviewAgentLicense(id, 'APPROVE').catch(() => {}))
         notify('Agent verified', `${label} approved and verified with RERA + KYC.`)
         break
       case 'reject':
         patchRows(ids, { status: 'Rejected' })
-        ids.forEach((id) => reviewAgentLicense(id, 'REJECT', 'Rejected by admin').catch(() => {}))
         notify('Agent rejected', `${label} application was rejected.`, 'error')
         break
       case 'suspend':
         patchRows(ids, { status: 'Suspended' })
-        ids.forEach((id) => setAgentActiveStatus(id, false).catch(() => {}))
         notify('Agent suspended', `${label} has been suspended.`, 'error')
         break
       case 'delete':
@@ -242,7 +228,6 @@ function AgentsInner() {
         saveRows(remaining)
         saveDeletedRows([...deletedRows, ...toDelete.map((a) => ({ ...a, status: 'Deleted' }))])
         setSelected([])
-        ids.forEach((id) => deleteAgentAccount(id).catch(() => {}))
         notify('Agent deleted', `${label} moved to Deleted Users archive.`, 'error')
         break
       case 'restore':
@@ -404,13 +389,7 @@ function AgentsInner() {
         <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[12px] leading-[16px] font-semibold uppercase tracking-wider text-[#00c2cb]">Licensed Network</span>
-                <span className="inline-flex items-center rounded-[6px] bg-[#dfefe8] px-2 py-0.5 text-[12px] leading-[16px] font-semibold text-[#17b26a]">
-                  RERA Compliant
-                </span>
-              </div>
-              <h1 className="mt-1 text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">Agents Directory & Compliance</h1>
+              <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">Agents Directory & Compliance</h1>
               <p className="mt-0.5 text-[14px] leading-[20px] text-[#6f777f]">
                 Manage licensed brokers, verify RERA & trade licenses, monitor offer metrics and manage subscriptions.
               </p>
@@ -438,41 +417,52 @@ function AgentsInner() {
 
           {/* 4 Stat Cards */}
           <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3">
-            <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
-              <p className="text-[14px] leading-[20px] text-[#6f777f]">Total Agents</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#1f2327]">{rows.length}</p>
-            </div>
-            <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
-              <p className="text-[14px] leading-[20px] text-[#6f777f]">Verified RERA</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#17b26a]">
-                {rows.filter((a) => a.status === 'Verified').length}
-              </p>
-            </div>
-            <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
-              <p className="text-[14px] leading-[20px] text-[#6f777f]">Pending Review</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#00c2cb]">
-                {rows.filter((a) => ['Pending', 'Under review'].includes(a.status)).length}
-              </p>
-            </div>
-            <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
-              <p className="text-[14px] leading-[20px] text-[#6f777f]">Suspended / Expired</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#f79009]">
-                {rows.filter((r) => ['Suspended', 'Rejected'].includes(r.status)).length}
-              </p>
-            </div>
+            <MetricCard
+              label="Total Agents"
+              value={rows.length}
+              tone="neutral"
+              active={tab === 'All agents'}
+              onClick={() => setTab('All agents')}
+            />
+            <MetricCard
+              label="Verified RERA"
+              value={rows.filter((a) => a.status === 'Verified').length}
+              tone="success"
+              active={false}
+              onClick={() => {
+                setTab('All agents')
+                setStatusFilter('Verified')
+              }}
+            />
+            <MetricCard
+              label="Pending Review"
+              value={rows.filter((a) => ['Pending', 'Under review'].includes(a.status)).length}
+              tone="warning"
+              active={tab === 'Pending verification'}
+              onClick={() => setTab('Pending verification')}
+            />
+            <MetricCard
+              label="Suspended / Expired"
+              value={rows.filter((r) => ['Suspended', 'Rejected'].includes(r.status)).length}
+              tone="destructive"
+              active={tab === 'Suspended' || tab === 'Expired license'}
+              onClick={() => setTab('Suspended')}
+            />
           </div>
         </header>
 
-        {/* Table & Filter Container */}
+        {/* Table & Filter Container (Original GitHub Repo Layout) */}
         <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
           {/* Top Tabs Bar */}
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
-                {(['All agents', 'Pending verification', 'Suspended', 'Expired license', 'Deleted users'] as const).map((item) => {
+                {(['All agents', 'Verified', 'Pending verification', 'Suspended', 'Expired license', 'Deleted users'] as const).map((item) => {
                   const count =
                     item === 'All agents'
                       ? rows.length
+                      : item === 'Verified'
+                      ? rows.filter((r) => r.status === 'Verified').length
                       : item === 'Pending verification'
                       ? rows.filter((r) => ['Pending', 'Under review'].includes(r.status)).length
                       : item === 'Suspended'
@@ -485,9 +475,9 @@ function AgentsInner() {
                     <button
                       type="button"
                       key={item}
-                      onClick={() => setTab(item as any)}
+                      onClick={() => setTab(item)}
                       className={cn(
-                        'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[15px] font-medium transition-colors cursor-pointer ant-wave-btn',
+                        'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn',
                         tab === item
                           ? 'bg-[#1f2327] text-white shadow-2xs'
                           : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
@@ -496,8 +486,8 @@ function AgentsInner() {
                       <span>{item}</span>
                       <span
                         className={cn(
-                          'rounded-full px-1.5 py-0.2 text-[11px] font-bold',
-                          item === 'Suspended'
+                          'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
+                          item === 'Suspended' || item === 'Expired license'
                             ? 'bg-[#f79009] text-white'
                             : tab === item
                             ? 'bg-white/20 text-white'
@@ -547,14 +537,14 @@ function AgentsInner() {
               </div>
             </div>
 
-            {/* 5 Filters Row: Search, Agency, Subscription, Country, Verification, Status */}
+            {/* 6 Filters Row */}
             <div className="flex flex-wrap items-center gap-2.5 pt-1">
               {/* Search */}
               <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9da4ae]" />
                 <input
                   value={query}
-                  onChange={(event) => setQuery(event.target.value)}
+                  onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search name, agency, RERA, license…"
                   className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-3 text-[14px] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20"
                 />
@@ -569,7 +559,45 @@ function AgentsInner() {
                 )}
               </div>
 
-              {/* 1. Agency Filter */}
+              {/* Status Filter */}
+              <Dropdown
+                align="start"
+                value={statusFilter}
+                onSelect={setStatusFilter}
+                ariaLabel="Filter by Status"
+                options={['All statuses', 'Verified', 'Pending', 'Suspended', 'Rejected'].map((item) => ({
+                  label: item,
+                  value: item,
+                }))}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
+                    <Filter className="size-4 text-[#6f777f]" />
+                    <span>{statusFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
+              />
+
+              {/* Plan Filter */}
+              <Dropdown
+                align="start"
+                value={subscriptionFilter}
+                onSelect={setSubscriptionFilter}
+                ariaLabel="Filter by Plan"
+                options={['All subscriptions', 'Pro agent', 'Elite agent', 'Power agent', 'Standard agent'].map((item) => ({
+                  label: item,
+                  value: item,
+                }))}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
+                    <Award className="size-4 text-[#6f777f]" />
+                    <span>{subscriptionFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
+              />
+
+              {/* Agency Filter */}
               <Dropdown
                 align="start"
                 value={agencyFilter}
@@ -583,7 +611,10 @@ function AgentsInner() {
                   'Avenue Realty',
                   'Nexus Properties',
                   'Vista Estates',
-                ].map((item) => ({ label: item, value: item }))}
+                ].map((item) => ({
+                  label: item,
+                  value: item,
+                }))}
                 trigger={
                   <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
                     <Building2 className="size-4 text-[#6f777f]" />
@@ -593,26 +624,7 @@ function AgentsInner() {
                 }
               />
 
-              {/* 2. Subscription Filter */}
-              <Dropdown
-                align="start"
-                value={subscriptionFilter}
-                onSelect={setSubscriptionFilter}
-                ariaLabel="Filter by Subscription"
-                options={['All subscriptions', 'Pro agent', 'Elite agent', 'Power agent'].map((item) => ({
-                  label: item,
-                  value: item,
-                }))}
-                trigger={
-                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
-                    <Award className="size-4 text-[#6f777f]" />
-                    <span>{subscriptionFilter}</span>
-                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
-                  </span>
-                }
-              />
-
-              {/* 3. Country Filter */}
+              {/* Country Filter */}
               <Dropdown
                 align="start"
                 value={countryFilter}
@@ -631,60 +643,20 @@ function AgentsInner() {
                 }
               />
 
-              {/* 4. Verification Filter */}
-              <Dropdown
-                align="start"
-                value={verificationFilter}
-                onSelect={setVerificationFilter}
-                ariaLabel="Filter by Verification"
-                options={['All verifications', 'RERA + KYC', 'KYC', 'Documents'].map((item) => ({
-                  label: item,
-                  value: item,
-                }))}
-                trigger={
-                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
-                    <ShieldCheck className="size-4 text-[#6f777f]" />
-                    <span>{verificationFilter}</span>
-                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
-                  </span>
-                }
-              />
-
-              {/* 5. Status Filter */}
-              <Dropdown
-                align="start"
-                value={statusFilter}
-                onSelect={setStatusFilter}
-                ariaLabel="Filter by Status"
-                options={['All statuses', 'Verified', 'Pending', 'Under review', 'Suspended', 'Rejected'].map((item) => ({
-                  label: item,
-                  value: item,
-                }))}
-                trigger={
-                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
-                    <Filter className="size-4 text-[#6f777f]" />
-                    <span>{statusFilter}</span>
-                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
-                  </span>
-                }
-              />
-
-              {/* 6. Date Range Picker */}
+              {/* Date Range Picker */}
               <DateRangePicker value={dateRange} onChange={setDateRange} />
 
-              {(agencyFilter !== 'All agencies' ||
+              {(statusFilter !== 'All statuses' ||
                 subscriptionFilter !== 'All subscriptions' ||
-                countryFilter !== 'All countries' ||
-                verificationFilter !== 'All verifications' ||
-                statusFilter !== 'All statuses') && (
+                agencyFilter !== 'All agencies' ||
+                countryFilter !== 'All countries') && (
                 <button
                   type="button"
                   onClick={() => {
-                    setAgencyFilter('All agencies')
-                    setSubscriptionFilter('All subscriptions')
-                    setCountryFilter('All countries')
-                    setVerificationFilter('All verifications')
                     setStatusFilter('All statuses')
+                    setSubscriptionFilter('All subscriptions')
+                    setAgencyFilter('All agencies')
+                    setCountryFilter('All countries')
                   }}
                   className="text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer"
                 >
@@ -755,7 +727,7 @@ function AgentsInner() {
           )}
 
           {/* Table */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto table-scrollbar flex-1">
             <table className="w-full min-w-[1500px] border-collapse text-left text-[14px] font-sans">
               <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
                 <tr className="h-12">
@@ -776,7 +748,7 @@ function AgentsInner() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#d3d5d7]">
-                {filtered.map((agent) => (
+                {paginatedAgents.map((agent) => (
                   <AgentRow
                     key={agent.id}
                     agent={agent}
@@ -795,51 +767,37 @@ function AgentsInner() {
             </table>
 
             {filtered.length === 0 && (
-              <div className="p-12 text-center">
-                <p className="text-[18px] font-semibold text-[#1f2327]">No agents found</p>
-                <p className="mt-1 text-[14px] text-[#6f777f]">Try adjusting your search query or reset your active filters.</p>
-              </div>
+              <EmptyState
+                title="No agents found"
+                description="Try adjusting your search query or reset your active filters."
+                actionLabel="Reset filters"
+                onAction={() => {
+                  setQuery('')
+                  setAgencyFilter('All agencies')
+                  setSubscriptionFilter('All plans')
+                  setCountryFilter('All countries')
+                  setVerificationFilter('All verification')
+                  setStatusFilter('All statuses')
+                }}
+              />
             )}
           </div>
 
           {/* Footer Pagination */}
-          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#d3d5d7] px-5 py-3.5 bg-white">
-            <div className="flex items-center gap-3">
-              <span className="text-[14px] text-[#6f777f]">Rows per page</span>
-              <Dropdown
-                align="start"
-                options={[5, 10, 25, 50, 75].map((count) => ({
-                  label: `${count}`,
-                  value: `${count}`,
-                }))}
-                value={`${rowsPerPage}`}
-                onSelect={(val) => setRowsPerPage(Number(val))}
-                trigger={
-                  <span className="inline-flex h-[32px] items-center gap-2 rounded-[6px] border border-[#d3d5d7] bg-white px-2.5 text-[13px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
-                    <span>{rowsPerPage}</span>
-                    <ChevronDown className="size-3 text-[#9da4ae]" />
-                  </span>
-                }
-              />
-              <span className="text-[14px] text-[#6f777f]">
-                Showing 1–{Math.min(filtered.length, rowsPerPage)} of {activeDataset.length} agents
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              {[1, 2, 3].map((page) => (
-                <button
-                  key={page}
-                  type="button"
-                  className={cn(
-                    'flex size-8 items-center justify-center rounded-[8px] text-[14px] font-semibold transition-colors cursor-pointer ant-wave-btn',
-                    page === 1 ? 'bg-[#00c2cb] text-white shadow-2xs' : 'hover:bg-[#eff1f3] text-[#6f777f]'
-                  )}
-                >
-                  {page}
-                </button>
-              ))}
-            </div>
+          <div className="mt-auto border-t border-[#d3d5d7]">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filtered.length}
+              rowsPerPage={rowsPerPage}
+              rowsOptions={[10, 20, 30]}
+              onPageChange={setCurrentPage}
+              onRowsPerPageChange={(n) => {
+                setRowsPerPage(n)
+                setCurrentPage(1)
+              }}
+              itemLabel="agents"
+            />
           </div>
         </section>
       </div>
@@ -936,25 +894,14 @@ function AgentRow({
       {cell(
         'Name',
         <div className="flex items-center gap-3">
-          <div className="relative size-9 shrink-0">
-            <button
-              type="button"
-              onClick={() => router.push(`/agents/${agent.id}`)}
-              className="size-9 rounded-[8px] overflow-hidden bg-gradient-to-br from-[#00c2cb] to-[#0a8288] flex items-center justify-center text-[12px] font-bold text-white shrink-0 hover:opacity-90 cursor-pointer shadow-2xs"
-            >
-              {agent.avatar ? (
-                <img src={agent.avatar} alt={agent.name} className="size-full object-cover" />
-              ) : (
-                agent.name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('')
-              )}
-            </button>
-            <div className="absolute -top-1 -left-1">
-              <Flag code={getCountryCode(agent.country || 'United Arab Emirates')} size="s" />
-            </div>
-          </div>
+          <TableAvatar
+            src={agent.avatar}
+            name={agent.name}
+            countryCode={getCountryCode(agent.country || 'United Arab Emirates')}
+            size="md"
+            variant="brand"
+            onClick={() => router.push(`/agents/${agent.id}`)}
+          />
           <div className="flex flex-col min-w-0">
             <button
               type="button"

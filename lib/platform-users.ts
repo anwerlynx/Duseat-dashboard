@@ -87,7 +87,7 @@ export type PropertyRequest = {
   agentsPitchingCount: number
   agentsPitching: { name: string; agency: string; avatar?: string }[]
   offersCount: number
-  status: 'Open' | 'Receiving offers' | 'Matched' | 'Deal confirmed' | 'Closed'
+  status: 'Draft' | 'Open' | 'Matched' | 'Closed' | 'Expired' | 'Archived' | 'Receiving offers' | 'Deal confirmed'
   created: string
   dealConfirmed?: boolean
   dealWinner?: {
@@ -126,12 +126,13 @@ export type VerificationDocument = {
 export type PlatformInvestor = {
   id: string
   name: string
+  avatar?: string
   email: string
   phone: string
   country: string
   countryFlag: string
-  status: 'Active' | 'Pending' | 'Suspended' | 'Banned'
-  verification: 'Verified' | 'In review' | 'Pending' | 'Revoked'
+  status: 'Active' | 'Pending' | 'Suspended' | 'Banned' | string
+  verification: 'Verified' | 'In review' | 'Under review' | 'Pending' | 'Revoked' | string
   requests: number
   deals: number
   lastLogin: string
@@ -145,6 +146,8 @@ export type PlatformInvestor = {
     preferredAreas: string[]
     address: string
     netWorthEstimated?: string
+    sourceOfWealth?: string
+    preferredLanguage?: string
   }
   devices: { name: string; location: string; ip: string; lastSeen: string; current?: boolean }[]
   loginHistory: ActivityItem[]
@@ -178,6 +181,7 @@ export type PlatformInvestor = {
 export type PlatformAgent = {
   id: string
   name: string
+  avatar?: string
   agency: string
   email: string
   phone: string

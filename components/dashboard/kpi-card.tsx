@@ -80,7 +80,7 @@ export function KpiCard({ card, compact = false, index = 0, onOpen, onAction }: 
             <span className="truncate font-normal text-muted-foreground">{m.label}</span>
             <span className="flex items-center gap-2">
               <span className="font-medium tabular-nums text-foreground">{m.value}</span>
-              {m.delta && <Delta value={m.delta} trend={m.trend} />}
+              {m.delta && <Delta value={m.delta} trend={m.trend || 'up'} />}
             </span>
           </div>
         ))}

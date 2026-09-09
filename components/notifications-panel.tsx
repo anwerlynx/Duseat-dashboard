@@ -1,7 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { Bell, X, Check, CheckCheck, Trash2, Plus, Sparkles } from 'lucide-react'
+import Link from 'next/link'
+import { Bell, X, Check, CheckCheck, Trash2, Plus, Sparkles, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface NotificationItem {
@@ -122,7 +123,15 @@ export function NotificationsPanel() {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
+              <Link
+                href="/notifications"
+                onClick={() => setOpen(false)}
+                className="inline-flex items-center gap-1 rounded bg-[#e5f6f7] px-2 py-1 text-[11px] font-bold text-[#00848b] hover:bg-[#00c2cb] hover:text-white transition-colors"
+              >
+                <span>Workspace</span>
+                <ExternalLink className="size-3" />
+              </Link>
               <button
                 type="button"
                 onClick={handleAddSample}

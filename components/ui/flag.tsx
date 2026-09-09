@@ -15,37 +15,36 @@ export type CountryCode =
   | 'OM'
   | 'DE'
   | 'FR'
-  | 'IN'
-  | 'RU'
-  | 'CN'
-  | 'LB'
-  | 'JO'
-  | 'CA'
-  | 'AU'
-  | 'CH'
-  | 'TR'
-  | 'SG'
-  | 'PK'
-  | 'ES'
   | 'IT'
+  | 'ES'
+  | 'CH'
   | 'NL'
   | 'SE'
   | 'NO'
-  | 'ZA'
-  | 'BR'
+  | 'CA'
+  | 'AU'
+  | 'IN'
+  | 'CN'
   | 'JP'
   | 'KR'
-  | 'GLOBAL'
+  | 'SG'
+  | 'RU'
+  | 'TR'
+  | 'LB'
+  | 'JO'
+  | 'BR'
+  | 'PK'
   | string
 
 export interface FlagProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   code?: CountryCode
-  size?: 's' | 'm' | 'l'
+  size?: 's' | 'm' | 'l' | 'xl'
+  aspectRatio?: '3:2' | '1:1'
   className?: string
   alt?: string
 }
 
-// Country name to ISO 3166-1 alpha-2 code mapping dictionary
+// Comprehensive country name to ISO 3166-1 alpha-2 mapping dictionary
 const countryCodeMap: Record<string, string> = {
   // Middle East & GCC
   uae: 'ae',
@@ -90,6 +89,12 @@ const countryCodeMap: Record<string, string> = {
   türkiye: 'tr',
   monaco: 'mc',
   cyprus: 'cy',
+  greece: 'gr',
+  portugal: 'pt',
+  austria: 'at',
+  belgium: 'be',
+  ireland: 'ie',
+  poland: 'pl',
 
   // Americas
   us: 'us',
@@ -99,6 +104,8 @@ const countryCodeMap: Record<string, string> = {
   america: 'us',
   canada: 'ca',
   brazil: 'br',
+  mexico: 'mx',
+  argentina: 'ar',
 
   // Asia & Oceania
   china: 'cn',
@@ -111,6 +118,11 @@ const countryCodeMap: Record<string, string> = {
   australia: 'au',
   'new zealand': 'nz',
   'hong kong': 'hk',
+  malaysia: 'my',
+  thailand: 'th',
+  indonesia: 'id',
+  philippines: 'ph',
+  vietnam: 'vn',
 }
 
 export function getCountryCode(countryName: string = ''): string {
@@ -131,12 +143,13 @@ export function getCountryCode(countryName: string = ''): string {
 }
 
 /**
- * RestCountries / FlagCDN Official High-Quality Vector Flag Component
- * Powered by RestCountries flags dataset with crisp SVG rendering
+ * Figma Node 2724:22777 Standard Vector Country Flag
+ * Aspect ratio: 3:2 (standard 36x24px, 24x16px, 18x12px, 48x32px)
  */
 export function Flag({
   code = 'AE',
   size = 'm',
+  aspectRatio = '3:2',
   className,
   alt,
   ...props
@@ -147,17 +160,17 @@ export function Flag({
   const iso = (code.length === 2 ? code : getCountryCode(code)).toLowerCase()
 
   const sizeClasses = {
-    s: 'w-4 h-[11px] rounded-[2px]',
-    m: 'w-5 h-[14px] rounded-[3px]',
-    l: 'w-7 h-[19px] rounded-[4px]',
+    s: aspectRatio === '3:2' ? 'w-[18px] h-[12px] rounded-[2px]' : 'size-[14px] rounded-full',
+    m: aspectRatio === '3:2' ? 'w-[24px] h-[16px] rounded-[3px]' : 'size-[18px] rounded-full',
+    l: aspectRatio === '3:2' ? 'w-[36px] h-[24px] rounded-[4px]' : 'size-[24px] rounded-full',
+    xl: aspectRatio === '3:2' ? 'w-[48px] h-[32px] rounded-[5px]' : 'size-[32px] rounded-full',
   }[size]
 
-  // If error, show sleek SVG fallback
   if (hasError) {
     return (
       <span
         className={cn(
-          'inline-flex items-center justify-center font-mono font-bold text-[9px] uppercase bg-[#e5f6f7] text-[#00a4ac] ring-1 ring-black/10 shrink-0 select-none',
+          'inline-flex items-center justify-center font-mono font-bold text-[9px] uppercase bg-[#e5f6f7] text-[#00a4ac] ring-1 ring-black/10 shrink-0 select-none shadow-2xs',
           sizeClasses,
           className
         )}
@@ -168,7 +181,7 @@ export function Flag({
     )
   }
 
-  // Official RestCountries / FlagCDN vector flag URL
+  // High-def vector SVG from FlagCDN
   const flagSvgUrl = `https://flagcdn.com/${iso}.svg`
 
   return (
@@ -184,5 +197,58 @@ export function Flag({
       )}
       {...props}
     />
+  )
+}
+
+/**
+ * Composite Country Badge with 3:2 flag + Country Name + Dial code
+ */
+export function CountryBadge({
+  code = 'AE',
+  name,
+  dial,
+  size = 'm',
+  className,
+}: {
+  code: CountryCode
+  name?: string
+  dial?: string
+  size?: 's' | 'm' | 'l'
+  className?: string
+}) {
+  const resolvedCode = getCountryCode(code)
+  return (
+    <div
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-2 py-1 font-sans text-[13px] font-medium text-[#1f2327] shadow-2xs',
+        className
+      )}
+    >
+      <Flag code={resolvedCode} size={size} />
+      {name && <span className="truncate">{name}</span>}
+      {dial && <span className="font-mono text-[11px] text-[#6f777f]">{dial}</span>}
+    </div>
+  )
+}
+
+/**
+ * Avatar Flag Overlay Badge
+ */
+export function AvatarFlagOverlay({
+  code = 'AE',
+  children,
+  className,
+}: {
+  code: CountryCode
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div className={cn('relative inline-block', className)}>
+      {children}
+      <div className="absolute -bottom-1 -right-1 z-10">
+        <Flag code={code} size="s" className="ring-2 ring-white" />
+      </div>
+    </div>
   )
 }

@@ -23,7 +23,7 @@ export default async function DedicatedChatPage({ params }: { params: Promise<{ 
   return (
     <ToastProvider>
       <PlatformShell title={`Negotiation Room: ${id}`} eyebrow="Live Chat">
-        <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
+        <div className="flex w-full min-w-0 flex-1 flex-col p-2 sm:p-3 lg:p-3.5 font-sans">
           <ChatModerator initialThreadId={id} isModal={false} />
         </div>
       </PlatformShell>

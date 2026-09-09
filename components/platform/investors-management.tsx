@@ -35,18 +35,12 @@ import { CustomizeTableDialog } from './customize-table-dialog'
 import { ScheduleExportModal } from './schedule-export-modal'
 import { DateRangePicker } from './date-range-picker'
 import { investors as initialInvestors, type PlatformInvestor } from '@/lib/platform-users'
-import { Flag, getCountryCode } from '@/components/ui/flag'
-import { Tag, StatusTag } from '@/components/ui/badge-tag'
 import { TableCheckbox } from '@/components/ui/table-checkbox'
 import { FigmaStatusBadge, CounterBadge, RateBadge } from '@/components/ui/figma-badges'
+import { Flag, getCountryCode, AvatarFlagOverlay } from '@/components/ui/flag'
+import { FilterTabs, MetricCard, SearchInput, Pagination, EmptyState, TableAvatar } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
-import {
-  fetchInvestorsList,
-  setInvestorActiveStatus,
-  deleteInvestorAccount,
-  reviewInvestorKYC,
-} from '@/lib/api/investors'
 
 type Investor = PlatformInvestor
 
@@ -74,35 +68,22 @@ function InvestorsInner() {
 
   const [rows, setRows] = React.useState<Investor[]>(initialInvestors)
   const [deletedRows, setDeletedRows] = React.useState<Investor[]>([])
-  const [loading, setLoading] = React.useState(false)
   const [query, setQuery] = React.useState('')
   const [tab, setTab] = React.useState<'All investors' | 'Verified' | 'Pending verification' | 'Suspended' | 'Deleted users'>('All investors')
   const [statusFilter, setStatusFilter] = React.useState('All statuses')
   const [verificationFilter, setVerificationFilter] = React.useState('All verification')
   const [countryFilter, setCountryFilter] = React.useState('All countries')
   const [dateRange, setDateRange] = React.useState('All Time')
-  const [rowsPerPage, setRowsPerPage] = React.useState(50)
+  const [showFilters, setShowFilters] = React.useState(true)
+  const [sortOption, setSortOption] = React.useState('newest')
+  const [rowsPerPage, setRowsPerPage] = React.useState(10)
+  const [currentPage, setCurrentPage] = React.useState(1)
   const [selected, setSelected] = React.useState<string[]>([])
   const [confirm, setConfirm] = React.useState<ConfirmRequest | null>(null)
   const [editProfileInvestor, setEditProfileInvestor] = React.useState<Investor | null>(null)
   const [columnsOpen, setColumnsOpen] = React.useState(false)
   const [visibleColumns, setVisibleColumns] = React.useState(columns)
   const [scheduleModalOpen, setScheduleModalOpen] = React.useState(false)
-
-  // Load from API and fallback to localStorage/mock
-  const loadData = React.useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await fetchInvestorsList({ search: query })
-      if (res.items && res.items.length > 0) {
-        setRows(res.items)
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false)
-    }
-  }, [query])
 
   React.useEffect(() => {
     try {
@@ -116,11 +97,10 @@ function InvestorsInner() {
         const parsedDeleted = JSON.parse(savedDeleted)
         if (Array.isArray(parsedDeleted)) setDeletedRows(parsedDeleted)
       }
-    } catch {
+    } catch (e) {
       // ignore
     }
-    loadData()
-  }, [loadData])
+  }, [])
 
   const saveRows = (newRows: Investor[], newDeleted = deletedRows) => {
     setRows(newRows)
@@ -145,17 +125,14 @@ function InvestorsInner() {
     switch (kind) {
       case 'verify':
         patchRows(ids, { status: 'Active', verification: 'Verified' })
-        ids.forEach((id) => reviewInvestorKYC(id, 'APPROVE').catch(() => {}))
         notify('Account verified', `${label} verified successfully.`)
         break
       case 'suspend':
         patchRows(ids, { status: 'Suspended' })
-        ids.forEach((id) => setInvestorActiveStatus(id, false).catch(() => {}))
         notify('Account suspended', `${label} has been suspended.`, 'info')
         break
       case 'ban':
         patchRows(ids, { status: 'Banned', verification: 'Revoked' })
-        ids.forEach((id) => setInvestorActiveStatus(id, false).catch(() => {}))
         notify('Account banned', `${label} has been banned.`, 'error')
         break
       case 'delete': {
@@ -163,7 +140,6 @@ function InvestorsInner() {
         const remaining = rows.filter((r) => !ids.includes(r.id))
         saveRows(remaining, [...deletedRows, ...toDelete])
         setSelected([])
-        ids.forEach((id) => deleteInvestorAccount(id).catch(() => {}))
         notify('Account deleted', `${label} moved to deleted records.`, 'error')
         break
       }
@@ -262,6 +238,12 @@ function InvestorsInner() {
     return matchesQuery && matchesStatus && matchesVerification && matchesCountry && tabMatch
   })
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage))
+  const paginatedInvestors = React.useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage
+    return filtered.slice(start, start + rowsPerPage)
+  }, [filtered, currentPage, rowsPerPage])
+
   const toggleAll = () => setSelected(selected.length === filtered.length ? [] : filtered.map((item) => item.id))
 
   const handleExportCsv = (investorsToExport = filtered) => {
@@ -316,13 +298,7 @@ function InvestorsInner() {
         <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[12px] leading-[16px] font-semibold uppercase tracking-wider text-[#00c2cb]">Verified Network</span>
-                <span className="inline-flex items-center rounded-[6px] bg-[#dfefe8] px-2 py-0.5 text-[12px] leading-[16px] font-semibold text-[#17b26a]">
-                  Compliance Active
-                </span>
-              </div>
-              <h1 className="mt-1 text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">Investors Directory & KYC</h1>
+              <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">Investors Directory & KYC</h1>
               <p className="mt-0.5 text-[14px] leading-[20px] text-[#6f777f]">
                 Manage verified investors, track KYC & proof of funds, monitor active requests and deal flow.
               </p>
@@ -350,32 +326,38 @@ function InvestorsInner() {
 
           {/* 4 Stat Cards */}
           <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3">
-            <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
-              <p className="text-[14px] leading-[20px] text-[#6f777f]">Total Investors</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#1f2327]">{rows.length}</p>
-            </div>
-            <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
-              <p className="text-[14px] leading-[20px] text-[#6f777f]">KYC Verified</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#17b26a]">
-                {rows.filter((r) => r.verification === 'Verified').length}
-              </p>
-            </div>
-            <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
-              <p className="text-[14px] leading-[20px] text-[#6f777f]">Pending Review</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#00c2cb]">
-                {rows.filter((r) => ['Pending', 'Under review'].includes(r.status) || r.verification === 'Under review').length}
-              </p>
-            </div>
-            <div className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
-              <p className="text-[14px] leading-[20px] text-[#6f777f]">Suspended / Deleted</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#f79009]">
-                {rows.filter((r) => r.status === 'Suspended').length + deletedRows.length}
-              </p>
-            </div>
+            <MetricCard
+              label="Total Investors"
+              value={rows.length}
+              tone="neutral"
+              active={tab === 'All investors'}
+              onClick={() => setTab('All investors')}
+            />
+            <MetricCard
+              label="KYC Verified"
+              value={rows.filter((r) => r.verification === 'Verified').length}
+              tone="success"
+              active={tab === 'Verified'}
+              onClick={() => setTab('Verified')}
+            />
+            <MetricCard
+              label="Pending Review"
+              value={rows.filter((r) => ['Pending', 'Under review'].includes(r.status) || r.verification === 'Under review').length}
+              tone="warning"
+              active={tab === 'Pending verification'}
+              onClick={() => setTab('Pending verification')}
+            />
+            <MetricCard
+              label="Suspended / Deleted"
+              value={rows.filter((r) => r.status === 'Suspended').length + deletedRows.length}
+              tone="destructive"
+              active={tab === 'Suspended' || tab === 'Deleted users'}
+              onClick={() => setTab('Suspended')}
+            />
           </div>
         </header>
 
-        {/* Table & Filter Container */}
+        {/* Table & Filter Container (Original GitHub Repo Layout) */}
         <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
           {/* Top Tabs Bar */}
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
@@ -591,6 +573,23 @@ function InvestorsInner() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => {
+                        const selRows = rows.filter((r) => selected.includes(r.id))
+                        const csv = 'data:text/csv;charset=utf-8,ID,Name,Email,Phone,Country,Status\n' + selRows.map(r => `${r.id},"${r.name}",${r.email},${r.phone},${r.country},${r.status}`).join('\n')
+                        const link = document.createElement('a')
+                        link.setAttribute('href', encodeURI(csv))
+                        link.setAttribute('download', `selected_investors_${Date.now()}.csv`)
+                        document.body.appendChild(link)
+                        link.click()
+                        document.body.removeChild(link)
+                        notify('Export Started', `${selected.length} investors CSV downloaded.`)
+                      }}
+                      className="h-[34px] rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[13px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                    >
+                      Export
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => runAction('delete', selected, `${selected.length} investors`)}
                       className="h-[34px] rounded-[8px] px-3.5 text-[13px] font-semibold text-[#f04438] hover:bg-rose-50 transition-colors cursor-pointer"
                     >
@@ -620,7 +619,7 @@ function InvestorsInner() {
           )}
 
           {/* Table */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto table-scrollbar flex-1">
             <table className="w-full min-w-[1400px] border-collapse text-left text-[14px] font-sans">
               <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
                 <tr className="h-12">
@@ -642,7 +641,7 @@ function InvestorsInner() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#d3d5d7]">
-                {filtered.map((investor) => (
+                {paginatedInvestors.map((investor) => (
                   <InvestorRow
                     key={investor.id}
                     investor={investor}
@@ -667,51 +666,35 @@ function InvestorsInner() {
             </table>
 
             {filtered.length === 0 && (
-              <div className="p-12 text-center">
-                <p className="text-[18px] font-semibold text-[#1f2327]">No investors found</p>
-                <p className="mt-1 text-[14px] text-[#6f777f]">Try adjusting your search query or reset your active filters.</p>
-              </div>
+              <EmptyState
+                title="No investors found"
+                description="Try adjusting your search query or reset your active filters."
+                actionLabel="Reset filters"
+                onAction={() => {
+                  setQuery('')
+                  setStatusFilter('All statuses')
+                  setVerificationFilter('All verification')
+                  setCountryFilter('All countries')
+                }}
+              />
             )}
           </div>
 
           {/* Footer Pagination */}
-          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#d3d5d7] px-5 py-3.5 bg-white">
-            <div className="flex items-center gap-3">
-              <span className="text-[14px] text-[#6f777f]">Rows per page</span>
-              <Dropdown
-                align="start"
-                options={[5, 10, 25, 50, 75].map((count) => ({
-                  label: `${count}`,
-                  value: `${count}`,
-                }))}
-                value={`${rowsPerPage}`}
-                onSelect={(val) => setRowsPerPage(Number(val))}
-                trigger={
-                  <span className="inline-flex h-[32px] items-center gap-2 rounded-[6px] border border-[#d3d5d7] bg-white px-2.5 text-[13px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
-                    <span>{rowsPerPage}</span>
-                    <ChevronDown className="size-3 text-[#9da4ae]" />
-                  </span>
-                }
-              />
-              <span className="text-[14px] text-[#6f777f]">
-                Showing 1–{Math.min(filtered.length, rowsPerPage)} of {activeDataset.length} investors
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              {[1, 2, 3].map((page) => (
-                <button
-                  key={page}
-                  type="button"
-                  className={cn(
-                    'flex size-8 items-center justify-center rounded-[8px] text-[14px] font-semibold transition-colors cursor-pointer ant-wave-btn',
-                    page === 1 ? 'bg-[#00c2cb] text-white shadow-2xs' : 'hover:bg-[#eff1f3] text-[#6f777f]'
-                  )}
-                >
-                  {page}
-                </button>
-              ))}
-            </div>
+          <div className="mt-auto border-t border-[#d3d5d7]">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filtered.length}
+              rowsPerPage={rowsPerPage}
+              rowsOptions={[10, 20, 30]}
+              onPageChange={setCurrentPage}
+              onRowsPerPageChange={(n) => {
+                setRowsPerPage(n)
+                setCurrentPage(1)
+              }}
+              itemLabel="investors"
+            />
           </div>
         </section>
       </div>
@@ -777,16 +760,16 @@ function InvestorRow({
   const countryCode = getCountryCode(investor.country)
 
   return (
-    <tr className={cn('h-[60px] transition-colors font-sans hover:bg-[#f8f9fa]', selected && 'bg-[#e5f6f7]/40')}>
-      <td className="px-4">
+    <tr className={cn('h-[60px] transition-colors font-sans hover:bg-[#f8f9fa] whitespace-nowrap', selected && 'bg-[#e5f6f7]/40')}>
+      <td className="px-4 whitespace-nowrap">
         <TableCheckbox ariaLabel={`Select ${investor.name}`} checked={selected} onChange={onSelect} />
       </td>
 
       {visibleColumns.includes('Investor ID') && (
-        <td className="px-4">
+        <td className="px-4 whitespace-nowrap">
           <Link
             href={`/investors/${investor.id}`}
-            className="font-mono text-[14px] leading-[20px] font-semibold text-[#00c2cb] hover:underline"
+            className="font-mono text-[14px] leading-[20px] font-semibold text-[#00c2cb] hover:underline whitespace-nowrap"
           >
             {investor.id}
           </Link>
@@ -794,81 +777,76 @@ function InvestorRow({
       )}
 
       {visibleColumns.includes('Investor') && (
-        <td className="px-4">
+        <td className="px-4 whitespace-nowrap">
           <Link
             href={`/investors/${investor.id}`}
-            className="flex items-center gap-3 font-semibold text-[14px] leading-[20px] text-[#1f2327] hover:text-[#00c2cb] transition-colors"
+            className="flex items-center gap-3 font-semibold text-[14px] leading-[20px] text-[#1f2327] hover:text-[#00c2cb] transition-colors whitespace-nowrap"
           >
-            <div className="relative size-9 shrink-0">
-              <div className="size-9 rounded-full overflow-hidden bg-gradient-to-br from-[#00c2cb] to-[#0a8288] flex items-center justify-center text-white font-bold text-[12px] shadow-2xs">
-                {investor.avatar ? (
-                  <img src={investor.avatar} alt={investor.name} className="size-full object-cover" />
-                ) : (
-                  investor.name.split(' ').map((n) => n[0]).join('')
-                )}
-              </div>
-              <div className="absolute -left-1 -top-1">
-                <Flag code={countryCode} size="s" />
-              </div>
-            </div>
-            <div>
-              <p className="leading-[20px]">{investor.name}</p>
-              <p className="text-[12px] leading-[16px] font-normal text-[#6f777f]">{investor.personalInfo?.occupation || 'Private Investor'}</p>
+            <TableAvatar
+              src={(investor as any).avatar}
+              name={investor.name}
+              countryCode={countryCode}
+              size="md"
+              variant="brand"
+            />
+            <div className="min-w-0">
+              <p className="leading-[20px] whitespace-nowrap">{investor.name}</p>
+              <p className="text-[12px] leading-[16px] font-normal text-[#6f777f] whitespace-nowrap">{investor.personalInfo?.occupation || 'Private Investor'}</p>
             </div>
           </Link>
         </td>
       )}
 
       {visibleColumns.includes('Email') && (
-        <td className="px-4 text-[14px] leading-[20px] text-[#6f777f]">{investor.email}</td>
+        <td className="px-4 text-[14px] leading-[20px] text-[#6f777f] whitespace-nowrap">{investor.email}</td>
       )}
 
       {visibleColumns.includes('Phone') && (
-        <td className="px-4 text-[14px] leading-[20px] text-[#6f777f] font-mono">{investor.phone}</td>
+        <td className="px-4 text-[14px] leading-[20px] text-[#6f777f] font-mono whitespace-nowrap">{investor.phone}</td>
       )}
 
       {visibleColumns.includes('Country') && (
-        <td className="px-4 text-[14px] leading-[20px] text-[#1f2327]">
-          <div className="flex items-center gap-1.5">
+        <td className="px-4 text-[14px] leading-[20px] text-[#1f2327] whitespace-nowrap">
+          <div className="flex items-center gap-1.5 whitespace-nowrap">
             <Flag code={countryCode} size="s" />
-            <span>{investor.country}</span>
+            <span className="whitespace-nowrap">{investor.country}</span>
           </div>
         </td>
       )}
 
       {visibleColumns.includes('Status') && (
-        <td className="px-4">
+        <td className="px-4 whitespace-nowrap">
           <FigmaStatusBadge status={investor.status} />
         </td>
       )}
 
       {visibleColumns.includes('Verification') && (
-        <td className="px-4">
+        <td className="px-4 whitespace-nowrap">
           <FigmaStatusBadge status={investor.verification} />
         </td>
       )}
 
       {visibleColumns.includes('Requests') && (
-        <td className="px-4 font-bold text-[14px] leading-[20px] text-[#1f2327]">{investor.requests}</td>
+        <td className="px-4 font-bold text-[14px] leading-[20px] text-[#1f2327] whitespace-nowrap">{investor.requests}</td>
       )}
 
       {visibleColumns.includes('Deals') && (
-        <td className="px-4 font-bold text-[14px] leading-[20px] text-[#1f2327]">{investor.deals}</td>
+        <td className="px-4 font-bold text-[14px] leading-[20px] text-[#1f2327] whitespace-nowrap">{investor.deals}</td>
       )}
 
       {visibleColumns.includes('Score') && (
-        <td className="px-4 font-bold text-[#00c2cb]">{investor.score} / 100</td>
+        <td className="px-4 font-bold text-[#00c2cb] whitespace-nowrap">{investor.score} / 100</td>
       )}
 
       {visibleColumns.includes('Last Login') && (
-        <td className="px-4 text-[13px] text-[#6f777f]">{investor.lastLogin}</td>
+        <td className="px-4 text-[13px] text-[#6f777f] whitespace-nowrap">{investor.lastLogin}</td>
       )}
 
       {visibleColumns.includes('Joined') && (
-        <td className="px-4 text-[13px] text-[#6f777f]">{investor.joined}</td>
+        <td className="px-4 text-[13px] text-[#6f777f] whitespace-nowrap">{investor.joined}</td>
       )}
 
-      <td className="px-4">
+      <td className="px-4 whitespace-nowrap">
         <Dropdown
           align="end"
           floating

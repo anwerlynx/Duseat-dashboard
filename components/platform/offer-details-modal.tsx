@@ -91,19 +91,52 @@ const defaultOffer: OfferDetail = {
 export function OfferDetailsModal({
   isOpen = true,
   onClose,
-  offer = defaultOffer,
+  offer: initialOffer = defaultOffer,
   onEdit,
   onDelete,
   onAccept,
 }: OfferDetailsModalProps) {
+  const [offer, setOffer] = React.useState<OfferDetail>(initialOffer || defaultOffer)
+  const [isEditing, setIsEditing] = React.useState(false)
+  const [editPrice, setEditPrice] = React.useState(offer.price || 'AED 8,500,000')
+  const [editProposal, setEditProposal] = React.useState(offer.proposalText || '')
+  const [editLocationName, setEditLocationName] = React.useState(offer.location?.name || 'Al Barsha First Villa')
+  const [editLocationArea, setEditLocationArea] = React.useState(offer.location?.area || 'Mall of the Emirates / Al Barsha, Dubai')
   const [activePhotoIdx, setActivePhotoIdx] = React.useState(0)
   const [isPlayingVideo, setIsPlayingVideo] = React.useState(false)
 
+  React.useEffect(() => {
+    if (initialOffer) {
+      setOffer(initialOffer)
+      setEditPrice(initialOffer.price || 'AED 8,500,000')
+      setEditProposal(initialOffer.proposalText || '')
+      setEditLocationName(initialOffer.location?.name || 'Al Barsha First Villa')
+      setEditLocationArea(initialOffer.location?.area || 'Mall of the Emirates / Al Barsha, Dubai')
+    }
+  }, [initialOffer])
+
   if (isOpen === false || !offer) return null
 
-  const photosList = offer.photos?.length ? offer.photos : defaultOffer.photos
-  const videosList = offer.videos?.length ? offer.videos : defaultOffer.videos
-  const docsList = offer.documents?.length ? offer.documents : defaultOffer.documents
+  const photosList = (offer.photos?.length ? offer.photos : defaultOffer.photos) || []
+  const videosList = (offer.videos?.length ? offer.videos : defaultOffer.videos) || []
+  const docsList = (offer.documents?.length ? offer.documents : defaultOffer.documents) || []
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const updated: OfferDetail = {
+      ...offer,
+      price: editPrice,
+      proposalText: editProposal,
+      location: {
+        ...offer.location,
+        name: editLocationName,
+        area: editLocationArea,
+      },
+    }
+    setOffer(updated)
+    setIsEditing(false)
+    onEdit?.(updated)
+  }
 
   return (
     <div
@@ -115,30 +148,51 @@ export function OfferDetailsModal({
         {/* Header & Quick Action Buttons */}
         <div className="flex items-start justify-between">
           <div className="space-y-3">
-            <h2 className="text-[24px] font-bold text-[#1f2327]">Offer details</h2>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => onEdit?.(offer)}
-                className="rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
-              >
-                Edit
-              </button>
-              <button
-                type="button"
-                onClick={() => onDelete?.(offer)}
-                className="rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#d92d20] hover:bg-rose-50 transition-colors cursor-pointer ant-wave-btn shadow-2xs"
-              >
-                Delete offer
-              </button>
-              <button
-                type="button"
-                onClick={() => onAccept?.(offer)}
-                className="rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#17b26a] hover:bg-emerald-50 transition-colors cursor-pointer ant-wave-btn shadow-2xs"
-              >
-                Accept offer
-              </button>
-            </div>
+            <h2 className="text-[24px] font-bold text-[#1f2327]">
+              {isEditing ? 'Edit Offer Details' : 'Offer details'}
+            </h2>
+            {!isEditing ? (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  className="rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                >
+                  Edit Offer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDelete?.(offer)}
+                  className="rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#d92d20] hover:bg-rose-50 transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                >
+                  Delete offer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onAccept?.(offer)}
+                  className="rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#17b26a] hover:bg-emerald-50 transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                >
+                  Accept offer
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  className="rounded-[8px] bg-[#1f2327] px-3.5 py-1.5 text-[14px] font-medium text-white hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                >
+                  Save Changes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#6f777f] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
 
           <button
@@ -150,6 +204,57 @@ export function OfferDetailsModal({
             <X className="size-5" />
           </button>
         </div>
+
+        {/* Editable fields section if editing */}
+        {isEditing ? (
+          <form onSubmit={handleSaveEdit} className="space-y-4 rounded-[12px] border border-[#00c2cb]/30 bg-[#f4fcfc] p-4 ant-fade-in">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[12px] font-bold text-[#1f2327] mb-1">Offer Price / Amount</label>
+                <input
+                  type="text"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                  className="w-full h-[36px] rounded-[6px] border border-[#d3d5d7] bg-white px-3 text-[13px] text-[#1f2327] font-bold outline-none focus:border-[#00c2cb]"
+                  placeholder="e.g. AED 8,500,000"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-bold text-[#1f2327] mb-1">Property Title / Name</label>
+                <input
+                  type="text"
+                  value={editLocationName}
+                  onChange={(e) => setEditLocationName(e.target.value)}
+                  className="w-full h-[36px] rounded-[6px] border border-[#d3d5d7] bg-white px-3 text-[13px] text-[#1f2327] outline-none focus:border-[#00c2cb]"
+                  placeholder="e.g. Al Barsha First Villa"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-[12px] font-bold text-[#1f2327] mb-1">Location / Area</label>
+                <input
+                  type="text"
+                  value={editLocationArea}
+                  onChange={(e) => setEditLocationArea(e.target.value)}
+                  className="w-full h-[36px] rounded-[6px] border border-[#d3d5d7] bg-white px-3 text-[13px] text-[#1f2327] outline-none focus:border-[#00c2cb]"
+                  placeholder="e.g. Mall of the Emirates / Al Barsha, Dubai"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-[12px] font-bold text-[#1f2327] mb-1">Proposal & Terms Text</label>
+                <textarea
+                  rows={4}
+                  value={editProposal}
+                  onChange={(e) => setEditProposal(e.target.value)}
+                  className="w-full rounded-[6px] border border-[#d3d5d7] bg-white p-3 text-[13px] text-[#1f2327] outline-none focus:border-[#00c2cb] resize-none"
+                  placeholder="Describe offer proposal and terms..."
+                />
+              </div>
+            </div>
+          </form>
+        ) : null}
 
         {/* Agent Profile Header */}
         <div className="flex items-center gap-3.5 pt-1">
@@ -189,6 +294,12 @@ export function OfferDetailsModal({
               <span>{offer.agentId}</span>
               <span className="mx-2 text-[#d3d5d7]">•</span>
               <span>{offer.agentDeals} Deals</span>
+              {offer.price && (
+                <>
+                  <span className="mx-2 text-[#d3d5d7]">•</span>
+                  <span className="font-bold text-[#1f2327]">{offer.price}</span>
+                </>
+              )}
             </p>
           </div>
         </div>

@@ -6,15 +6,19 @@ import { Sidebar } from './sidebar'
 import { Topbar, type DateRange } from './topbar'
 import { Section } from './section'
 import { KpiCard } from './kpi-card'
-import { RevenueChart } from './revenue-chart'
+import { ChartsGallery } from './charts-gallery'
 import { DealStatus } from './deal-status'
-import { RecentActivity } from './recent-activity'
+import { LiveActivityFeed } from './live-activity-feed'
 import { TopAgents } from './top-agents'
 import { LatestRequests } from './latest-requests'
+import { FigmaMetricsTable } from './figma-metrics-table'
+import { DashboardQuickActions } from './dashboard-quick-actions'
 import { ToastProvider, useToast } from './toast'
 import { Skeleton } from './primitives'
-import { platformOverview, marketplaceMetrics, operationalMetrics, type KpiCard as KpiCardType } from './data'
+import { allKpiCards, type KpiCard as KpiCardType } from './data'
 import { routeByNavId } from '@/lib/platform-modules'
+import { AllToolsModal } from '@/components/platform/all-tools-modal'
+import { cn, exportToCsv } from '@/lib/utils'
 
 function matchesQuery(card: KpiCardType, q: string) {
   if (!q) return true
@@ -24,22 +28,17 @@ function matchesQuery(card: KpiCardType, q: string) {
 
 function LoadingSkeleton() {
   return (
-    <div className="space-y-3">
-      {[0, 1].map((s) => (
-        <div key={s} className="rounded-2xl border border-border bg-card p-4">
-          <Skeleton className="mb-4 h-5 w-40" />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="rounded-xl border border-border p-4">
-                <Skeleton className="h-8 w-8 rounded-lg" />
-                <Skeleton className="mt-3 h-7 w-24" />
-                <Skeleton className="mt-4 h-3 w-full" />
-                <Skeleton className="mt-2 h-3 w-2/3" />
-              </div>
-            ))}
+    <div className="space-y-4 font-sans">
+      <div className="h-28 rounded-2xl border border-border bg-card p-4 animate-pulse" />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <div key={i} className="rounded-xl border border-border p-4 bg-card">
+            <Skeleton className="h-8 w-8 rounded-lg" />
+            <Skeleton className="mt-3 h-7 w-24" />
+            <Skeleton className="mt-4 h-3 w-full" />
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }
@@ -53,9 +52,11 @@ function DashboardInner() {
   const [range, setRange] = React.useState<DateRange>('week')
   const [query, setQuery] = React.useState('')
   const [loading, setLoading] = React.useState(true)
+  const [allToolsOpen, setAllToolsOpen] = React.useState(false)
+  const [kpiFilter, setKpiFilter] = React.useState<'all' | 'users' | 'marketplace' | 'finance'>('all')
 
   React.useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 500)
+    const t = setTimeout(() => setLoading(false), 400)
     return () => clearTimeout(t)
   }, [])
 
@@ -76,6 +77,10 @@ function DashboardInner() {
   }, [])
 
   const handleNavigate = (id: string, label: string) => {
+    if (id === 'tools') {
+      setAllToolsOpen(true)
+      return
+    }
     setActive(id)
     const destination = routeByNavId[id]
     if (destination && destination !== '/') {
@@ -85,6 +90,10 @@ function DashboardInner() {
   }
 
   const openCard = (card: KpiCardType) => {
+    if (card.href.startsWith('/')) {
+      router.push(card.href)
+      return
+    }
     const mapping: Record<string, string> = {
       '#users': '/all-tools',
       '#investors': '/investors',
@@ -97,64 +106,42 @@ function DashboardInner() {
       '#reports': '/reports',
       '#subscriptions': '/subscriptions',
     }
-    const target = mapping[card.href]
-    if (target) {
-      toast({ variant: 'info', title: `Opening ${card.title}`, description: 'Navigating to platform module…' })
-      router.push(target)
-    } else {
-      toast({ variant: 'info', title: `Opening ${card.title}`, description: 'Metrics details updated.' })
-    }
+    const target = mapping[card.href] || '/all-tools'
+    router.push(target)
   }
 
   const cardAction = (action: string, card: KpiCardType) => {
     if (action === 'pin') toast({ variant: 'success', title: 'Pinned', description: `${card.title} pinned to top.` })
     else if (action === 'export') {
+      const headers = ['Metric', 'Current Value', 'Growth', 'Trend']
       const rows = [
-        ['Metric', 'Current Value', 'Growth', 'Trend'],
-        [card.title, `"${card.value}"`, card.growth, card.trend],
-        ...card.supporting.map((s) => [s.label, `"${s.value}"`, s.delta || '—', s.trend]),
+        [card.title, card.value, card.growth, card.trend],
+        ...card.supporting.map((s) => [s.label, s.value, s.delta || '—', s.trend || 'up']),
       ]
-      const csv = 'data:text/csv;charset=utf-8,' + rows.map((e) => e.join(',')).join('\n')
-      const encodedUri = encodeURI(csv)
-      const link = document.createElement('a')
-      link.setAttribute('href', encodedUri)
-      link.setAttribute('download', `${card.id}_kpi_export.csv`)
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      exportToCsv(`${card.id}_kpi_export`, headers, rows)
       toast({ variant: 'success', title: 'Export started', description: `${card.title} CSV downloaded.` })
     } else openCard(card)
   }
 
   const handleExportFullReport = () => {
-    const allCards = [...platformOverview, ...marketplaceMetrics, ...operationalMetrics]
-    const headers = ['Category', 'Metric', 'Value', 'Growth', 'Trend', 'Supporting 1', 'Supporting 2']
-    const rows = allCards.map((c) => [
-      c.href.replace('#', '').toUpperCase(),
-      `"${c.title}"`,
-      `"${c.value}"`,
+    const headers = ['Metric', 'Category', 'Value', 'Growth']
+    const rows = allKpiCards.map((c) => [
+      c.title,
+      c.category.toUpperCase(),
+      c.value,
       c.growth,
-      c.trend,
-      c.supporting[0] ? `"${c.supporting[0].label}: ${c.supporting[0].value}"` : '',
-      c.supporting[1] ? `"${c.supporting[1].label}: ${c.supporting[1].value}"` : '',
     ])
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n')
-    const encodedUri = encodeURI(csvContent)
-    const link = document.createElement('a')
-    link.setAttribute('href', encodedUri)
-    link.setAttribute('download', `duseat_full_platform_summary_${new Date().toISOString().slice(0, 10)}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    exportToCsv(`duseat_complete_dashboard_kpis_${new Date().toISOString().slice(0, 10)}`, headers, rows)
     toast({ variant: 'success', title: 'Report exported', description: 'Platform summary CSV downloaded.' })
   }
 
-  const filteredPlatform = platformOverview.filter((c) => matchesQuery(c, query))
-  const filteredMarket = marketplaceMetrics.filter((c) => matchesQuery(c, query))
-  const filteredOps = operationalMetrics.filter((c) => matchesQuery(c, query))
+  const filteredKpis = allKpiCards.filter((card) => {
+    const matchCategory = kpiFilter === 'all' || card.category === kpiFilter
+    return matchCategory && matchesQuery(card, query)
+  })
 
   return (
-    <div className="flex min-h-dvh bg-background">
+    <div className="flex min-h-dvh bg-background font-sans">
       <Sidebar
         collapsed={collapsed}
         active={active}
@@ -181,49 +168,77 @@ function DashboardInner() {
           onExport={handleExportFullReport}
         />
 
-        <main className="w-full min-w-0 flex-1 px-4 sm:px-6 lg:px-8 py-5 space-y-4">
+        <main className="w-full min-w-0 flex-1 px-4 sm:px-6 lg:px-8 py-5 space-y-5">
           {loading ? (
             <LoadingSkeleton />
           ) : (
             <>
-              <Section title="Platform Overview" description="Top-level growth and active population" count={filteredPlatform.length} id="overview">
-                <MetricGrid>
-                  {filteredPlatform.map((card, i) => (
+              {/* 1. Quick Actions Suite (Figma & User Spec) */}
+              <DashboardQuickActions />
+
+              {/* 2. Complete 19 KPI Cards Grid with Category Filter */}
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+                  <div>
+                    <h2 className="text-[18px] sm:text-[20px] font-bold text-[#1f2327]">
+                      Executive KPI Metrics ({filteredKpis.length} Cards)
+                    </h2>
+                    <p className="text-[13px] text-[#6f777f]">
+                      Real-time telemetry across users, marketplace demand, closed deals, and revenue
+                    </p>
+                  </div>
+
+                  {/* Filter Pills */}
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                    {(
+                      [
+                        { id: 'all', label: 'All (19)' },
+                        { id: 'users', label: 'Users (8)' },
+                        { id: 'marketplace', label: 'Marketplace (5)' },
+                        { id: 'finance', label: 'Finance & Ops (6)' },
+                      ] as const
+                    ).map((pill) => (
+                      <button
+                        key={pill.id}
+                        type="button"
+                        onClick={() => setKpiFilter(pill.id)}
+                        className={cn(
+                          'px-3 py-1.5 rounded-[8px] font-bold transition-all cursor-pointer',
+                          kpiFilter === pill.id
+                            ? 'bg-[#00c2cb] text-white shadow-2xs'
+                            : 'bg-white border border-[#d3d5d7] text-[#6f777f] hover:text-[#1f2327] hover:bg-[#eff1f3]'
+                        )}
+                      >
+                        {pill.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {filteredKpis.map((card, i) => (
                     <KpiCard key={card.id} card={card} index={i} onOpen={openCard} onAction={cardAction} />
                   ))}
-                  {filteredPlatform.length === 0 && <NoMatch />}
-                </MetricGrid>
-              </Section>
+                  {filteredKpis.length === 0 && <NoMatch />}
+                </div>
+              </div>
 
-              <Section title="Marketplace Metrics" description="Requests pipeline, offers & closed deals" count={filteredMarket.length}>
-                <MetricGrid>
-                  {filteredMarket.map((card, i) => (
-                    <KpiCard key={card.id} card={card} index={i} onOpen={openCard} onAction={cardAction} />
-                  ))}
-                  {filteredMarket.length === 0 && <NoMatch />}
-                </MetricGrid>
-              </Section>
-
-              <Section title="Operational Health" description="Live platform activity, verifications & risk signals" count={filteredOps.length}>
-                <MetricGrid>
-                  {filteredOps.map((card, i) => (
-                    <KpiCard key={card.id} card={card} index={i} compact onOpen={openCard} onAction={cardAction} />
-                  ))}
-                  {filteredOps.length === 0 && <NoMatch />}
-                </MetricGrid>
-              </Section>
-
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+              {/* 3. 8 Interactive Multi-Charts Gallery + Deal Status */}
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                 <div className="lg:col-span-2">
-                  <RevenueChart range={range} />
+                  <ChartsGallery />
                 </div>
                 <div>
                   <DealStatus />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-                <RecentActivity onViewAll={() => router.push('/activity')} />
+              {/* 4. Figma Standard Telemetry & Performance Matrix Table (Figma Node 234-12116) */}
+              <FigmaMetricsTable />
+
+              {/* 5. Live Activity Feed (9 Events) + Top Agents + Latest Requests */}
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                <LiveActivityFeed onViewAll={() => router.push('/activity')} />
                 <TopAgents query={query} onViewAll={() => router.push('/agents')} />
                 <LatestRequests query={query} onViewAll={() => router.push('/requests')} />
               </div>
@@ -236,18 +251,16 @@ function DashboardInner() {
           )}
         </main>
       </div>
+
+      <AllToolsModal isOpen={allToolsOpen} onClose={() => setAllToolsOpen(false)} sidebarCollapsed={collapsed} />
     </div>
   )
 }
 
-function MetricGrid({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-4">{children}</div>
-}
-
 function NoMatch() {
   return (
-    <div className="col-span-full py-6 text-center text-sm text-muted-foreground">
-      No metrics match your search.
+    <div className="col-span-full py-8 text-center bg-white rounded-[12px] border border-[#d3d5d7] text-sm text-muted-foreground">
+      No KPI metrics match your search or filter criteria.
     </div>
   )
 }

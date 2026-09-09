@@ -67,7 +67,7 @@ export function AllOffersModal({
         <div className="flex flex-wrap items-center justify-between border-b border-[#d3d5d7] bg-white px-6 py-4 gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-[20px] leading-[28px] font-bold text-[#1f2327]">All Submitted Offers</h2>
+              <h2 className="text-[20px] leading-[28px] font-medium text-[#1f2327]">All Submitted Offers</h2>
               <span className="rounded-full bg-[#e5f6f7] text-[#00c2cb] px-2.5 py-0.5 text-[12px] leading-[16px] font-medium">
                 {request.offers.length} Total Offers
               </span>
@@ -110,7 +110,7 @@ export function AllOffersModal({
                   type="button"
                   onClick={() => setStatusFilter(st)}
                   className={cn(
-                    'h-[36px] rounded-[8px] px-3 text-[14px] leading-[20px] font-semibold transition-colors cursor-pointer ant-wave-btn',
+                    'h-[36px] rounded-[8px] px-3 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn',
                     statusFilter === st
                       ? 'bg-[#1f2327] text-white shadow-2xs'
                       : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3]'
@@ -135,7 +135,7 @@ export function AllOffersModal({
               value={sortBy}
               onSelect={setSortBy}
               trigger={
-                <span className="inline-flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] leading-[20px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
+                <span className="inline-flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] leading-[20px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
                   <ArrowUpDown className="size-3.5 text-[#6f777f]" />
                   <span>{sortBy}</span>
                   <ChevronDown className="size-3 text-[#9da4ae]" />
@@ -162,8 +162,8 @@ export function AllOffersModal({
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-[14px] text-[#1f2327]">{offer.agentName}</span>
-                          <span className="inline-flex items-center gap-0.5 bg-[#e5f6f7] text-[#00c2cb] px-1.5 py-0.2 rounded text-[11px] font-bold">
+                          <span className="font-medium text-[14px] text-[#1f2327]">{offer.agentName}</span>
+                          <span className="inline-flex items-center gap-0.5 bg-[#e5f6f7] text-[#00c2cb] px-1.5 py-0.2 rounded text-[11px] font-medium">
                             Pro
                           </span>
                         </div>
@@ -172,8 +172,8 @@ export function AllOffersModal({
                     </div>
 
                     <div className="text-right">
-                      <span className="block font-bold text-[15px] text-[#1f2327]">{offer.price}</span>
-                      <span className="inline-flex items-center rounded-full bg-[#dfefe8] px-2 py-0.5 text-[11px] font-semibold text-[#17b26a]">
+                      <span className="block font-medium text-[15px] text-[#1f2327]">{offer.price}</span>
+                      <span className="inline-flex items-center rounded-full bg-[#dfefe8] px-2 py-0.5 text-[11px] font-medium text-[#17b26a]">
                         {offer.status}
                       </span>
                     </div>
@@ -182,9 +182,9 @@ export function AllOffersModal({
                   {/* Title & Description */}
                   <div>
                     <div className="flex items-center justify-between">
-                      <p className="font-bold text-[14px] text-[#1f2327]">{offer.propertyTitle}</p>
+                      <p className="font-medium text-[14px] text-[#1f2327]">{offer.propertyTitle}</p>
                       {offer.roi && (
-                        <span className="text-[12px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                        <span className="text-[12px] font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
                           {offer.roi}
                         </span>
                       )}
@@ -243,7 +243,7 @@ export function AllOffersModal({
                           price: offer.price,
                         })
                       }
-                      className="flex-1 rounded-[8px] border border-[#d3d5d7] bg-white py-2 text-[13px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                      className="flex-1 rounded-[8px] border border-[#d3d5d7] bg-white py-2 text-[13px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
                     >
                       View Details
                     </button>
@@ -267,7 +267,7 @@ export function AllOffersModal({
                         onAcceptOffer(offer)
                         onClose()
                       }}
-                      className="w-full rounded-[8px] bg-[#00c2cb] py-2 text-[13px] font-bold text-white hover:opacity-90 transition-opacity cursor-pointer shadow-2xs ant-wave-btn"
+                      className="w-full rounded-[8px] bg-[#00c2cb] py-2 text-[13px] font-medium text-white hover:opacity-90 transition-opacity cursor-pointer shadow-2xs ant-wave-btn"
                     >
                       Accept Deal & Award Broker
                     </button>
@@ -279,7 +279,7 @@ export function AllOffersModal({
 
           {filteredOffers.length === 0 && (
             <div className="p-12 text-center bg-white rounded-[12px] border border-[#d3d5d7]">
-              <p className="text-[16px] font-bold text-[#1f2327]">No matching offers</p>
+              <p className="text-[16px] font-medium text-[#1f2327]">No matching offers</p>
               <p className="text-[13px] text-[#6f777f] mt-1">Try clearing your search query or adjusting the filters.</p>
             </div>
           )}
@@ -293,7 +293,7 @@ export function AllOffersModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-[8px] bg-[#1f2327] px-5 py-2 text-[13px] font-bold text-white hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+            className="rounded-[8px] bg-[#1f2327] px-5 py-2 text-[13px] font-medium text-white hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
           >
             Close
           </button>

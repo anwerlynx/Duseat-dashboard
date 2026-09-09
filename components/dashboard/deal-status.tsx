@@ -45,10 +45,12 @@ export function DealStatus() {
               stroke="none"
               onMouseEnter={(_, i) => setActiveIndex(i)}
               onMouseLeave={() => setActiveIndex(null)}
-              activeIndex={activeIndex ?? undefined}
-              activeShape={(props: React.ComponentProps<typeof Sector>) => (
-                <Sector {...props} outerRadius={(props.outerRadius ?? 88) + 5} />
-              )}
+              {...({
+                activeIndex: activeIndex ?? undefined,
+                activeShape: (props: any) => (
+                  <Sector {...props} outerRadius={(props.outerRadius ?? 88) + 5} />
+                ),
+              } as any)}
               animationDuration={600}
             >
               {visible.map((seg) => (

@@ -56,7 +56,7 @@ import { DocumentViewerModal } from './document-viewer-modal'
 import { OfferDetailsModal, type OfferDetail } from './offer-details-modal'
 import { ChatModerator } from './chat-moderator'
 import { RequestCard } from './request-card'
-import { Flag, getCountryCode } from '@/components/ui/flag'
+import { Flag, getCountryCode, AvatarFlagOverlay } from '@/components/ui/flag'
 import { Tag, StatusTag } from '@/components/ui/badge-tag'
 import { FigmaStatusBadge } from '@/components/ui/figma-badges'
 import { cn } from '@/lib/utils'
@@ -312,7 +312,7 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             {/* Left: Avatar + Identity + Status Badges */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="relative size-[72px] sm:size-[80px] shrink-0">
+              <AvatarFlagOverlay code={getCountryCode(investor.country || 'United Arab Emirates')}>
                 <div className="size-[72px] sm:size-[80px] rounded-[12px] overflow-hidden bg-gradient-to-br from-amber-500 to-rose-600 flex items-center justify-center shadow-xs">
                   {investor.avatar ? (
                     <img src={investor.avatar} alt={investor.name} className="size-full object-cover" />
@@ -325,11 +325,7 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                     </span>
                   )}
                 </div>
-                <div className="absolute -top-1 -left-1">
-                  <Flag code={getCountryCode(investor.country || 'United Arab Emirates')} size="m" />
-                </div>
-                <div className="absolute -bottom-1 -right-1 size-[20px] sm:size-[24px] rounded-full bg-[#17b26a] border-2 border-white" />
-              </div>
+              </AvatarFlagOverlay>
 
               <div className="space-y-1 font-sans">
                 <div className="flex flex-wrap items-center gap-2.5">
@@ -632,21 +628,21 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                       <div className="flex flex-col gap-1 min-w-0">
                         <p className="text-[16px] sm:text-[18px] text-[#6f777f]">Email</p>
                         <p className="text-[16px] sm:text-[18px] font-medium text-[#1f2327] truncate">
-                          amal.haddad@example.com
+                          {investor.email}
                         </p>
                       </div>
 
                       <div className="flex flex-col gap-1 min-w-0">
                         <p className="text-[16px] sm:text-[18px] text-[#6f777f]">Phone</p>
                         <p className="text-[16px] sm:text-[18px] font-medium text-[#1f2327] truncate">
-                          +971 50 248 9912
+                          {investor.phone}
                         </p>
                       </div>
 
                       <div className="flex flex-col gap-1 min-w-0">
                         <p className="text-[16px] sm:text-[18px] text-[#6f777f]">Country</p>
                         <p className="text-[16px] sm:text-[18px] font-medium text-[#1f2327] truncate">
-                          United Arab Emirates
+                          {investor.country}
                         </p>
                       </div>
 
@@ -674,7 +670,7 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                       <div className="col-span-2 flex flex-col gap-1 min-w-0">
                         <p className="text-[16px] sm:text-[18px] text-[#6f777f]">Budget</p>
                         <p className="text-[16px] sm:text-[18px] font-medium text-[#1f2327]">
-                          AED 1.5M – 4M
+                          {investor.personalInfo.budget || 'AED 1.5M – 4M'}
                         </p>
                       </div>
 
@@ -793,11 +789,11 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="rounded-[8px] border border-[#d3d5d7] bg-[#fcfcfc] p-3.5">
                         <p className="text-[12px] font-medium text-[#6f777f]">Budget Portfolio</p>
-                        <p className="mt-1 text-[16px] font-bold text-[#1f2327]">AED 5M – 15M</p>
+                        <p className="mt-1 text-[16px] font-bold text-[#1f2327]">{investor.personalInfo.budget || 'AED 5M – 15M'}</p>
                       </div>
                       <div className="rounded-[8px] border border-[#d3d5d7] bg-[#fcfcfc] p-3.5">
                         <p className="text-[12px] font-medium text-[#6f777f]">Available Liquid Funds</p>
-                        <p className="mt-1 text-[16px] font-bold text-[#00c2cb]">AED 10M (500,000+)</p>
+                        <p className="mt-1 text-[16px] font-bold text-[#00c2cb]">{investor.personalInfo.netWorthEstimated || 'AED 10M+'}</p>
                       </div>
                     </div>
 
@@ -824,12 +820,12 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                       <div>
                         <p className="text-[12px] font-medium text-[#6f777f]">Residential Address</p>
                         <p className="mt-1 text-[14px] font-semibold text-[#1f2327] leading-relaxed">
-                          Al Barsha First, Al Sufouh, Dubai, UAE
+                          {investor.personalInfo.address || investor.country}
                         </p>
                       </div>
                       <div className="pt-2 border-t border-[#d3d5d7]">
                         <p className="text-[12px] font-medium text-[#6f777f]">Country</p>
-                        <p className="mt-0.5 text-[14px] font-semibold text-[#1f2327]">United Arab Emirates</p>
+                        <p className="mt-0.5 text-[14px] font-semibold text-[#1f2327]">{investor.country}</p>
                       </div>
                       <div className="pt-2 border-t border-[#d3d5d7]">
                         <p className="text-[12px] font-medium text-[#6f777f]">Preferred Communication</p>

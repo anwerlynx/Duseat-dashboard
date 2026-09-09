@@ -27,9 +27,14 @@ import { ChatModerator } from './chat-moderator'
 import { ToastProvider, useToast } from '@/components/dashboard/toast'
 import { Dropdown } from '@/components/dashboard/menu'
 import { ConfirmDialog, type ConfirmRequest } from './confirm-dialog'
+import { FigmaTableFilterHeader, type FigmaTabItem, type FigmaFilterChipConfig } from '@/components/ui/figma-table-layout'
+import { FigmaStatusBadge } from '@/components/ui/figma-badges'
+import { TableCheckbox } from '@/components/ui/table-checkbox'
+import { TableAvatar } from '@/components/ui/table-avatar'
 import { MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { PlatformModule, ModuleRecord } from '@/lib/platform-modules'
+
 
 interface ModuleDashboardProps {
   module: PlatformModule
@@ -45,6 +50,7 @@ function ModuleDashboardInner({ module }: ModuleDashboardProps) {
   const [query, setQuery] = React.useState('')
   const [tab, setTab] = React.useState(module.tabs[0])
   const [statusFilter, setStatusFilter] = React.useState('All')
+  const [customFilterValues, setCustomFilterValues] = React.useState<Record<string, string>>({})
   const [page, setPage] = React.useState(1)
   const [selected, setSelected] = React.useState<string[]>([])
   const [sortAsc, setSortAsc] = React.useState(true)
@@ -260,24 +266,20 @@ function ModuleDashboardInner({ module }: ModuleDashboardProps) {
     >
       <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5">
         {/* Module Banner with dynamic animated visual bars */}
-        <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <section className="overflow-hidden rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)]">
           <div className="flex flex-col justify-between gap-4 p-4 lg:flex-row lg:items-end">
             <div className="max-w-2xl">
-              <div className="mb-2.5 inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-[12px] leading-[16px] font-semibold text-accent-foreground">
-                <span className="size-1.5 rounded-full bg-brand" />
-                {module.accent}
-              </div>
-              <h2 className="text-balance text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] tracking-tight text-card-foreground">
+              <h2 className="text-balance text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] tracking-tight text-[#1f2327]">
                 {module.title}
               </h2>
-              <p className="mt-1.5 max-w-xl text-pretty text-[14px] leading-[20px] text-muted-foreground">{module.description}</p>
+              <p className="mt-1.5 max-w-xl text-pretty text-[14px] leading-[20px] text-[#6f777f]">{module.description}</p>
             </div>
             {/* Visual trend bars */}
             <div className="flex items-end gap-1.5">
               {[35, 48, 42, 60, 68, 64, 78, 72, 85, 90, 84, 96].map((h, i) => (
                 <div key={i} className="group relative flex flex-col items-center">
                   <span
-                    className="w-2.5 rounded-t bg-brand/25 transition-all duration-300 group-hover:scale-y-110 group-hover:bg-brand"
+                    className="w-2.5 rounded-t bg-[#00c2cb]/30 transition-all duration-300 group-hover:scale-y-110 group-hover:bg-[#00c2cb]"
                     style={{ height: `${h}px` }}
                   />
                 </div>
@@ -286,19 +288,19 @@ function ModuleDashboardInner({ module }: ModuleDashboardProps) {
           </div>
 
           {/* Metrics summary */}
-          <div className="grid border-t border-border sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid border-t border-[#d3d5d7] sm:grid-cols-2 xl:grid-cols-4">
             {module.metrics.map((metric, index) => (
               <article
                 key={metric.label}
                 className={cn(
-                  'p-3 sm:p-3.5 transition-colors hover:bg-secondary/30',
-                  index > 0 && 'border-t border-border sm:border-l sm:border-t-0',
+                  'p-3 sm:p-3.5 transition-colors hover:bg-[#f8f9fa]',
+                  index > 0 && 'border-t border-[#d3d5d7] sm:border-l sm:border-t-0',
                   index === 2 && 'sm:border-l-0 xl:border-l'
                 )}
               >
-                <p className="text-[12px] leading-[16px] font-medium uppercase tracking-wider text-muted-foreground">{metric.label}</p>
+                <p className="text-[12px] leading-[16px] font-medium uppercase tracking-wider text-[#6f777f]">{metric.label}</p>
                 <div className="mt-2 flex items-end justify-between gap-3">
-                  <p className="text-[24px] leading-[32px] font-bold tabular-nums text-card-foreground">{metric.value}</p>
+                  <p className="text-[24px] leading-[32px] font-bold tabular-nums text-[#1f2327]">{metric.value}</p>
                   <span
                     className={cn(
                       'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] leading-[16px] font-semibold',
@@ -316,19 +318,19 @@ function ModuleDashboardInner({ module }: ModuleDashboardProps) {
 
         {/* If Conversations Module: Offer View Mode Toggle */}
         {module.slug === 'conversations' && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-border bg-card p-3 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-[#d3d5d7] bg-white p-3 shadow-[0px_1px_3px_rgba(16,24,40,0.05)]">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-card-foreground">Chat Management View:</span>
+              <span className="text-sm font-semibold text-[#1f2327]">Chat Management View:</span>
             </div>
-            <div className="flex items-center gap-1.5 rounded-[8px] bg-secondary p-1">
+            <div className="flex items-center gap-1.5 rounded-[8px] bg-[#eff1f3] p-1">
               <button
                 type="button"
                 onClick={() => setViewMode('chat-room')}
                 className={cn(
                   'flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer',
                   viewMode === 'chat-room'
-                    ? 'bg-[#00c2cb] text-white shadow-2xs'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-[#1f2327] text-white shadow-2xs'
+                    : 'text-[#6f777f] hover:text-[#1f2327]'
                 )}
               >
                 <MessageSquare className="size-3.5" />
@@ -340,8 +342,8 @@ function ModuleDashboardInner({ module }: ModuleDashboardProps) {
                 className={cn(
                   'flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer',
                   viewMode === 'table'
-                    ? 'bg-[#00c2cb] text-white shadow-2xs'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-[#1f2327] text-white shadow-2xs'
+                    : 'text-[#6f777f] hover:text-[#1f2327]'
                 )}
               >
                 <span>Directory Table</span>
@@ -353,172 +355,126 @@ function ModuleDashboardInner({ module }: ModuleDashboardProps) {
         {module.slug === 'conversations' && viewMode === 'chat-room' ? (
           <ChatModerator />
         ) : (
-          /* Records Table Section */
-          <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            {/* Header Controls: Tabs + Actions */}
-            <div className="flex flex-col gap-3 border-b border-border p-4">
-              <div className="flex items-center justify-between gap-3 overflow-x-auto">
-                <div className="flex min-w-max items-center gap-1 rounded-xl bg-secondary p-1">
-                  {module.tabs.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => {
-                      setTab(item)
-                      setPage(1)
-                    }}
-                    className={cn(
-                      'rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium transition-all',
-                      tab === item ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setColumnsModalOpen(true)}
-                  className="hidden h-9 shrink-0 items-center gap-2 rounded-lg border border-input px-3 text-xs sm:text-sm font-medium hover:bg-secondary md:flex"
-                >
-                  <Settings2 className="size-4 text-muted-foreground" />
-                  Columns
-                </button>
-                <button
-                  type="button"
-                  onClick={handleResetData}
-                  title="Reset sample data"
-                  className="flex h-9 size-9 items-center justify-center rounded-lg border border-input text-muted-foreground hover:bg-secondary hover:text-foreground"
-                >
-                  <RotateCcw className="size-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Filter Bar */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative min-w-56 flex-1 sm:max-w-xs md:hidden">
-                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value)
-                    setPage(1)
-                  }}
-                  placeholder="Search records…"
-                  className="h-9 w-full rounded-lg border border-input pl-9 pr-3 text-sm outline-none"
-                />
-              </div>
-
-              <Dropdown
-                align="start"
-                value={statusFilter}
-                onSelect={(value) => {
-                  setStatusFilter(value)
-                  setPage(1)
-                }}
-                ariaLabel="Filter records by status"
-                options={['All', 'Active', 'Pending', 'Verified', 'Under review', 'Completed', 'Flagged', 'Suspended'].map(
-                  (status) => ({ label: status, value: status })
-                )}
-                trigger={
-                  <span className="inline-flex h-9 items-center gap-2 rounded-lg border border-input bg-card px-3 text-xs sm:text-sm font-medium hover:bg-secondary">
-                    <Filter className="size-3.5 text-muted-foreground" />
-                    Status: {statusFilter}
-                    <ChevronDown className="size-3.5 text-muted-foreground" />
-                  </span>
+          /* Records Table Section with Standard Figma Filters & Header */
+          <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)]">
+            <FigmaTableFilterHeader
+              tabs={module.tabs.map((t) => ({ id: t, label: t }))}
+              activeTab={tab}
+              onTabChange={(item) => {
+                setTab(item)
+                setPage(1)
+              }}
+              onCustomizeColumns={() => setColumnsModalOpen(true)}
+              onResetFilters={handleResetData}
+              filterChips={[
+                {
+                  id: 'status',
+                  label: 'Status',
+                  selectedValue: statusFilter,
+                  options: [
+                    { label: 'All Statuses', value: 'All' },
+                    { label: 'Active', value: 'Active' },
+                    { label: 'Pending', value: 'Pending' },
+                    { label: 'Verified', value: 'Verified' },
+                    { label: 'Under review', value: 'Under review' },
+                    { label: 'Completed', value: 'Completed' },
+                    { label: 'Flagged', value: 'Flagged' },
+                    { label: 'Suspended', value: 'Suspended' },
+                  ],
+                },
+                ...module.filters.slice(0, 3).map((f) => ({
+                  id: f.toLowerCase().replace(/\s+/g, '_'),
+                  label: f,
+                  selectedValue: customFilterValues[f.toLowerCase().replace(/\s+/g, '_')] || 'all',
+                  options: [
+                    { label: `All ${f}`, value: 'all' },
+                    { label: `Standard ${f}`, value: 'standard' },
+                    { label: `Priority ${f}`, value: 'priority' },
+                  ],
+                })),
+              ]}
+              onFilterChange={(chipId, val) => {
+                if (chipId === 'status') {
+                  setStatusFilter(val)
+                } else {
+                  setCustomFilterValues((prev) => ({ ...prev, [chipId]: val }))
                 }
-              />
+                setPage(1)
+              }}
+              searchQuery={query}
+              onSearchChange={(q) => {
+                setQuery(q)
+                setPage(1)
+              }}
+              searchPlaceholder={`Search ${module.title}...`}
+              totalCount={filtered.length}
+              countLabel="records found"
+            />
 
-              {module.filters.slice(0, 3).map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() =>
-                    toast({
-                      variant: 'info',
-                      title: `${item} filter applied`,
-                      description: `Filtering ${module.title} records.`,
-                    })
-                  }
-                  className="hidden h-9 rounded-lg border border-input px-3 text-xs sm:text-sm text-muted-foreground hover:bg-secondary hover:text-foreground lg:block"
-                >
-                  {item}
-                </button>
-              ))}
-
-              <span className="ml-auto text-xs text-muted-foreground font-medium">
-                {filtered.length} {filtered.length === 1 ? 'record' : 'records'} found
-              </span>
-            </div>
-          </div>
-
-          {/* Bulk Action Banner */}
-          {selected.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 border-b border-brand/20 bg-accent px-4 py-2.5">
-              <span className="text-xs sm:text-sm font-semibold text-accent-foreground">
-                {selected.length} {selected.length === 1 ? 'record' : 'records'} selected
-              </span>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => handleBulkStatus('Completed')}
-                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-                >
-                  Mark Completed
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleBulkStatus('Active')}
-                  className="rounded-md border border-input bg-card px-3 py-1.5 text-xs font-medium hover:bg-secondary"
-                >
-                  Mark Active
-                </button>
+            {/* Bulk Action Banner */}
+            {selected.length > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#00c2cb]/30 bg-[#e5f6f7] px-4 py-2.5 text-[13px] font-medium text-[#1f2327]">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="font-semibold text-[#1f2327]">
+                    {selected.length} {selected.length === 1 ? 'record' : 'records'} selected
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleBulkStatus('Completed')}
+                      className="h-[32px] rounded-[8px] bg-[#00c2cb] px-3 text-[12px] font-semibold text-white shadow-2xs hover:bg-[#00a8b0] transition-colors"
+                    >
+                      Mark Completed
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkStatus('Active')}
+                      className="h-[32px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[12px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors"
+                    >
+                      Mark Active
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleExportCsv(records.filter((r) => selected.includes(r.id)))}
+                      className="h-[32px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[12px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors"
+                    >
+                      Export Selected
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleBulkDelete}
+                      className="h-[32px] rounded-[8px] px-3 text-[12px] font-semibold text-[#f04438] hover:bg-[#fef3f2] transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
                 <button
                   type="button"
-                  onClick={() => handleExportCsv(records.filter((r) => selected.includes(r.id)))}
-                  className="rounded-md border border-input bg-card px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                  onClick={() => setSelected([])}
+                  className="text-[12px] font-medium text-[#6f777f] hover:text-[#1f2327] transition-colors"
                 >
-                  Export Selected
-                </button>
-                <button
-                  type="button"
-                  onClick={handleBulkDelete}
-                  className="rounded-md px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
-                >
-                  Delete
+                  Clear selection
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelected([])}
-                className="ml-auto text-xs font-medium text-muted-foreground hover:text-foreground"
-              >
-                Clear selection
-              </button>
-            </div>
-          )}
+            )}
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] border-collapse text-left text-sm">
-              <thead className="bg-secondary/70 text-xs uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="w-12 px-4 py-3.5">
-                    <input
-                      type="checkbox"
-                      aria-label="Select all visible records"
+            <table className="w-full min-w-[900px] border-collapse text-left text-[14px] font-sans">
+              <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
+                <tr className="h-12 whitespace-nowrap">
+                  <th className="w-12 px-4 whitespace-nowrap">
+                    <TableCheckbox
+                      ariaLabel="Select all visible records"
                       checked={visible.length > 0 && selected.length === visible.length}
                       onChange={toggleSelectAll}
-                      className="size-4 rounded border-input accent-[var(--brand)]"
                     />
                   </th>
                   {module.columns.map((col, index) => {
                     if (!visibleColumns.includes(col)) return null
                     return (
-                      <th key={col} className="whitespace-nowrap px-4 py-3.5 font-semibold">
+                      <th key={col} className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327]">
                         <button
                           type="button"
                           onClick={() => {
@@ -544,26 +500,30 @@ function ModuleDashboardInner({ module }: ModuleDashboardProps) {
                       </th>
                     )
                   })}
-                  <th className="w-12 px-4 py-3.5 text-right font-semibold">
+                  <th className="w-12 px-4 text-right text-[14px] font-semibold text-[#1f2327]">
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-[#d3d5d7]">
                 {visible.map((record) => (
-                  <tr key={record.id} className="transition-colors hover:bg-secondary/45">
-                    <td className="px-4 py-3.5">
-                      <input
-                        type="checkbox"
-                        aria-label={`Select ${record.id}`}
+                  <tr
+                    key={record.id}
+                    className={cn(
+                      "h-[60px] transition-colors font-sans hover:bg-[#f8f9fa] whitespace-nowrap",
+                      selected.includes(record.id) && "bg-[#e5f6f7]/40"
+                    )}
+                  >
+                    <td className="px-4 whitespace-nowrap">
+                      <TableCheckbox
+                        ariaLabel={`Select ${record.id}`}
                         checked={selected.includes(record.id)}
                         onChange={() =>
                           setSelected((items) =>
                             items.includes(record.id) ? items.filter((id) => id !== record.id) : [...items, record.id]
                           )
                         }
-                        className="size-4 rounded border-input accent-[var(--brand)]"
                       />
                     </td>
 
@@ -592,7 +552,7 @@ function ModuleDashboardInner({ module }: ModuleDashboardProps) {
 
                     {visibleColumns.includes(module.columns[3]) && (
                       <td className="px-4 py-3.5">
-                        <StatusPill value={record.status} />
+                        <FigmaStatusBadge status={record.status} />
                       </td>
                     )}
 

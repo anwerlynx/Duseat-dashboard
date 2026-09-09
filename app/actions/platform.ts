@@ -58,12 +58,15 @@ export async function createRecord(module: string, data: {
 }) {
   const userId = await getUserId()
   try {
+    const { amount, rating, ...restData } = data
     const result = await db
       .insert(platformRecords)
       .values({
         userId,
         module,
-        ...data,
+        ...restData,
+        amount: amount !== undefined ? String(amount) : undefined,
+        rating: rating !== undefined ? String(rating) : undefined,
       })
       .returning()
     
@@ -129,16 +132,16 @@ export async function deleteRecord(module: string, recordKey: string) {
 export async function getNotifications(unreadOnly = false) {
   try {
     const userId = await getUserId()
-    let query = db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.userId, userId))
-    
+    const conditions = [eq(notifications.userId, userId)]
     if (unreadOnly) {
-      query = query.where(eq(notifications.read, false))
+      conditions.push(eq(notifications.read, false))
     }
     
-    return await query.orderBy(desc(notifications.createdAt))
+    return await db
+      .select()
+      .from(notifications)
+      .where(and(...conditions))
+      .orderBy(desc(notifications.createdAt))
   } catch (error) {
     return unreadOnly ? memoryNotifications.filter((n) => !n.read) : memoryNotifications
   }
@@ -239,16 +242,16 @@ async function logAction(userId: string, action: string, module: string, recordK
 export async function getAuditLogs(module?: string) {
   try {
     const userId = await getUserId()
-    let query = db
-      .select()
-      .from(auditLogs)
-      .where(eq(auditLogs.userId, userId))
-    
+    const conditions = [eq(auditLogs.userId, userId)]
     if (module) {
-      query = query.where(eq(auditLogs.module, module))
+      conditions.push(eq(auditLogs.module, module))
     }
     
-    return await query.orderBy(desc(auditLogs.createdAt))
+    return await db
+      .select()
+      .from(auditLogs)
+      .where(and(...conditions))
+      .orderBy(desc(auditLogs.createdAt))
   } catch (error) {
     return []
   }

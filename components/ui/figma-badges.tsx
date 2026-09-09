@@ -108,26 +108,85 @@ export type PlanType = 'Pro' | 'Elite' | 'Power' | string
 
 export function AgentPlanBadge({
   plan = 'Pro',
+  compact = false,
+  showLabel = true,
   className,
 }: {
   plan?: PlanType
+  compact?: boolean
+  showLabel?: boolean
   className?: string
 }) {
   const norm = (plan || '').toLowerCase()
   const isElite = norm.includes('elite')
   const isPower = norm.includes('power')
-  const isPro = !isElite && !isPower
+  const tier = isPower ? 'Power' : isElite ? 'Elite' : 'Pro'
+
+  // Icon only compact mode (when displayed next to name in table rows)
+  if (compact || !showLabel) {
+    return (
+      <div className="relative group/badge inline-flex items-center cursor-pointer">
+        {isPower ? (
+          <span
+            className={cn(
+              'relative inline-flex items-center justify-center shrink-0 size-[18px] transition-transform group-hover/badge:scale-115 select-none',
+              className
+            )}
+          >
+            <img src="/images/badges/power-vector.svg" alt="Power" className="absolute inset-0 size-full object-contain" />
+            <img src="/images/badges/power-reflect.svg" alt="" className="absolute inset-0 size-full object-contain" />
+            <img src="/images/badges/star-elite-power.png" alt="" className="absolute size-[9px] object-contain z-10" />
+          </span>
+        ) : isElite ? (
+          <span
+            className={cn(
+              'relative inline-flex items-center justify-center shrink-0 size-[18px] transition-transform group-hover/badge:scale-115 select-none',
+              className
+            )}
+          >
+            <img src="/images/badges/elite-vector.svg" alt="Elite" className="absolute inset-0 size-full object-contain" />
+            <img src="/images/badges/elite-reflect.svg" alt="" className="absolute inset-0 size-full object-contain" />
+            <img src="/images/badges/star-elite-power.png" alt="" className="absolute size-[9px] object-contain z-10" />
+          </span>
+        ) : (
+          <span
+            className={cn(
+              'relative inline-flex items-center justify-center shrink-0 size-[18px] transition-transform group-hover/badge:scale-115 select-none',
+              className
+            )}
+          >
+            <img src="/images/badges/pro-vector.svg" alt="Pro" className="absolute inset-0 size-full object-contain" />
+            <img src="/images/badges/pro-reflect.svg" alt="" className="absolute inset-0 size-full object-contain" />
+            <img src="/images/badges/star-pro.png" alt="" className="absolute size-[9px] object-contain z-10" />
+          </span>
+        )}
+
+        {/* Floating Tooltip on Hover */}
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover/badge:flex flex-col items-center z-50 pointer-events-none">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] bg-[#1f2327] text-white text-[11px] font-semibold tracking-wide whitespace-nowrap shadow-lg">
+            <span className={cn('size-1.5 rounded-full', isPower ? 'bg-[#d92d20]' : isElite ? 'bg-[#2f54eb]' : 'bg-[#00c2cb]')} />
+            <span>{tier} Agent Plan</span>
+          </div>
+          <div className="border-4 border-transparent border-t-[#1f2327] size-0 -mt-px" />
+        </div>
+      </div>
+    )
+  }
 
   if (isPower) {
     return (
       <div
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-[12px] bg-[#f3e1e0] px-3 py-1 font-sans text-[12px] leading-[16px] font-semibold text-[#d92d20] shadow-2xs select-none transition-transform hover:scale-102',
+          'inline-flex items-center gap-1.5 rounded-[12px] bg-[#f3e1e0] px-3 py-1 font-sans text-[12px] leading-[16px] font-semibold text-[#d92d20] shadow-2xs select-none transition-transform hover:scale-102 border border-[#eaa5a0]/80',
           className
         )}
       >
         <span>Power agent</span>
-        <PowerBadgeIcon className="size-[16px]" />
+        <div className="relative inline-flex items-center justify-center shrink-0 size-[16px]">
+          <img src="/images/badges/power-vector.svg" alt="" className="absolute inset-0 size-full object-contain" />
+          <img src="/images/badges/power-reflect.svg" alt="" className="absolute inset-0 size-full object-contain" />
+          <img src="/images/badges/star-elite-power.png" alt="" className="absolute size-[8px] object-contain z-10" />
+        </div>
       </div>
     )
   }
@@ -136,12 +195,16 @@ export function AgentPlanBadge({
     return (
       <div
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-[12px] bg-[#eaf2ff] px-3 py-1 font-sans text-[12px] leading-[16px] font-semibold text-[#3366ff] shadow-2xs select-none transition-transform hover:scale-102',
+          'inline-flex items-center gap-1.5 rounded-[12px] bg-[#eaf2ff] px-3 py-1 font-sans text-[12px] leading-[16px] font-semibold text-[#2f54eb] shadow-2xs select-none transition-transform hover:scale-102 border border-[#adc8ff]/80',
           className
         )}
       >
         <span>Elite agent</span>
-        <EliteBadgeIcon className="size-[16px]" />
+        <div className="relative inline-flex items-center justify-center shrink-0 size-[16px]">
+          <img src="/images/badges/elite-vector.svg" alt="" className="absolute inset-0 size-full object-contain" />
+          <img src="/images/badges/elite-reflect.svg" alt="" className="absolute inset-0 size-full object-contain" />
+          <img src="/images/badges/star-elite-power.png" alt="" className="absolute size-[8px] object-contain z-10" />
+        </div>
       </div>
     )
   }
@@ -149,12 +212,16 @@ export function AgentPlanBadge({
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-[12px] bg-[#e5f6f7] px-3 py-1 font-sans text-[12px] leading-[16px] font-semibold text-[#00c2cb] shadow-2xs select-none transition-transform hover:scale-102',
+        'inline-flex items-center gap-1.5 rounded-[12px] bg-[#e5f6f7] px-3 py-1 font-sans text-[12px] leading-[16px] font-semibold text-[#00a4ac] shadow-2xs select-none transition-transform hover:scale-102 border border-[#c7ecee]/80',
         className
       )}
     >
       <span>Pro agent</span>
-      <ProBadgeIcon className="size-[16px]" />
+      <div className="relative inline-flex items-center justify-center shrink-0 size-[16px]">
+        <img src="/images/badges/pro-vector.svg" alt="" className="absolute inset-0 size-full object-contain" />
+        <img src="/images/badges/pro-reflect.svg" alt="" className="absolute inset-0 size-full object-contain" />
+        <img src="/images/badges/star-pro.png" alt="" className="absolute size-[8px] object-contain z-10" />
+      </div>
     </div>
   )
 }
@@ -196,13 +263,54 @@ export function FigmaStatusBadge({
   status,
   className,
 }: {
-  status: 'Verified' | 'Pending' | 'Rejected' | 'Suspended' | 'Active' | string
+  status:
+    | 'Verified'
+    | 'Pending'
+    | 'Rejected'
+    | 'Suspended'
+    | 'Active'
+    | 'Completed'
+    | 'Scheduled'
+    | 'Draft'
+    | 'Failed'
+    | 'Cancelled'
+    | 'In Progress'
+    | 'Closed'
+    | 'Archived'
+    | 'Disabled'
+    | string
   className?: string
 }) {
-  const norm = (status || '').toLowerCase()
-  const isVerified = norm === 'verified' || norm === 'active' || norm === 'approved'
-  const isPending = norm === 'pending' || norm === 'under review' || norm === 'in review'
-  const isRejected = norm === 'rejected' || norm === 'suspended' || norm === 'banned' || norm === 'declined'
+  const norm = (status || '').toLowerCase().trim()
+  const isVerified =
+    norm === 'verified' ||
+    norm === 'active' ||
+    norm === 'approved' ||
+    norm === 'completed' ||
+    norm === 'deal confirmed' ||
+    norm === 'accepted' ||
+    norm === 'resolved' ||
+    norm === 'ready' ||
+    norm === 'delivered' ||
+    norm === 'published'
+
+  const isPending =
+    norm === 'pending' ||
+    norm === 'under review' ||
+    norm === 'in review' ||
+    norm === 'scheduled' ||
+    norm === 'in progress' ||
+    norm === 'in queue' ||
+    norm === 'receiving offers' ||
+    norm === 'waiting' ||
+    norm === 'open' ||
+    norm === 'trial' ||
+    norm === 'grace period'
+
+  const isDraft = norm === 'draft' || norm === 'system maintenance' || norm === 'system info'
+
+  const isArchived =
+    norm === 'archived' || norm === 'disabled' || norm === 'deleted' || norm === 'withdrawn'
 
   if (isVerified) {
     return (
@@ -228,6 +336,34 @@ export function FigmaStatusBadge({
       >
         <span>{status}</span>
         <PendingClockIcon className="size-[14px]" />
+      </div>
+    )
+  }
+
+  if (isDraft) {
+    return (
+      <div
+        className={cn(
+          'inline-flex items-center gap-1.5 rounded-[12px] bg-[#f2f4f7] px-3 py-1 font-sans text-[12px] leading-[16px] font-medium text-[#6f777f] select-none border border-[#d3d5d7]/60',
+          className
+        )}
+      >
+        <span>{status}</span>
+        <span className="size-1.5 rounded-full bg-[#9da4ae]" />
+      </div>
+    )
+  }
+
+  if (isArchived) {
+    return (
+      <div
+        className={cn(
+          'inline-flex items-center gap-1.5 rounded-[12px] bg-[#eff1f3] px-3 py-1 font-sans text-[12px] leading-[16px] font-medium text-[#4b5563] select-none border border-[#d3d5d7]',
+          className
+        )}
+      >
+        <span>{status}</span>
+        <span className="size-1.5 rounded-full bg-[#6f777f]" />
       </div>
     )
   }

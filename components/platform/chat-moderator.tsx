@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import {
   Play,
   Pause,
@@ -35,19 +36,41 @@ import {
   RotateCcw,
   Clock,
   ChevronDown,
-  Printer,
+  ChevronRight,
+  ChevronLeft,
   FileDown,
   Share2,
+  ShieldCheck,
+  Building,
+  MapPin,
+  DollarSign,
+  Plus,
+  Eye,
+  PanelRightClose,
+  PanelRight,
+  Phone,
+  Mail,
+  Layers,
+  Calendar,
+  CheckCircle2,
+  Compass,
+  ArrowLeft,
+  SlidersHorizontal,
+  Radio,
+  FileSpreadsheet,
+  MessageSquare,
+  LayoutGrid,
 } from 'lucide-react'
-import { FigmaStatusBadge, AgentPlanBadge, RateBadge } from '@/components/ui/figma-badges'
-import { Flag as CountryFlag, getCountryCode } from '@/components/ui/flag'
-import { Dropdown } from '@/components/dashboard/menu'
+import { FigmaStatusBadge, AgentPlanBadge } from '@/components/ui/figma-badges'
+import { Flag as CountryFlag, getCountryCode, AvatarFlagOverlay } from '@/components/ui/flag'
 import { useToast } from '@/components/dashboard/toast'
 import { cn } from '@/lib/utils'
 import {
   type ChatThread,
   type ChatMessage,
   type PropertyCardData,
+  type TimelineEvent,
+  type InternalComplianceNote,
   initialChatThreads,
 } from '@/lib/platform-chats'
 
@@ -68,26 +91,62 @@ export function ChatModerator({
   const [searchQuery, setSearchQuery] = React.useState('')
   const [statusTab, setStatusTab] = React.useState<'All' | 'Active' | 'Closed' | 'Flagged'>('All')
 
+  // Mobile View Navigation: 'list' | 'chat'
+  const [mobileView, setMobileView] = React.useState<'list' | 'chat'>('chat')
+
+  // View Mode: Details Sidebar is hidden by default to maximize chat width
+  const [showRightPanel, setShowRightPanel] = React.useState(false)
+  const [showLeftPanel, setShowLeftPanel] = React.useState(true)
+
   // Active Thread
   const activeThread = threads.find((t) => t.id === activeThreadId) || threads[0]
 
   // Composer State
   const [inputText, setInputText] = React.useState('')
   const [sendAs, setSendAs] = React.useState<'admin' | 'agent' | 'system'>('admin')
-  const [systemNoticeType, setSystemNoticeType] = React.useState<'warning' | 'info' | 'deal_secured'>('info')
+  const [systemNoticeType, setSystemNoticeType] = React.useState<
+    'warning' | 'info' | 'deal_secured' | 'deal_created' | 'offer_accepted' | 'chat_closed'
+  >('info')
   const [showSystemDialog, setShowSystemDialog] = React.useState(false)
   const [systemNoticeText, setSystemNoticeText] = React.useState('')
-
-  // Edit Message State
-  const [editingMessage, setEditingMessage] = React.useState<ChatMessage | null>(null)
-  const [editText, setEditText] = React.useState('')
 
   // Audio Playback Simulation State
   const [playingVoiceId, setPlayingVoiceId] = React.useState<string | null>(null)
   const [playbackProgress, setPlaybackProgress] = React.useState(0)
+  const [playbackSpeed, setPlaybackSpeed] = React.useState<1 | 1.5 | 2>(1)
 
-  // Lightbox Media Viewer
+  // Media & Modals
   const [lightboxImage, setLightboxImage] = React.useState<string | null>(null)
+  const [videoModalUrl, setVideoModalUrl] = React.useState<string | null>(null)
+  const [deleteMessageTarget, setDeleteMessageTarget] = React.useState<ChatMessage | null>(null)
+  const [showCloseModal, setShowCloseModal] = React.useState(false)
+  const [showFlagModal, setShowFlagModal] = React.useState(false)
+  const [flagReason, setFlagReason] = React.useState('Suspicious contact sharing attempt')
+  const [showExportModal, setShowExportModal] = React.useState(false)
+  const [exportFormat, setExportFormat] = React.useState<'csv' | 'txt' | 'json'>('csv')
+  const [copiedId, setCopiedId] = React.useState(false)
+  const [showMoreMenu, setShowMoreMenu] = React.useState(false)
+
+  // Typing indicator simulation
+  const [isTyping, setIsTyping] = React.useState(false)
+
+  // Right Panel Accordion States
+  const [expandedSections, setExpandedSections] = React.useState<Record<string, boolean>>({
+    participants: true,
+    property: true,
+    overview: false,
+    media: true,
+    timeline: false,
+    surveillance: false,
+    compliance: true,
+  })
+
+  // Media Tab Filter in Sidebar
+  const [mediaTabFilter, setMediaTabFilter] = React.useState<'all' | 'images' | 'docs' | 'voice'>('all')
+
+  // Internal Notes State
+  const [newNoteText, setNewNoteText] = React.useState('')
+  const [newNoteCategory, setNewNoteCategory] = React.useState<'compliance' | 'negotiation' | 'risk'>('compliance')
 
   // Audio simulation timer
   React.useEffect(() => {
@@ -99,43 +158,83 @@ export function ChatModerator({
             setPlayingVoiceId(null)
             return 0
           }
-          return prev + 4
+          return prev + 4 * playbackSpeed
         })
       }, 100)
     } else {
       setPlaybackProgress(0)
     }
     return () => clearInterval(interval)
-  }, [playingVoiceId])
+  }, [playingVoiceId, playbackSpeed])
 
   const notify = (title: string, description: string, variant: 'success' | 'info' | 'error' = 'success') =>
     toast({ variant, title, description })
 
-  // Thread Actions
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }))
+  }
+
+  const handleCopyId = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigator.clipboard.writeText(activeThread.id)
+    setCopiedId(true)
+    notify('Copied', `${activeThread.id} copied to clipboard.`)
+    setTimeout(() => setCopiedId(false), 2000)
+  }
+
+  // Close / Reopen Chat Handler
   const handleToggleChatLock = () => {
     const nextStatus = activeThread.status === 'closed' ? 'active' : 'closed'
-    setThreads((prev) =>
-      prev.map((t) => (t.id === activeThread.id ? { ...t, status: nextStatus } : t))
-    )
-    if (nextStatus === 'closed') {
-      const closedNotice: ChatMessage = {
-        id: `m-${Date.now()}`,
-        sender: 'system',
-        senderName: 'Duseat System',
-        type: 'system_notice',
-        systemType: 'chat_closed',
-        text: 'The chat is closed by administrator. Messaging is disabled temporarily.',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      }
-      setThreads((prev) =>
-        prev.map((t) =>
-          t.id === activeThread.id ? { ...t, messages: [...t.messages, closedNotice] } : t
-        )
-      )
-      notify('Chat Closed', `Chat ${activeThread.id} is now closed. Users cannot send messages.`, 'info')
-    } else {
-      notify('Chat Reopened', `Chat ${activeThread.id} reopened for negotiations.`)
+    const systemMsg: ChatMessage = {
+      id: `m-${Date.now()}`,
+      sender: 'system',
+      senderName: 'Duseat Moderator',
+      type: 'system_event',
+      systemType: nextStatus === 'closed' ? 'chat_closed' : 'chat_reopened',
+      text:
+        nextStatus === 'closed'
+          ? 'Conversation officially closed by administrator. Participant messaging disabled.'
+          : 'Conversation reopened by administrator for active negotiation.',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }
+
+    setThreads((prev) =>
+      prev.map((t) =>
+        t.id === activeThread.id
+          ? {
+              ...t,
+              status: nextStatus,
+              messages: [...t.messages, systemMsg],
+              lastActivity: 'Just now',
+            }
+          : t
+      )
+    )
+
+    if (nextStatus === 'closed') {
+      notify('Conversation Closed', `Chat ${activeThread.id} is now closed. Participants cannot reply.`, 'info')
+    } else {
+      notify('Conversation Reopened', `Chat ${activeThread.id} reopened for negotiations.`, 'success')
+    }
+    setShowCloseModal(false)
+  }
+
+  // Flag Thread
+  const handleFlagSubmit = () => {
+    setThreads((prev) =>
+      prev.map((t) =>
+        t.id === activeThread.id
+          ? {
+              ...t,
+              status: 'flagged',
+              isFlagged: true,
+              flagReason,
+            }
+          : t
+      )
+    )
+    notify('Room Flagged', `Thread ${activeThread.id} marked for surveillance review.`, 'error')
+    setShowFlagModal(false)
   }
 
   // Send Message
@@ -146,1140 +245,1690 @@ export function ChatModerator({
     const newMsg: ChatMessage = {
       id: `m-${Date.now()}`,
       sender: sendAs === 'admin' ? 'admin' : sendAs === 'agent' ? 'agent' : 'system',
-      senderName: sendAs === 'admin' ? 'Duseat Admin' : activeThread.agent.name,
-      senderRole: sendAs === 'admin' ? 'Moderator' : 'Agent',
-      type: 'text',
+      senderName: sendAs === 'admin' ? 'Duseat Compliance Desk' : activeThread.agent.name,
+      senderRole: sendAs === 'admin' ? 'Admin Official' : 'Agent Proxy',
       text: inputText.trim(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      status: 'read',
+      type: 'text',
+      status: 'sent',
     }
 
     setThreads((prev) =>
       prev.map((t) =>
         t.id === activeThread.id
-          ? { ...t, messages: [...t.messages, newMsg], lastActivity: 'Just now' }
+          ? {
+              ...t,
+              messages: [...t.messages, newMsg],
+              lastActivity: 'Just now',
+              totalMessages: t.totalMessages + 1,
+            }
           : t
       )
     )
+
     setInputText('')
-    notify('Message Sent', 'Message posted to the negotiation room.')
+
+    // Simulate brief typing response
+    setTimeout(() => {
+      setIsTyping(true)
+      setTimeout(() => setIsTyping(false), 2200)
+    }, 600)
   }
 
-  // Broadcast System Notice
-  const handleBroadcastSystemNotice = (e: React.FormEvent) => {
-    e.preventDefault()
+  // Send System Notice
+  const handleSendSystemNotice = () => {
     if (!systemNoticeText.trim()) return
-
     const sysMsg: ChatMessage = {
-      id: `sys-${Date.now()}`,
+      id: `m-${Date.now()}`,
       sender: 'system',
-      senderName: 'Duseat System',
-      type: 'system_notice',
-      systemType: systemNoticeType,
+      senderName: 'Duseat Automated Sentinel',
       text: systemNoticeText.trim(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      type: 'system_notice',
+      systemType: systemNoticeType,
     }
 
     setThreads((prev) =>
       prev.map((t) =>
-        t.id === activeThread.id ? { ...t, messages: [...t.messages, sysMsg] } : t
+        t.id === activeThread.id
+          ? {
+              ...t,
+              messages: [...t.messages, sysMsg],
+              lastActivity: 'Just now',
+              totalMessages: t.totalMessages + 1,
+            }
+          : t
       )
     )
-    setShowSystemDialog(false)
+
     setSystemNoticeText('')
-    notify('System Notice Posted', 'Official notice delivered to both parties.')
+    setShowSystemDialog(false)
+    notify('System Notice Broadcasted', 'Notice has been displayed to all participants.')
   }
 
-  // Edit Message
-  const handleSaveEditMessage = () => {
-    if (!editingMessage || !editText.trim()) return
+  // Delete Message Confirmation
+  const handleConfirmDeleteMessage = () => {
+    if (!deleteMessageTarget) return
     setThreads((prev) =>
       prev.map((t) =>
         t.id === activeThread.id
           ? {
               ...t,
-              messages: t.messages.map((m) =>
-                m.id === editingMessage.id ? { ...m, text: editText.trim(), isEdited: true } : m
-              ),
+              messages: t.messages.filter((m) => m.id !== deleteMessageTarget.id),
+              totalMessages: Math.max(0, t.totalMessages - 1),
             }
           : t
       )
     )
-    setEditingMessage(null)
-    setEditText('')
-    notify('Message Edited', 'Message has been modified and updated with admin signature.')
+    notify('Message Deleted', 'Message permanently removed from negotiation transcript.', 'error')
+    setDeleteMessageTarget(null)
   }
 
-  // Delete Message for User / Everyone
-  const handleDeleteMessage = (msgId: string, deletePermanently = false) => {
-    setThreads((prev) =>
-      prev.map((t) =>
-        t.id === activeThread.id
-          ? {
-              ...t,
-              messages: deletePermanently
-                ? t.messages.filter((m) => m.id !== msgId)
-                : t.messages.map((m) =>
-                    m.id === msgId
-                      ? {
-                          ...m,
-                          isDeleted: true,
-                          text: '🚫 This message was removed by administrator.',
-                        }
-                      : m
-                  ),
-            }
-          : t
-      )
-    )
-    notify(
-      deletePermanently ? 'Message Permanently Deleted' : 'Message Revoked',
-      'The message content was cleared from user and agent feeds.'
-    )
-  }
+  // Add Internal Compliance Note
+  const handleAddComplianceNote = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newNoteText.trim()) return
 
-  // Pin Message
-  const handleTogglePin = (msgId: string) => {
-    setThreads((prev) =>
-      prev.map((t) =>
-        t.id === activeThread.id
-          ? {
-              ...t,
-              messages: t.messages.map((m) =>
-                m.id === msgId ? { ...m, isPinned: !m.isPinned } : m
-              ),
-            }
-          : t
-      )
-    )
-    notify('Pin Updated', 'Message pinned state updated.')
-  }
-
-  // Open in Dedicated Tab
-  const handleOpenInNewTab = () => {
-    if (typeof window !== 'undefined') {
-      window.open(`/chats/${activeThread.id}`, '_blank')
+    const newNote: InternalComplianceNote = {
+      id: `note-${Date.now()}`,
+      author: 'Admin Moderator',
+      authorRole: 'Compliance Officer',
+      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+      text: newNoteText.trim(),
+      category: newNoteCategory,
     }
+
+    setThreads((prev) =>
+      prev.map((t) =>
+        t.id === activeThread.id
+          ? {
+              ...t,
+              complianceNotes: [newNote, ...(t.complianceNotes || [])],
+            }
+          : t
+      )
+    )
+
+    setNewNoteText('')
+    notify('Internal Note Saved', 'Private note added to surveillance audit log.')
   }
 
-  // Export as PDF / Print Official Transcript
-  const handlePrintPdf = () => {
-    if (typeof window !== 'undefined') {
-      window.print()
-      notify('Printing / Saving as PDF', 'Document formatted for PDF export.')
+  // Delete Compliance Note
+  const handleDeleteNote = (noteId: string) => {
+    setThreads((prev) =>
+      prev.map((t) =>
+        t.id === activeThread.id
+          ? {
+              ...t,
+              complianceNotes: t.complianceNotes.filter((n) => n.id !== noteId),
+            }
+          : t
+      )
+    )
+    notify('Note Removed', 'Internal compliance note deleted.', 'info')
+  }
+
+  // Export Conversation Handler
+  const handleExportDownload = () => {
+    if (exportFormat === 'csv') {
+      const rows = activeThread.messages.map((m) => [
+        `"${m.id}"`,
+        `"${m.sender}"`,
+        `"${m.senderName}"`,
+        `"${m.type}"`,
+        `"${(m.text || m.document?.name || m.linkPreview?.title || 'Media attachment').replace(/"/g, '""')}"`,
+        `"${m.time}"`,
+        `"${m.date || 'Today'}"`,
+      ])
+      const csv = 'Message ID,Sender Role,Sender Name,Type,Content,Time,Date\n' + rows.map((r) => r.join(',')).join('\n')
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.setAttribute('href', url)
+      link.setAttribute('download', `transcript_${activeThread.id}_${Date.now()}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } else if (exportFormat === 'json') {
+      const json = JSON.stringify(activeThread, null, 2)
+      const blob = new Blob([json], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.setAttribute('href', url)
+      link.setAttribute('download', `thread_${activeThread.id}.json`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } else {
+      const text = activeThread.messages
+        .map((m) => `[${m.time}] ${m.senderName} (${m.sender}): ${m.text || m.type}`)
+        .join('\n')
+      const blob = new Blob([text], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.setAttribute('href', url)
+      link.setAttribute('download', `transcript_${activeThread.id}.txt`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     }
+    setShowExportModal(false)
+    notify('Export Generated', `Transcript for ${activeThread.id} downloaded successfully.`)
   }
 
-  // Export Transcript (TXT)
-  const handleExportTranscript = () => {
-    const header = `DUSEAT LIVE NEGOTIATION TRANSCRIPT\nChat ID: ${activeThread.id}\nRequest: ${activeThread.requestId}\nContext: ${activeThread.context}\nAgent: ${activeThread.agent.name} (${activeThread.agent.id})\nInvestor: ${activeThread.investor.name} (${activeThread.investor.id})\nStatus: ${activeThread.status.toUpperCase()}\nExported At: ${new Date().toISOString()}\n----------------------------------------------------\n\n`
-    const body = activeThread.messages
-      .map((m) => `[${m.time}] ${m.senderName} (${m.sender}): ${m.text || `[${m.type.toUpperCase()} CONTENT]`}`)
-      .join('\n')
-    const blob = new Blob([header + body], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `duseat_chat_${activeThread.id}.txt`
-    link.click()
-    notify('Transcript Exported', `Downloaded transcript for ${activeThread.id}.`)
-  }
-
-  // Filter Threads
+  // Filter threads
   const filteredThreads = threads.filter((t) => {
-    const matchesQuery =
-      !searchQuery ||
-      t.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.investor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.context.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesTab =
-      statusTab === 'All' ||
-      (statusTab === 'Active' && t.status === 'active') ||
-      (statusTab === 'Closed' && t.status === 'closed') ||
-      (statusTab === 'Flagged' && t.status === 'flagged')
-    return matchesQuery && matchesTab
+    if (statusTab === 'Active' && t.status !== 'active') return false
+    if (statusTab === 'Closed' && t.status !== 'closed') return false
+    if (statusTab === 'Flagged' && t.status !== 'flagged' && !t.isFlagged && !t.isReported) return false
+
+    if (!searchQuery) return true
+    const q = searchQuery.toLowerCase()
+    return (
+      t.id.toLowerCase().includes(q) ||
+      t.investor.name.toLowerCase().includes(q) ||
+      t.agent.name.toLowerCase().includes(q) ||
+      t.context.toLowerCase().includes(q) ||
+      t.requestId.toLowerCase().includes(q)
+    )
   })
 
-  // Pinned Message in Active Thread
-  const pinnedMessage = activeThread.messages.find((m) => m.isPinned)
+  // Extract attachments for the active thread
+  const threadAttachments = React.useMemo(() => {
+    const images: { url: string; title: string; time: string }[] = []
+    const videos: { url: string; thumbnail?: string; time: string; duration?: string }[] = []
+    const voiceNotes: { id: string; time: string; duration?: string }[] = []
+    const docs: { name: string; size: string; ext: string; url: string; time: string }[] = []
+    const links: { title: string; domain: string; url: string; time: string }[] = []
+
+    activeThread.messages.forEach((m) => {
+      if (m.type === 'image' && m.mediaUrl) {
+        images.push({ url: m.mediaUrl, title: 'Chat Photo', time: m.time })
+      }
+      if (m.type === 'video' && m.videoThumbnail) {
+        videos.push({ url: m.mediaUrl || '', thumbnail: m.videoThumbnail, time: m.time, duration: m.duration })
+      }
+      if (m.type === 'voice') {
+        voiceNotes.push({ id: m.id, time: m.time, duration: m.duration })
+      }
+      if (m.type === 'document' && m.document) {
+        docs.push({ ...m.document, time: m.time })
+      }
+      if (m.type === 'link_preview' && m.linkPreview) {
+        links.push({ ...m.linkPreview, time: m.time })
+      }
+    })
+
+    return { images, videos, voiceNotes, docs, links }
+  }, [activeThread])
+
+  const investorCountryCode = getCountryCode(activeThread.investor.country || 'United Arab Emirates')
+  const agentCountryCode = getCountryCode(activeThread.agent.country || 'United Arab Emirates')
 
   return (
-    <div
-      className={cn(
-        'flex w-full bg-[#f8f9fa] font-sans overflow-hidden border border-[#d3d5d7] rounded-[16px] shadow-sm',
-        isModal ? 'h-[85vh] max-h-[850px]' : 'h-[750px] min-h-[600px]'
-      )}
-    >
-      {/* =========================================================================
-          LEFT SIDEBAR: Thread List & Filter Controls
-         ========================================================================= */}
-      <div className="hidden md:flex w-[320px] lg:w-[360px] flex-col border-r border-[#d3d5d7] bg-white shrink-0">
-        {/* Header */}
-        <div className="p-4 border-b border-[#d3d5d7] space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[18px] font-bold text-[#1f2327]">Live Negotiation Chats</h2>
-            <span className="rounded-[8px] bg-[#e5f6f7] px-2.5 py-0.5 text-xs font-bold text-[#00a4ac]">
-              {threads.length} Rooms
-            </span>
-          </div>
-
-          {/* Search Box */}
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 size-4 text-[#9da4ae]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search chat ID, agent, investor..."
-              className="w-full rounded-[8px] border border-[#d3d5d7] bg-[#f8f9fa] py-2 pl-9 pr-3 text-xs outline-none focus:border-[#00c2cb] focus:bg-white transition-colors"
-            />
-          </div>
-
-          {/* Status Tabs */}
-          <div className="flex gap-1.5 pt-1">
-            {(['All', 'Active', 'Closed', 'Flagged'] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setStatusTab(tab)}
-                className={cn(
-                  'flex-1 rounded-[6px] py-1.5 text-xs font-semibold transition-colors cursor-pointer text-center',
-                  statusTab === tab
-                    ? 'bg-[#00c2cb] text-white shadow-2xs'
-                    : 'bg-[#eff1f3] text-[#6f777f] hover:bg-[#e4e7eb]'
-                )}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Thread List */}
-        <div className="flex-1 overflow-y-auto divide-y divide-[#eff1f3]">
-          {filteredThreads.map((t) => {
-            const isActive = t.id === activeThread.id
-            const lastMsg = t.messages[t.messages.length - 1]
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setActiveThreadId(t.id)}
-                className={cn(
-                  'w-full text-left p-4 transition-colors flex items-start gap-3 cursor-pointer',
-                  isActive ? 'bg-[#e5f6f7]/60 border-l-4 border-[#00c2cb]' : 'hover:bg-[#fcfcfc]'
-                )}
-              >
-                {/* Agent Avatar */}
-                <div className="relative size-11 shrink-0">
-                  <div className="size-11 rounded-full bg-gradient-to-br from-[#00c2cb] to-[#0a8288] flex items-center justify-center text-white font-bold text-sm shadow-2xs">
-                    {t.agent.name.split(' ').map((n) => n[0]).join('')}
-                  </div>
-                  {t.agent.isOnline && (
-                    <div className="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full bg-[#17b26a] border-2 border-white" />
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <p className="font-semibold text-[14px] leading-[20px] text-[#1f2327] truncate">{t.agent.name}</p>
-                    <span className="text-[12px] leading-[16px] text-[#9da4ae] shrink-0">{t.lastActivity.split(', ')[1] || t.lastActivity}</span>
-                  </div>
-
-                  <p className="text-[12px] leading-[16px] text-[#00c2cb] font-semibold truncate mt-0.5">{t.context}</p>
-
-                  <p className="text-[12px] leading-[16px] text-[#6f777f] truncate mt-1">
-                    {lastMsg ? (
-                      <span>
-                        <strong className="font-medium text-[#1f2327]">{lastMsg.senderName.split(' ')[0]}:</strong>{' '}
-                        {lastMsg.text || `[${lastMsg.type.toUpperCase()}]`}
-                      </span>
-                    ) : (
-                      'No messages yet'
-                    )}
-                  </p>
-
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="font-mono text-[12px] leading-[16px] font-semibold text-[#9da4ae]">{t.id}</span>
-                    {t.status === 'closed' ? (
-                      <span className="rounded-[4px] bg-[#f3e1e0] px-1.5 py-0.5 text-[12px] leading-[16px] font-semibold text-[#d92d20] flex items-center gap-1">
-                        <Lock className="size-3" />
-                        <span>Closed</span>
-                      </span>
-                    ) : (
-                      <span className="rounded-[4px] bg-[#dfefe8] px-1.5 py-0.5 text-[12px] leading-[16px] font-semibold text-[#17b26a]">
-                        ● Active
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* =========================================================================
-          RIGHT MAIN: Figma Chat Room (Nodes 300:4068 & 99:30669)
-         ========================================================================= */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#f8f9fa] relative">
-        {/* 1. Header Bar (matching Figma) */}
-        <div className="border-b border-[#d3d5d7] bg-white px-4 sm:px-6 py-3 flex items-center justify-between gap-3 shrink-0 shadow-2xs z-10">
-          <div className="flex items-center gap-3 min-w-0">
-            {onClose && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="size-8 rounded-[8px] border border-[#d3d5d7] flex items-center justify-center text-[#6f777f] hover:bg-[#eff1f3] cursor-pointer shrink-0"
-              >
-                <X className="size-4" />
-              </button>
-            )}
-
-            {/* Participant Profile */}
-            <div className="relative size-10 shrink-0">
-              <div className="size-10 rounded-full bg-gradient-to-br from-[#00c2cb] to-[#0a8288] flex items-center justify-center text-white font-bold text-[14px] shadow-2xs">
-                {activeThread.agent.name.split(' ').map((n) => n[0]).join('')}
-              </div>
-              <div className="absolute -top-1 -left-1">
-                <CountryFlag code={getCountryCode(activeThread.agent.country || 'Egypt')} size="s" />
-              </div>
-            </div>
-
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-[16px] leading-[24px] text-[#1f2327] truncate">{activeThread.agent.name}</h3>
-                <Check className="size-4 text-[#00c2cb] shrink-0" />
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5 text-[12px] leading-[16px] text-[#00c2cb]">
-                <span>Rera verified | {activeThread.agent.plan}</span>
-                <span className="text-[#d3d5d7]">•</span>
-                <span className="text-[#17b26a] flex items-center gap-1">
-                  <span className="size-1.5 rounded-full bg-[#17b26a]" />
-                  <span>Online now</span>
+    <div className="flex h-[calc(100vh-90px)] min-h-[600px] w-full flex-col bg-white overflow-hidden rounded-[10px] border border-[#d3d5d7] font-sans shadow-xs">
+      {/* 2-COLUMN MAIN WORKSPACE (Left Queue + Wide Full-Width Center Chat) */}
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
+        {/* =========================================================================
+            COLUMN 1: LEFT CONVERSATION LIST (280px - 320px)
+           ========================================================================= */}
+        <div
+          className={cn(
+            'flex flex-col border-r border-[#d3d5d7] bg-white transition-all duration-200 shrink-0 z-20',
+            mobileView === 'list'
+              ? 'w-full flex absolute inset-0 md:relative md:w-72 lg:w-80'
+              : 'hidden md:flex md:w-72 lg:w-80',
+            !showLeftPanel && 'md:hidden'
+          )}
+        >
+          {/* Header & Search */}
+          <div className="p-3 border-b border-[#d3d5d7] space-y-2 bg-[#fcfcfc]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[13px] font-bold text-[#1f2327]">Conversations</span>
+                <span className="rounded-full bg-[#eff1f3] px-2 py-0.2 text-[11px] font-semibold text-[#6f777f]">
+                  {filteredThreads.length}
                 </span>
               </div>
+              <button
+                type="button"
+                onClick={() => notify('Syncing', 'Updating live conversations queue…')}
+                className="text-[#6f777f] hover:text-[#1f2327] text-[11px] font-medium flex items-center gap-1 cursor-pointer"
+                title="Sync queue"
+              >
+                <RotateCcw className="size-3" />
+                <span className="hidden sm:inline">Sync</span>
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#6f777f]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search conversations, ID, users…"
+                className="h-[32px] w-full rounded-[6px] border border-[#d3d5d7] bg-white pl-8 pr-7 text-[12px] text-[#1f2327] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-1 focus:ring-[#00c2cb]"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#6f777f] hover:text-[#1f2327]"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Status Filter Tabs */}
+            <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
+              {(['All', 'Active', 'Closed', 'Flagged'] as const).map((tab) => {
+                const count =
+                  tab === 'All'
+                    ? threads.length
+                    : tab === 'Active'
+                    ? threads.filter((t) => t.status === 'active').length
+                    : tab === 'Closed'
+                    ? threads.filter((t) => t.status === 'closed').length
+                    : threads.filter((t) => t.status === 'flagged' || t.isFlagged || t.isReported).length
+
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setStatusTab(tab)}
+                    className={cn(
+                      'h-[26px] px-2 rounded-[5px] text-[11px] font-semibold transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1',
+                      statusTab === tab
+                        ? 'bg-[#1f2327] text-white shadow-2xs'
+                        : 'text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
+                    )}
+                  >
+                    <span>{tab}</span>
+                    <span
+                      className={cn(
+                        'text-[9.5px] px-1 rounded-full',
+                        statusTab === tab ? 'bg-white/20 text-white' : 'bg-[#eff1f3] text-[#6f777f]'
+                      )}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
-          {/* Right Action Controls */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Open in Dedicated Tab Button */}
-            <button
-              type="button"
-              onClick={handleOpenInNewTab}
-              className="hidden sm:inline-flex h-9 items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-xs font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer shadow-2xs"
-              title="Open chat in standalone browser tab"
-            >
-              <ExternalLink className="size-3.5 text-[#00c2cb]" />
-              <span>Open in Tab</span>
-            </button>
+          {/* Conversation Rows List */}
+          <div className="flex-1 overflow-y-auto divide-y divide-[#d3d5d7]/50">
+            {filteredThreads.length === 0 ? (
+              <div className="p-6 text-center text-[12.5px] text-[#6f777f] space-y-1">
+                <p className="font-semibold text-[#1f2327]">No conversations found</p>
+                <p className="text-[11.5px]">Try adjusting your search criteria</p>
+              </div>
+            ) : (
+              filteredThreads.map((thread) => {
+                const isActive = thread.id === activeThread.id
+                const lastMsg = thread.messages[thread.messages.length - 1]
+                const preview =
+                  lastMsg?.text ||
+                  (lastMsg?.type === 'video'
+                    ? '📹 Video message'
+                    : lastMsg?.type === 'voice'
+                    ? '🎙️ Voice note'
+                    : lastMsg?.type === 'document'
+                    ? `📄 ${lastMsg.document?.name || 'Document'}`
+                    : lastMsg?.type === 'link_preview'
+                    ? `🔗 ${lastMsg.linkPreview?.title || 'Shared link'}`
+                    : '📷 Media message')
 
-            {/* Export / Print PDF Button */}
-            <button
-              type="button"
-              onClick={handlePrintPdf}
-              className="inline-flex h-9 items-center gap-1.5 rounded-[8px] border border-[#00c2cb] bg-white px-3 text-xs font-semibold text-[#00a4ac] hover:bg-[#00c2cb]/10 transition-colors cursor-pointer shadow-2xs ant-wave-btn"
-              title="Print or Save Chat as Official PDF Document"
-            >
-              <FileDown className="size-3.5" />
-              <span>Export PDF</span>
-            </button>
+                const hasFlag = thread.status === 'flagged' || thread.isFlagged || thread.isReported
 
-            {/* View Request Link */}
-            <button
-              type="button"
-              onClick={() => notify('Request Details', `Viewing ${activeThread.requestId} details`)}
-              className="flex size-9 items-center justify-center rounded-[8px] bg-[#00c2cb] text-white hover:bg-[#00a8b0] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
-              title="View Request / Deal Link"
-            >
-              <ExternalLink className="size-4" />
-            </button>
+                return (
+                  <button
+                    key={thread.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveThreadId(thread.id)
+                      setMobileView('chat')
+                    }}
+                    className={cn(
+                      'w-full text-left p-3 transition-colors cursor-pointer flex flex-col gap-1.5',
+                      isActive ? 'bg-[#e5f6f7]/60 border-l-4 border-l-[#00c2cb]' : 'hover:bg-[#fcfcfc]'
+                    )}
+                  >
+                    {/* Top Row: ID, Badges, Time */}
+                    <div className="flex items-center justify-between gap-1">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-mono text-[11px] font-bold text-[#00c2cb]">{thread.id}</span>
+                        {hasFlag && (
+                          <span className="flex items-center gap-0.5 rounded bg-[#fee4e2] px-1 py-0.2 text-[9.5px] font-bold text-[#d92d20]">
+                            <Flag className="size-2.5" />
+                            <span>Flagged</span>
+                          </span>
+                        )}
+                        <FigmaStatusBadge
+                          status={thread.status === 'active' ? 'Active' : thread.status === 'closed' ? 'Closed' : 'Flagged'}
+                        />
+                      </div>
+                      <span className="text-[10px] font-mono text-[#6f777f] shrink-0">{thread.lastActivity}</span>
+                    </div>
 
-            <Dropdown
-              align="end"
-              floating
-              ariaLabel="Chat Moderation Options"
-              options={[
-                {
-                  label: 'Open in Dedicated Browser Tab',
-                  value: 'open-tab',
-                  icon: <ExternalLink className="size-4 text-[#00c2cb]" />,
-                },
-                {
-                  label: 'Export as Official PDF Document (حفظ كـ PDF)',
-                  value: 'export-pdf',
-                  icon: <Printer className="size-4 text-[#00a4ac]" />,
-                },
-                {
-                  label: 'Export Chat Transcript (TXT)',
-                  value: 'export-txt',
-                  icon: <Download className="size-4 text-[#6f777f]" />,
-                },
-                {
-                  label: activeThread.status === 'closed' ? 'Reopen Chat Room' : 'Lock / Close Chat Room',
-                  value: 'toggle-lock',
-                  icon: activeThread.status === 'closed' ? <Unlock className="size-4 text-emerald-600" /> : <Lock className="size-4 text-amber-600" />,
-                },
-                {
-                  label: 'Broadcast Official System Notice',
-                  value: 'system-notice',
-                  icon: <Sparkles className="size-4 text-[#00c2cb]" />,
-                },
-                {
-                  label: 'Flag as Suspicious / Inappropriate',
-                  value: 'flag',
-                  icon: <Flag className="size-4 text-amber-600" />,
-                },
-              ]}
-              onSelect={(val) => {
-                if (val === 'open-tab') handleOpenInNewTab()
-                else if (val === 'export-pdf') handlePrintPdf()
-                else if (val === 'export-txt') handleExportTranscript()
-                else if (val === 'toggle-lock') handleToggleChatLock()
-                else if (val === 'system-notice') setShowSystemDialog(true)
-                else if (val === 'flag') notify('Chat Flagged', `Chat ${activeThread.id} flagged for compliance audit.`, 'error')
-              }}
-              trigger={
-                <button
-                  type="button"
-                  className="flex size-9 items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] transition-colors cursor-pointer"
-                >
-                  <MoreHorizontal className="size-4" />
-                </button>
-              }
-            />
-          </div>
-        </div>
+                    {/* Middle Row: Avatars & Participant Names */}
+                    <div className="flex items-center gap-2">
+                      <div className="relative shrink-0">
+                        <img
+                          src={thread.investor.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400'}
+                          alt={thread.investor.name}
+                          className="size-7 rounded-full object-cover border border-[#d3d5d7]"
+                        />
+                        <img
+                          src={thread.agent.avatar || 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400'}
+                          alt={thread.agent.name}
+                          className="size-4.5 rounded-full object-cover border border-white absolute -bottom-1 -right-1 shadow-2xs"
+                        />
+                      </div>
 
-        {/* 2. Top Deal Context Chip Bar */}
-        <div className="bg-[#eef8f8] border-b border-[#d3e9e9] py-2 px-4 flex items-center justify-center shrink-0">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/90 border border-[#b2e5e8] px-4 py-1 text-xs font-semibold text-[#1f2327] shadow-2xs">
-            <span>{activeThread.context}</span>
-            {activeThread.dealPrice && (
-              <>
-                <span className="text-[#d3d5d7]">•</span>
-                <span className="text-[#00a4ac]">{activeThread.dealPrice}</span>
-              </>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12px] font-bold text-[#1f2327] truncate">
+                          {thread.investor.name} <span className="font-normal text-[#6f777f]">↔</span> {thread.agent.name}
+                        </p>
+                        <p className="text-[11px] font-medium text-[#6f777f] truncate">{thread.context}</p>
+                      </div>
+                    </div>
+
+                    {/* Bottom Row: Last Message Snippet */}
+                    <div className="flex items-center justify-between text-[11px] text-[#6f777f]">
+                      <span className="truncate max-w-[200px]">{preview}</span>
+                      {thread.unreadCount && thread.unreadCount > 0 ? (
+                        <span className="size-3.5 rounded-full bg-[#00c2cb] text-white text-[9px] font-bold flex items-center justify-center shrink-0">
+                          {thread.unreadCount}
+                        </span>
+                      ) : null}
+                    </div>
+                  </button>
+                )
+              })
             )}
           </div>
         </div>
 
-        {/* 3. Pinned Message Notice (if any) */}
-        {pinnedMessage && (
-          <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center justify-between text-xs text-amber-800 shrink-0">
-            <div className="flex items-center gap-2 truncate">
-              <Pin className="size-3.5 text-amber-600 shrink-0" />
-              <span className="font-semibold shrink-0">Pinned:</span>
-              <span className="truncate">{pinnedMessage.text}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => handleTogglePin(pinnedMessage.id)}
-              className="text-amber-600 hover:text-amber-900 font-medium ml-2 shrink-0 cursor-pointer"
-            >
-              Unpin
-            </button>
-          </div>
-        )}
-
-        {/* 4. Chat Messages Scroll Area with Duseat Pattern Wallpaper */}
+        {/* =========================================================================
+            COLUMN 2: FULL-WIDTH CENTER LIVE CHAT (Dominant, Wide Workspace)
+           ========================================================================= */}
         <div
-          className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 relative"
-          style={{
-            backgroundColor: '#eaf6f6',
-            backgroundImage: `radial-gradient(#00c2cb 0.65px, transparent 0.65px), radial-gradient(#00a4ac 0.65px, #eaf6f6 0.65px)`,
-            backgroundSize: '26px 26px',
-            backgroundPosition: '0 0, 13px 13px',
-          }}
+          className={cn(
+            'flex flex-1 flex-col min-w-0 bg-[#f8f9fa] relative z-10',
+            mobileView === 'list' && 'hidden md:flex'
+          )}
         >
-          {/* Date separator */}
-          <div className="flex justify-center">
-            <span className="rounded-full bg-white/80 backdrop-blur-xs border border-[#d3d5d7] px-3.5 py-0.5 text-[11px] font-semibold text-[#6f777f] shadow-2xs">
-              Yesterday
-            </span>
+          {/* =========================================================================
+              COMPACT CHAT HEADER (48px - 52px)
+             ========================================================================= */}
+          <div className="flex shrink-0 items-center justify-between border-b border-[#d3d5d7] bg-white px-3 sm:px-4 py-2">
+            {/* Left Header Group */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              {/* Mobile Back Button */}
+              <button
+                type="button"
+                onClick={() => setMobileView('list')}
+                className="md:hidden flex size-7 items-center justify-center rounded-[5px] border border-[#d3d5d7] text-[#1f2327] hover:bg-[#eff1f3]"
+                title="Back to conversation list"
+              >
+                <ArrowLeft className="size-3.5" />
+              </button>
+
+              {/* Investor Avatar with Country Flag & Online Dot */}
+              <div className="relative shrink-0">
+                <AvatarFlagOverlay code={investorCountryCode}>
+                  <img
+                    src={activeThread.investor.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400'}
+                    alt={activeThread.investor.name}
+                    className="size-8 rounded-full object-cover border border-[#d3d5d7]"
+                  />
+                </AvatarFlagOverlay>
+                <span className="absolute bottom-0 right-0 size-2 rounded-full bg-[#17b26a] border border-white" />
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h3 className="text-[13.5px] font-bold text-[#1f2327] truncate">{activeThread.investor.name}</h3>
+                  <span className="text-[11px] text-[#6f777f]">with</span>
+                  <span className="font-semibold text-[12.5px] text-[#1f2327] truncate">{activeThread.agent.name}</span>
+                  <AgentPlanBadge plan={activeThread.agent.plan || 'Elite'} compact />
+                  <FigmaStatusBadge
+                    status={activeThread.status === 'active' ? 'Active' : activeThread.status === 'closed' ? 'Closed' : 'Flagged'}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 text-[11px] text-[#6f777f] mt-0.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleCopyId}
+                    className="font-mono text-[#00c2cb] hover:underline flex items-center gap-1 cursor-pointer font-bold"
+                    title="Click to copy Conversation ID"
+                  >
+                    <span>{activeThread.id}</span>
+                    {copiedId ? <Check className="size-2.5 text-[#17b26a]" /> : <Copy className="size-2.5" />}
+                  </button>
+                  <span>•</span>
+                  <span className="font-mono text-[#1f2327]">Req: {activeThread.requestId}</span>
+                  <span className="hidden sm:inline">•</span>
+                  <span className="hidden sm:inline font-medium text-[#1f2327] truncate max-w-[240px]">
+                    {activeThread.property.title}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Header Controls (Compact, Clean, Toggleable Details Drawer) */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* VIEW MODE TOGGLE (Chat View / Details) */}
+              <div className="flex items-center rounded-[6px] border border-[#d3d5d7] bg-[#eff1f3] p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setShowRightPanel(false)}
+                  className={cn(
+                    'h-[26px] px-2.5 rounded-[4px] text-[11.5px] font-semibold transition-colors cursor-pointer flex items-center gap-1',
+                    !showRightPanel
+                      ? 'bg-white text-[#1f2327] shadow-2xs font-bold'
+                      : 'text-[#6f777f] hover:text-[#1f2327]'
+                  )}
+                  title="Full-Width Chat Mode"
+                >
+                  <MessageSquare className="size-3" />
+                  <span className="hidden sm:inline">Chat View</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowRightPanel(true)}
+                  className={cn(
+                    'h-[26px] px-2.5 rounded-[4px] text-[11.5px] font-semibold transition-colors cursor-pointer flex items-center gap-1',
+                    showRightPanel
+                      ? 'bg-white text-[#1f2327] shadow-2xs font-bold'
+                      : 'text-[#6f777f] hover:text-[#1f2327]'
+                  )}
+                  title="Open Conversation Details Drawer"
+                >
+                  <SlidersHorizontal className="size-3" />
+                  <span>Details</span>
+                </button>
+              </div>
+
+              {/* Reopen / Close Action Button */}
+              <button
+                type="button"
+                onClick={() => setShowCloseModal(true)}
+                className={cn(
+                  'flex h-[28px] items-center gap-1 rounded-[6px] border px-2 text-[11.5px] font-semibold transition-colors cursor-pointer',
+                  activeThread.status === 'closed'
+                    ? 'border-[#17b26a] bg-[#dfefe8] text-[#17b26a] hover:bg-[#c9e8dc]'
+                    : 'border-[#d3d5d7] bg-white text-[#1f2327] hover:bg-[#eff1f3]'
+                )}
+                title={activeThread.status === 'closed' ? 'Reopen negotiation room' : 'Close negotiation room'}
+              >
+                {activeThread.status === 'closed' ? <Unlock className="size-3.5" /> : <Lock className="size-3.5" />}
+                <span className="hidden lg:inline">{activeThread.status === 'closed' ? 'Reopen' : 'Close'}</span>
+              </button>
+
+              {/* Flag Action Button */}
+              <button
+                type="button"
+                onClick={() => setShowFlagModal(true)}
+                className={cn(
+                  'flex size-[28px] items-center justify-center rounded-[6px] border transition-colors cursor-pointer',
+                  activeThread.isFlagged
+                    ? 'border-[#d92d20] bg-[#fee4e2] text-[#d92d20]'
+                    : 'border-[#d3d5d7] bg-white text-[#6f777f] hover:text-[#d92d20] hover:bg-[#fee4e2]'
+                )}
+                title="Flag conversation for surveillance review"
+              >
+                <Flag className="size-3.5" />
+              </button>
+
+              {/* Open in Dedicated Tab */}
+              <Link
+                href={`/chats/${activeThread.id}`}
+                target="_blank"
+                className="hidden sm:flex size-[28px] items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:text-[#1f2327] hover:bg-[#eff1f3]"
+                title="Open in full standalone tab"
+              >
+                <ExternalLink className="size-3.5" />
+              </Link>
+
+              {/* Export Transcript Trigger */}
+              <button
+                type="button"
+                onClick={() => setShowExportModal(true)}
+                className="hidden sm:flex size-[28px] items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:text-[#1f2327] hover:bg-[#eff1f3]"
+                title="Export Transcript"
+              >
+                <FileDown className="size-3.5" />
+              </button>
+
+              {/* Modal Close Button if presented in popup modal */}
+              {isModal && onClose && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex size-[28px] items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] cursor-pointer"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Message List */}
-          {activeThread.messages.map((msg) => {
-            const isAgent = msg.sender === 'agent' || msg.sender === 'admin'
-            const isSystem = msg.sender === 'system'
+          {/* Compact Single-Line Property / Deal Strip */}
+          <div className="flex items-center justify-between bg-[#f4f5f6] border-b border-[#d3d5d7] px-4 py-1 text-[11.5px] text-[#1f2327]">
+            <div className="flex items-center gap-2 min-w-0">
+              <Building className="size-3 text-[#00c2cb] shrink-0" />
+              <span className="font-bold truncate">{activeThread.property.title}</span>
+              <span className="text-[#6f777f]">•</span>
+              <span className="font-bold text-[#00c2cb] shrink-0">{activeThread.property.price}</span>
+              <span className="text-[#6f777f] hidden md:inline">•</span>
+              <span className="text-[#6f777f] hidden md:inline truncate">{activeThread.property.location}</span>
+            </div>
 
-            // System Notification Bubble
-            if (isSystem) {
-              const isDealSecured = msg.systemType === 'deal_secured'
-              return (
-                <div key={msg.id} className="flex justify-start my-2">
-                  <div className="flex items-start gap-2.5 max-w-[85%] sm:max-w-[70%]">
-                    {/* Duseat System Icon */}
-                    <div className="size-8 rounded-full bg-gradient-to-br from-[#00c2cb] to-[#0a8288] flex items-center justify-center text-white shrink-0 shadow-2xs mt-1">
-                      <Sparkles className="size-4" />
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="hidden sm:inline rounded bg-white px-1.5 py-0.2 text-[10.5px] font-medium border border-[#d3d5d7] text-[#6f777f]">
+                {activeThread.property.requestStatus}
+              </span>
+              <Link
+                href="/requests"
+                className="font-semibold text-[#00c2cb] hover:underline text-[11px] flex items-center gap-0.5"
+              >
+                <span>Request</span>
+                <ChevronRight className="size-3" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Closed State Banner Notice (Thin, Non-intrusive) */}
+          {activeThread.status === 'closed' && (
+            <div className="bg-[#fee4e2]/80 border-b border-[#d92d20]/30 px-4 py-1.5 flex items-center justify-between ant-fade-in text-[12px]">
+              <div className="flex items-center gap-2 text-[#d92d20]">
+                <Lock className="size-3.5 shrink-0" />
+                <span className="font-bold">Chat closed for participants.</span>
+                <span className="text-[#6f777f] hidden sm:inline">
+                  Participants cannot send messages. Admin override mode is active.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleToggleChatLock}
+                className="text-[11.5px] font-bold text-[#00c2cb] hover:underline cursor-pointer ml-2"
+              >
+                Reopen Chat →
+              </button>
+            </div>
+          )}
+
+          {/* =========================================================================
+              MESSAGE STREAM AREA (Dominant, Natural Messaging Layout)
+             ========================================================================= */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5 scrollbar-thin">
+            {/* Date Separator */}
+            <div className="flex items-center justify-center my-2">
+              <span className="rounded-full bg-[#eff1f3] px-3 py-0.5 text-[11px] font-semibold text-[#6f777f] border border-[#d3d5d7]/50 shadow-2xs">
+                {activeThread.startedDate} • Verified Negotiation Log
+              </span>
+            </div>
+
+            {activeThread.messages.map((msg) => {
+              const isInvestor = msg.sender === 'investor'
+              const isAgent = msg.sender === 'agent'
+              const isAdmin = msg.sender === 'admin'
+              const isSystemEvent = msg.type === 'system_event'
+              const isSystemNotice = msg.type === 'system_notice'
+
+              // System Event (Centered pill)
+              if (isSystemEvent) {
+                return (
+                  <div key={msg.id} className="flex justify-center my-3">
+                    <div className="max-w-md rounded-full bg-[#f4f5f6] border border-[#d3d5d7] px-3.5 py-1 text-center text-[11.5px] text-[#6f777f] flex items-center gap-2 shadow-2xs">
+                      <ShieldCheck className="size-3.5 text-[#00c2cb] shrink-0" />
+                      <span className="font-medium">{msg.text}</span>
+                      <span className="font-mono text-[10px] opacity-75">{msg.time}</span>
                     </div>
+                  </div>
+                )
+              }
 
-                    <div className="rounded-[16px] border border-[#d3d5d7] bg-white p-4 shadow-sm space-y-2">
-                      <p className={cn('text-xs font-bold', isDealSecured ? 'text-amber-600' : 'text-[#00a4ac]')}>
-                        {isDealSecured ? 'Congratulations!' : 'System Notification'}
-                      </p>
-                      <p className="text-xs text-[#1f2327] leading-relaxed font-normal">{msg.text}</p>
-                      <div className="flex items-center justify-between text-[10px] text-[#9da4ae] pt-1 border-t border-[#f0f2f5]">
-                        <span>System message</span>
-                        <div className="flex items-center gap-1">
-                          <span>{msg.time}</span>
-                          {isDealSecured ? <span>👑</span> : <span>ℹ️</span>}
+              // System Notice Broadcast Card
+              if (isSystemNotice) {
+                return (
+                  <div key={msg.id} className="flex justify-center my-3.5">
+                    <div className="max-w-lg w-full rounded-[8px] bg-[#f6efe0] border border-[#fdb022]/60 p-3 text-center space-y-1 shadow-2xs">
+                      <div className="flex items-center justify-center gap-1.5 text-[11.5px] font-bold text-[#b54708]">
+                        <Sparkles className="size-3.5" />
+                        <span>{msg.senderName}</span>
+                      </div>
+                      <p className="text-[12.5px] text-[#1f2327] leading-relaxed">{msg.text}</p>
+                      <span className="text-[10px] font-mono text-[#6f777f] block">{msg.time}</span>
+                    </div>
+                  </div>
+                )
+              }
+
+              return (
+                <div
+                  key={msg.id}
+                  className={cn(
+                    'group flex flex-col max-w-[75%] sm:max-w-[560px] space-y-1',
+                    isInvestor ? 'mr-auto items-start' : 'ml-auto items-end'
+                  )}
+                >
+                  {/* Sender Name & Timestamp Header */}
+                  <div className="flex items-center gap-1.5 text-[10.5px] text-[#6f777f] px-1">
+                    <span className="font-bold text-[#1f2327]">{msg.senderName}</span>
+                    <span className="rounded bg-[#eff1f3] px-1.5 py-0.2 text-[9.5px] font-semibold text-[#6f777f]">
+                      {msg.senderRole || (isInvestor ? 'Investor' : isAdmin ? 'Admin' : 'Agent')}
+                    </span>
+                    <span>•</span>
+                    <span className="font-mono">{msg.time}</span>
+                  </div>
+
+                  {/* Message Bubble Container with Action Hover */}
+                  <div className="relative flex items-center gap-1.5">
+                    {/* Delete Action (visible on hover) */}
+                    <button
+                      type="button"
+                      onClick={() => setDeleteMessageTarget(msg)}
+                      className={cn(
+                        'opacity-0 group-hover:opacity-100 size-6 rounded-full bg-white border border-[#d3d5d7] text-[#6f777f] hover:text-[#d92d20] flex items-center justify-center transition-opacity shadow-2xs cursor-pointer',
+                        isInvestor ? 'order-last' : 'order-first'
+                      )}
+                      title="Delete message from audit log"
+                    >
+                      <Trash2 className="size-3" />
+                    </button>
+
+                    <div
+                      className={cn(
+                        'rounded-[10px] p-3 text-[13px] leading-[19px] shadow-2xs font-sans space-y-2.5',
+                        isInvestor
+                          ? 'bg-white border border-[#d3d5d7] text-[#1f2327]'
+                          : isAdmin
+                          ? 'bg-[#e5f6f7] border border-[#00c2cb]/50 text-[#1f2327]'
+                          : 'bg-[#1f2327] text-white'
+                      )}
+                    >
+                      {/* Text */}
+                      {msg.text && <p className="whitespace-pre-wrap">{msg.text}</p>}
+
+                      {/* Photo Attachment (Constrained aspect-ratio + Lightbox trigger) */}
+                      {msg.type === 'image' && msg.mediaUrl && (
+                        <div
+                          onClick={() => setLightboxImage(msg.mediaUrl!)}
+                          className="overflow-hidden rounded-[8px] border border-black/10 cursor-pointer max-w-sm group/img"
+                        >
+                          <img
+                            src={msg.mediaUrl}
+                            alt="Attached Image"
+                            className="max-h-56 w-full object-cover group-hover/img:scale-102 transition-transform"
+                          />
                         </div>
+                      )}
+
+                      {/* Video Attachment with Preview & Modal Playback */}
+                      {msg.type === 'video' && msg.videoThumbnail && (
+                        <div
+                          onClick={() => setVideoModalUrl(msg.mediaUrl || 'https://sample-videos.com')}
+                          className="relative overflow-hidden rounded-[8px] border border-black/10 cursor-pointer max-w-sm group/video"
+                        >
+                          <img
+                            src={msg.videoThumbnail}
+                            alt="Video Preview"
+                            className="max-h-56 w-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover/video:bg-black/55 transition-colors">
+                            <div className="flex size-11 items-center justify-center rounded-full bg-white/90 text-[#1f2327] shadow-md group-hover/video:scale-105 transition-transform">
+                              <Play className="size-4.5 ml-0.5" />
+                            </div>
+                          </div>
+                          {msg.duration && (
+                            <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-mono text-white">
+                              {msg.duration}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Voice Note Audio Waveform Player */}
+                      {msg.type === 'voice' && (
+                        <div
+                          className={cn(
+                            'flex items-center gap-2.5 p-2 rounded-[8px] min-w-[240px]',
+                            isAgent && !isAdmin ? 'bg-white/10' : 'bg-[#eff1f3]'
+                          )}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setPlayingVoiceId(playingVoiceId === msg.id ? null : msg.id)}
+                            className="flex size-8 items-center justify-center rounded-full bg-[#00c2cb] text-[#1f2327] shrink-0 cursor-pointer hover:opacity-90 shadow-2xs"
+                          >
+                            {playingVoiceId === msg.id ? <Pause className="size-3.5" /> : <Play className="size-3.5 ml-0.5" />}
+                          </button>
+
+                          <div className="flex-1 space-y-1">
+                            {/* Waveform Visualization */}
+                            <div className="flex items-end gap-0.5 h-6">
+                              {(msg.waveform || [30, 60, 40, 90, 70, 50, 80, 100, 65, 45, 75, 90, 55, 35, 65, 80, 45, 60]).map(
+                                (h, i) => (
+                                  <span
+                                    key={i}
+                                    style={{ height: `${h}%` }}
+                                    className={cn(
+                                      'w-1 rounded-full transition-colors',
+                                      playingVoiceId === msg.id && i < (playbackProgress / 100) * 18
+                                        ? 'bg-[#00c2cb]'
+                                        : isAgent && !isAdmin
+                                        ? 'bg-white/40'
+                                        : 'bg-[#9da4ae]'
+                                    )}
+                                  />
+                                )
+                              )}
+                            </div>
+                            <div className="flex justify-between text-[10px] opacity-75 font-mono">
+                              <span>{msg.duration || '00:28'}</span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setPlaybackSpeed((prev) => (prev === 1 ? 1.5 : prev === 1.5 ? 2 : 1))
+                                }}
+                                className="font-bold hover:underline cursor-pointer"
+                              >
+                                {playbackSpeed}x
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Document Attachment */}
+                      {msg.type === 'document' && msg.document && (
+                        <div
+                          className={cn(
+                            'flex items-center justify-between p-2.5 rounded-[8px] gap-3 border',
+                            isAgent && !isAdmin
+                              ? 'bg-white/10 border-white/20'
+                              : 'bg-white border-[#d3d5d7]'
+                          )}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="size-7 rounded-[5px] bg-[#fee4e2] text-[#d92d20] flex items-center justify-center font-bold text-[9.5px] shrink-0">
+                              {msg.document.ext}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-bold text-[12px] truncate">{msg.document.name}</p>
+                              <p className="text-[10.5px] opacity-75 font-mono">{msg.document.size}</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => notify('Document Download', `Downloading ${msg.document?.name}…`)}
+                            className="flex size-6.5 items-center justify-center rounded-[5px] bg-[#f4f5f6] text-[#1f2327] hover:bg-[#d3d5d7] cursor-pointer shrink-0"
+                            title="Download Document"
+                          >
+                            <Download className="size-3" />
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Link Preview Card */}
+                      {msg.type === 'link_preview' && msg.linkPreview && (
+                        <a
+                          href={msg.linkPreview.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={cn(
+                            'block overflow-hidden rounded-[8px] border transition-colors',
+                            isAgent && !isAdmin
+                              ? 'bg-white/10 border-white/20 hover:bg-white/15'
+                              : 'bg-white border-[#d3d5d7] hover:bg-[#fcfcfc]'
+                          )}
+                        >
+                          {msg.linkPreview.image && (
+                            <img
+                              src={msg.linkPreview.image}
+                              alt=""
+                              className="h-28 w-full object-cover border-b border-inherit"
+                            />
+                          )}
+                          <div className="p-2.5 space-y-1 text-left">
+                            <span className="text-[9.5px] font-mono text-[#00c2cb] block">{msg.linkPreview.domain}</span>
+                            <p className="font-bold text-[12px] line-clamp-1">{msg.linkPreview.title}</p>
+                            <p className="text-[10.5px] opacity-75 line-clamp-2">{msg.linkPreview.description}</p>
+                          </div>
+                        </a>
+                      )}
+
+                      {/* Property Card Attachment */}
+                      {msg.type === 'property_card' && msg.propertyCard && (
+                        <div className="overflow-hidden rounded-[8px] border border-[#d3d5d7] bg-white text-[#1f2327] p-2 space-y-2">
+                          <img
+                            src={msg.propertyCard.image}
+                            alt=""
+                            className="h-28 w-full object-cover rounded-[6px]"
+                          />
+                          <div>
+                            <p className="font-bold text-[12.5px]">{msg.propertyCard.title}</p>
+                            <p className="text-[10.5px] text-[#6f777f]">{msg.propertyCard.subtitle}</p>
+                            <p className="font-bold text-[12.5px] text-[#00c2cb] mt-0.5">{msg.propertyCard.price}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Status / Receipts */}
+                      <div className="flex items-center justify-end gap-1 text-[10px] opacity-70">
+                        <span>{msg.time}</span>
+                        {!isInvestor && <CheckCheck className="size-3 text-[#00c2cb]" />}
                       </div>
                     </div>
                   </div>
                 </div>
               )
-            }
+            })}
 
-            // Message Options Menu Items
-            const messageActions = [
-              {
-                label: 'Edit Message (تعديل الرسالة)',
-                value: 'edit',
-                icon: <Pencil className="size-3.5 text-[#00c2cb]" />,
-              },
-              {
-                label: 'Delete from User (مسح من عند اليوزر)',
-                value: 'delete-user',
-                destructive: true,
-                icon: <Trash2 className="size-3.5 text-rose-600" />,
-              },
-              {
-                label: 'Permanently Delete Message',
-                value: 'delete-perm',
-                destructive: true,
-                icon: <Trash2 className="size-3.5 text-rose-700" />,
-              },
-              {
-                label: msg.isPinned ? 'Unpin Message' : 'Pin Message (تثبيت)',
-                value: 'pin',
-                icon: <Pin className="size-3.5 text-amber-600" />,
-              },
-              {
-                label: 'Copy Message Text',
-                value: 'copy',
-                icon: <Copy className="size-3.5 text-[#6f777f]" />,
-              },
-            ]
-
-            const handleMsgAction = (val: string) => {
-              if (val === 'edit') {
-                setEditingMessage(msg)
-                setEditText(msg.text || '')
-              } else if (val === 'delete-user') {
-                handleDeleteMessage(msg.id, false)
-              } else if (val === 'delete-perm') {
-                handleDeleteMessage(msg.id, true)
-              } else if (val === 'pin') {
-                handleTogglePin(msg.id)
-              } else if (val === 'copy') {
-                navigator.clipboard?.writeText(msg.text || '')
-                notify('Copied', 'Message copied to clipboard.')
-              }
-            }
-
-            return (
-              <div
-                key={msg.id}
-                className={cn('flex items-end gap-2 group', isAgent ? 'justify-end' : 'justify-start')}
-              >
-                {/* Left Participant Avatar */}
-                {!isAgent && (
-                  <div className="size-7 rounded-full bg-gradient-to-br from-[#00c2cb] to-[#0a8288] flex items-center justify-center text-white font-bold text-[10px] shrink-0 mb-1 shadow-2xs">
-                    {msg.senderName.split(' ').map((n) => n[0]).join('')}
-                  </div>
-                )}
-
-                {/* Message Bubble Container */}
-                <div className="relative max-w-[85%] sm:max-w-[70%]">
-                  {/* Action Menu (Visible on hover) */}
-                  <div
-                    className={cn(
-                      'absolute top-2 opacity-0 group-hover:opacity-100 transition-opacity z-10',
-                      isAgent ? '-left-8' : '-right-8'
-                    )}
-                  >
-                    <Dropdown
-                      align={isAgent ? 'start' : 'end'}
-                      floating
-                      options={messageActions}
-                      onSelect={handleMsgAction}
-                      trigger={
-                        <button
-                          type="button"
-                          className="size-6 rounded-full bg-white/90 shadow-sm border border-[#d3d5d7] flex items-center justify-center text-[#6f777f] hover:text-[#1f2327] cursor-pointer"
-                        >
-                          <MoreHorizontal className="size-3" />
-                        </button>
-                      }
-                    />
-                  </div>
-
-                  {/* 1. Video Message */}
-                  {msg.type === 'video' && (
-                    <div className="rounded-[16px] overflow-hidden border border-[#d3d5d7] bg-white shadow-sm">
-                      <div className="relative h-[220px] sm:h-[260px] bg-black group/video cursor-pointer">
-                        <img
-                          src={msg.videoThumbnail}
-                          alt="Video Preview"
-                          className="size-full object-cover opacity-90 group-hover/video:scale-105 transition-transform duration-300"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => notify('Video Player', 'Opening video playback player')}
-                          className="absolute inset-0 m-auto size-14 rounded-full bg-[#00c2cb]/90 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform cursor-pointer"
-                        >
-                          <Play className="size-6 fill-white ml-0.5" />
-                        </button>
-                        <div className="absolute bottom-2 left-2 rounded-md bg-black/60 px-2 py-0.5 text-[11px] font-medium text-white">
-                          {msg.duration}
-                        </div>
-                      </div>
-                      <div className="p-2.5 flex justify-end text-[11px] text-[#9da4ae]">
-                        <span>{msg.time}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 2. Photo Gallery Grid */}
-                  {msg.type === 'gallery' && msg.photos && (
-                    <div className="rounded-[16px] border border-[#d3d5d7] bg-white p-2 shadow-sm space-y-2">
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {msg.photos.map((src, pIdx) => (
-                          <div
-                            key={pIdx}
-                            onClick={() => setLightboxImage(src)}
-                            className="size-[120px] sm:size-[140px] rounded-[10px] overflow-hidden border border-[#d3d5d7] relative group/photo cursor-pointer"
-                          >
-                            <img
-                              src={src}
-                              alt="Gallery Preview"
-                              className="size-full object-cover group-hover/photo:scale-105 transition-transform"
-                            />
-                            <div className="absolute inset-0 bg-black/10 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center">
-                              <Maximize2 className="size-4 text-white drop-shadow-md" />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex items-center justify-end gap-1 text-[11px] text-[#9da4ae] px-1">
-                        <span>{msg.time}</span>
-                        <Check className="size-3 text-[#00c2cb]" />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 3. Voice Note Audio Player (Figma Waveform) */}
-                  {msg.type === 'voice' && (
-                    <div
-                      className={cn(
-                        'rounded-[16px] p-3.5 shadow-sm min-w-[240px] sm:min-w-[280px]',
-                        isAgent ? 'bg-[#00737a] text-white' : 'bg-white text-[#1f2327] border border-[#d3d5d7]'
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (playingVoiceId === msg.id) setPlayingVoiceId(null)
-                            else setPlayingVoiceId(msg.id)
-                          }}
-                          className={cn(
-                            'size-9 rounded-full flex items-center justify-center shrink-0 cursor-pointer shadow-2xs transition-transform hover:scale-105',
-                            isAgent ? 'bg-white text-[#00737a]' : 'bg-[#00c2cb] text-white'
-                          )}
-                        >
-                          {playingVoiceId === msg.id ? (
-                            <Pause className="size-4 fill-current" />
-                          ) : (
-                            <Play className="size-4 fill-current ml-0.5" />
-                          )}
-                        </button>
-
-                        {/* Waveform Bars */}
-                        <div className="flex-1 flex items-center gap-0.5 h-6">
-                          {[40, 60, 25, 90, 75, 30, 85, 100, 45, 60, 80, 35, 70, 95, 50, 65, 30, 85, 40].map(
-                            (height, barIdx) => {
-                              const barProgress = (barIdx / 19) * 100
-                              const isPast = playingVoiceId === msg.id && playbackProgress >= barProgress
-                              return (
-                                <div
-                                  key={barIdx}
-                                  className={cn(
-                                    'w-1 rounded-full transition-colors',
-                                    isPast
-                                      ? isAgent ? 'bg-white' : 'bg-[#00c2cb]'
-                                      : isAgent ? 'bg-white/40' : 'bg-[#d3d5d7]'
-                                  )}
-                                  style={{ height: `${height}%` }}
-                                />
-                              )
-                            }
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between text-[10px] mt-2 pt-1 border-t border-white/20 opacity-85">
-                        <span>{playingVoiceId === msg.id ? 'Playing audio...' : msg.duration || '00:25'}</span>
-                        <div className="flex items-center gap-1">
-                          <span>{msg.time}</span>
-                          {isAgent && <CheckCheck className="size-3 text-cyan-200" />}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 4. Text Message */}
-                  {msg.type === 'text' && (
-                    <div
-                      className={cn(
-                        'rounded-[16px] px-4 py-3 shadow-sm text-[14px] leading-relaxed',
-                        msg.sender === 'admin'
-                          ? 'bg-gradient-to-r from-[#005f66] to-[#00737a] text-white border border-[#00c2cb]/40 rounded-br-[4px]'
-                          : isAgent
-                          ? 'bg-[#00737a] text-white rounded-br-[4px]'
-                          : 'bg-white text-[#1f2327] border border-[#d3d5d7] rounded-bl-[4px]'
-                      )}
-                    >
-                      {msg.sender === 'admin' && (
-                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-cyan-200 mb-1 pb-1 border-b border-white/15">
-                          <Shield className="size-3" />
-                          <span>Duseat Administrator (Official)</span>
-                        </div>
-                      )}
-                      {msg.isDeleted ? (
-                        <p className="italic text-xs opacity-75">{msg.text}</p>
-                      ) : (
-                        <p className="whitespace-pre-wrap">{msg.text}</p>
-                      )}
-                      {msg.isEdited && (
-                        <span className="block text-[10px] opacity-75 mt-1 font-sans">
-                          (edited by admin)
-                        </span>
-                      )}
-                      <div className="flex items-center justify-end gap-1 text-[10px] opacity-75 mt-1.5 text-right">
-                        <span>{msg.time}</span>
-                        {isAgent && <CheckCheck className="size-3 text-cyan-200" />}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 5. Property Card Embed Message */}
-                  {msg.type === 'property_card' && msg.propertyCard && (
-                    <div
-                      className={cn(
-                        'rounded-[16px] overflow-hidden shadow-sm border',
-                        isAgent
-                          ? 'bg-[#00737a] text-white border-transparent'
-                          : 'bg-white text-[#1f2327] border-[#d3d5d7]'
-                      )}
-                    >
-                      {/* Quoted reply card if present */}
-                      {msg.replyTo && (
-                        <div className="bg-black/10 px-3.5 py-2 border-b border-white/10 text-xs">
-                          <p className="font-bold opacity-90">{msg.replyTo.senderName}</p>
-                          <p className="text-[11px] opacity-75 truncate">{msg.replyTo.snippet}</p>
-                        </div>
-                      )}
-
-                      {/* Property Preview Container */}
-                      <div className="p-3">
-                        <div className="rounded-[10px] overflow-hidden bg-black/10 border border-white/10 flex items-center gap-3 p-2">
-                          <img
-                            src={msg.propertyCard.image}
-                            alt="Property"
-                            className="size-14 rounded-[8px] object-cover shrink-0"
-                          />
-                          <div className="min-w-0">
-                            <p className="font-bold text-[13px] truncate">{msg.propertyCard.title}</p>
-                            <p className="text-[11px] opacity-80 truncate">{msg.propertyCard.subtitle}</p>
-                            <p className="text-[11px] font-semibold text-cyan-300 mt-0.5">
-                              {msg.propertyCard.price}
-                            </p>
-                          </div>
-                        </div>
-
-                        <a
-                          href={msg.propertyCard.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-2 block text-xs underline text-cyan-200 hover:text-white truncate"
-                        >
-                          {msg.propertyCard.url}
-                        </a>
-                      </div>
-
-                      <div className="px-3 pb-2 flex items-center justify-end gap-1 text-[10px] opacity-75">
-                        <span>{msg.time}</span>
-                        {isAgent && <CheckCheck className="size-3 text-cyan-200" />}
-                      </div>
-                    </div>
-                  )}
-                </div>
+            {/* Typing Indicator */}
+            {isTyping && (
+              <div className="flex items-center gap-2 text-[11px] text-[#6f777f] pl-1 ant-fade-in">
+                <span className="size-1.5 rounded-full bg-[#00c2cb] animate-pulse" />
+                <span>{activeThread.agent.name} is typing…</span>
               </div>
-            )
-          })}
-
-          {/* Floating Action Button in Chat: Chat Summary */}
-          <div className="flex justify-center my-4">
-            <button
-              type="button"
-              onClick={() =>
-                notify('Chat Summary', `Generated full negotiation summary for ${activeThread.id}`)
-              }
-              className="inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur-xs border border-[#00c2cb] px-4 py-1.5 text-xs font-semibold text-[#00a4ac] shadow-2xs hover:bg-[#00c2cb] hover:text-white transition-colors cursor-pointer"
-            >
-              <FileText className="size-3.5" />
-              <span>Chat summary</span>
-            </button>
+            )}
           </div>
-        </div>
 
-        {/* 5. Bottom Controls Bar: Always Available for Admin Override */}
-        <div className="p-4 bg-white border-t border-[#d3d5d7] shrink-0 space-y-3">
-          {/* If Closed: Show Lock Status Notice with Reopen button */}
-          {activeThread.status === 'closed' && (
-            <div className="rounded-[12px] border border-amber-200 bg-amber-50/80 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 shadow-2xs">
-              <div className="flex items-center gap-2.5">
-                <div className="size-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-700 shrink-0">
-                  <Lock className="size-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-bold text-[13px] text-amber-900">Chat closed for participants</p>
-                    <span className="rounded-full bg-amber-200/80 px-2 py-0.5 text-[10px] font-bold text-amber-900">
-                      Admin Override Active 🛡️
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-amber-700">
-                    Participants cannot send messages. As an Administrator, you can still post official notices and messages anytime.
-                  </p>
-                </div>
+          {/* =========================================================================
+              COMPOSER BAR (Sticky at bottom, multi-persona admin switchers)
+             ========================================================================= */}
+          <div className="shrink-0 border-t border-[#d3d5d7] bg-white p-2.5 sm:p-3 space-y-2">
+            {/* Persona Switchers */}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[11px] font-semibold text-[#6f777f]">Transmit as:</span>
+                <button
+                  type="button"
+                  onClick={() => setSendAs('admin')}
+                  className={cn(
+                    'h-[24px] px-2 rounded-[5px] text-[10.5px] font-bold transition-colors cursor-pointer flex items-center gap-1',
+                    sendAs === 'admin'
+                      ? 'bg-[#00c2cb] text-[#1f2327] shadow-2xs'
+                      : 'bg-[#eff1f3] text-[#6f777f] hover:bg-[#d3d5d7]'
+                  )}
+                >
+                  <Shield className="size-3" />
+                  <span>Admin Official</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSendAs('agent')}
+                  className={cn(
+                    'h-[24px] px-2 rounded-[5px] text-[10.5px] font-bold transition-colors cursor-pointer flex items-center gap-1',
+                    sendAs === 'agent'
+                      ? 'bg-[#7f56d9] text-white shadow-2xs'
+                      : 'bg-[#eff1f3] text-[#6f777f] hover:bg-[#d3d5d7]'
+                  )}
+                >
+                  <User className="size-3" />
+                  <span>Agent Proxy</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowSystemDialog(true)}
+                  className="h-[24px] px-2 rounded-[5px] bg-[#f6efe0] text-[#b54708] text-[10.5px] font-bold hover:bg-[#fbd08a] transition-colors cursor-pointer flex items-center gap-1 border border-[#fdb022]/40"
+                >
+                  <Sparkles className="size-3" />
+                  <span>Broadcast Notice</span>
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={handleToggleChatLock}
-                className="inline-flex h-[32px] items-center justify-center gap-1.5 rounded-[8px] bg-emerald-600 px-3 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors cursor-pointer ant-wave-btn shadow-2xs shrink-0"
-              >
-                <Unlock className="size-3.5" />
-                <span>Reopen Chat</span>
-              </button>
-            </div>
-          )}
-
-          {/* Admin Composer Bar (Always Active) */}
-          <div className="space-y-2">
-            {/* Send As Selector & System Notice Action */}
-            <div className="flex items-center justify-between text-xs text-[#6f777f]">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">Send as:</span>
-                <div className="flex items-center gap-1 rounded-[6px] bg-[#eff1f3] p-0.5">
-                  <button
-                    type="button"
-                    onClick={() => setSendAs('admin')}
-                    className={cn(
-                      'rounded-[4px] px-2 py-0.5 text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1',
-                      sendAs === 'admin' ? 'bg-white text-[#1f2327] shadow-2xs font-bold' : 'text-[#6f777f]'
-                    )}
-                  >
-                    <Shield className="size-3 text-[#00c2cb]" />
-                    <span>Admin (Official)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSendAs('agent')}
-                    className={cn(
-                      'rounded-[4px] px-2 py-0.5 text-xs font-semibold cursor-pointer transition-colors',
-                      sendAs === 'agent' ? 'bg-white text-[#1f2327] shadow-2xs font-bold' : 'text-[#6f777f]'
-                    )}
-                  >
-                    Agent (Impersonate)
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowSystemDialog(true)}
-                className="text-xs text-[#00c2cb] font-semibold hover:underline cursor-pointer flex items-center gap-1"
-              >
-                <Sparkles className="size-3" />
-                <span>Insert System Notice</span>
-              </button>
+              <span className="text-[10px] text-[#9da4ae] hidden lg:inline font-mono">
+                Press Enter ↵ to send
+              </span>
             </div>
 
-            {/* Input Bar */}
-            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-              <div className="flex-1 relative flex items-center rounded-[10px] border border-[#d3d5d7] bg-[#f8f9fa] focus-within:border-[#00c2cb] focus-within:bg-white transition-colors">
-                <input
-                  type="text"
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  placeholder={
-                    activeThread.status === 'closed'
-                      ? 'Type official message (Admin override enabled on closed chat)...'
-                      : 'Type a message to investor or agent...'
-                  }
-                  className="flex-1 bg-transparent py-2.5 pl-3.5 pr-20 text-sm outline-none text-[#1f2327]"
-                />
-
-                {/* Right Tools: Attach + Camera */}
-                <div className="absolute right-2.5 flex items-center gap-2 text-[#6f777f]">
-                  <button
-                    type="button"
-                    onClick={() => notify('Attachment', 'Select image or PDF brochure to send.')}
-                    className="p-1 hover:text-[#1f2327] cursor-pointer"
-                    title="Attach file / brochure"
-                  >
-                    <Paperclip className="size-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => notify('Media Upload', 'Capture or upload property video.')}
-                    className="p-1 hover:text-[#1f2327] cursor-pointer"
-                    title="Upload camera photo / video"
-                  >
-                    <Camera className="size-4" />
-                  </button>
-                </div>
+            {/* Input Row */}
+            <form onSubmit={handleSendMessage} className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => notify('Document Attachment', 'Upload PDF or CAD agreement…')}
+                  className="flex size-8 items-center justify-center rounded-[5px] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+                  title="Attach File"
+                >
+                  <Paperclip className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => notify('Photo Upload', 'Select image scan or property render…')}
+                  className="flex size-8 items-center justify-center rounded-[5px] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+                  title="Upload Image"
+                >
+                  <Camera className="size-4" />
+                </button>
               </div>
+
+              <input
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder={
+                  activeThread.status === 'closed'
+                    ? 'Transmitting official administrative override message…'
+                    : sendAs === 'admin'
+                    ? 'Type official compliance message…'
+                    : `Impersonate message as ${activeThread.agent.name}…`
+                }
+                className="flex-1 h-[36px] px-3 rounded-[6px] border border-[#d3d5d7] bg-white text-[12.5px] outline-none focus:border-[#00c2cb] focus:ring-1 focus:ring-[#00c2cb] font-sans"
+              />
 
               <button
                 type="submit"
                 disabled={!inputText.trim()}
-                className="size-10 rounded-full bg-[#00c2cb] flex items-center justify-center text-white hover:bg-[#00a8b0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shrink-0 shadow-2xs ant-wave-btn"
-                title="Send message as Admin"
+                className="flex h-[36px] items-center gap-1.5 rounded-[6px] bg-[#1f2327] px-3.5 text-[12.5px] font-bold text-white hover:bg-black disabled:opacity-40 transition-colors cursor-pointer shadow-2xs shrink-0"
               >
-                <Send className="size-4 fill-white ml-0.5" />
+                <span>Send</span>
+                <Send className="size-3.5" />
               </button>
             </form>
           </div>
         </div>
-      </div>
 
-      {/* =========================================================================
-          MODALS & DIALOGS
-         ========================================================================= */}
-
-      {/* 1. Edit Message Dialog */}
-      {editingMessage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 font-sans backdrop-blur-2xs">
-          <div className="w-full max-w-md rounded-[16px] border border-[#d3d5d7] bg-white p-5 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-[#d3d5d7] pb-3">
-              <h4 className="font-bold text-[16px] text-[#1f2327]">Edit Message (تعديل الرسالة)</h4>
+        {/* =========================================================================
+            DRAWER / SIDEBAR: CONVERSATION DETAILS (Opened via Toggle)
+           ========================================================================= */}
+        {showRightPanel && (
+          <div
+            className={cn(
+              'w-80 sm:w-96 flex flex-col border-l border-[#d3d5d7] bg-white overflow-y-auto shrink-0 divide-y divide-[#d3d5d7] z-30 transition-all',
+              'absolute right-0 top-0 bottom-0 shadow-2xl bg-white ant-fade-in'
+            )}
+          >
+            {/* Drawer Header */}
+            <div className="p-3 bg-[#fcfcfc] flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <h4 className="font-bold text-[13px] text-[#1f2327]">Conversation Details</h4>
+                <span className="rounded bg-[#eff1f3] px-1.5 py-0.2 text-[10px] font-mono text-[#6f777f]">
+                  {activeThread.id}
+                </span>
+              </div>
               <button
                 type="button"
-                onClick={() => setEditingMessage(null)}
-                className="size-7 rounded-full flex items-center justify-center text-[#6f777f] hover:bg-[#eff1f3] cursor-pointer"
+                onClick={() => setShowRightPanel(false)}
+                className="size-6.5 rounded-[5px] text-[#6f777f] hover:bg-[#eff1f3] flex items-center justify-center cursor-pointer"
+                title="Close Details Drawer"
               >
                 <X className="size-4" />
               </button>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-[#6f777f]">Modified Message Content</label>
-              <textarea
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                className="w-full rounded-[8px] border border-[#d3d5d7] p-3 text-sm outline-none focus:border-[#00c2cb]"
-                rows={4}
-              />
-              <p className="text-[11px] text-[#9da4ae]">
-                An official `(edited by admin)` marker will be added to this message.
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-[#d3d5d7]">
+            {/* Accordion 1: Participants */}
+            <div className="p-3 space-y-2">
               <button
                 type="button"
-                onClick={() => setEditingMessage(null)}
-                className="rounded-[8px] border border-[#d3d5d7] px-4 py-2 text-xs font-semibold text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer"
+                onClick={() => toggleSection('participants')}
+                className="w-full flex items-center justify-between font-bold text-[12px] text-[#1f2327] cursor-pointer"
+              >
+                <span>1. Participants</span>
+                <ChevronDown
+                  className={cn('size-3.5 text-[#6f777f] transition-transform', !expandedSections.participants && '-rotate-90')}
+                />
+              </button>
+
+              {expandedSections.participants && (
+                <div className="space-y-2 text-[12px]">
+                  {/* Investor */}
+                  <div className="rounded-[6px] border border-[#d3d5d7] p-2.5 space-y-1 bg-[#fcfcfc]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10.5px] font-bold text-[#6f777f]">Investor (Buyer)</span>
+                      <Link
+                        href={`/investors/${activeThread.investor.id}`}
+                        className="text-[10.5px] font-bold text-[#00c2cb] hover:underline flex items-center gap-0.5"
+                      >
+                        <span>Profile</span>
+                        <ChevronRight className="size-3" />
+                      </Link>
+                    </div>
+                    <p className="font-bold text-[#1f2327] text-[12.5px]">{activeThread.investor.name}</p>
+                    <div className="space-y-0.5 text-[11px] text-[#6f777f]">
+                      <p className="flex items-center gap-1.5">
+                        <Mail className="size-3 text-[#9da4ae]" />
+                        <span>{activeThread.investor.email || 'investor@duseat.ae'}</span>
+                      </p>
+                      <p className="flex items-center gap-1.5">
+                        <Phone className="size-3 text-[#9da4ae]" />
+                        <span>{activeThread.investor.phone || '+971 50 000 0000'}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Agent */}
+                  <div className="rounded-[6px] border border-[#d3d5d7] p-2.5 space-y-1 bg-[#fcfcfc]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10.5px] font-bold text-[#6f777f]">Licensed Broker</span>
+                      <Link
+                        href={`/agents/${activeThread.agent.id}`}
+                        className="text-[10.5px] font-bold text-[#00c2cb] hover:underline flex items-center gap-0.5"
+                      >
+                        <span>Profile</span>
+                        <ChevronRight className="size-3" />
+                      </Link>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="font-bold text-[#1f2327] text-[12.5px]">{activeThread.agent.name}</p>
+                      <AgentPlanBadge plan={activeThread.agent.plan || 'Elite'} compact />
+                    </div>
+                    <p className="text-[11px] font-semibold text-[#1f2327]">{activeThread.agent.agency}</p>
+                    <div className="space-y-0.5 text-[10.5px] text-[#6f777f]">
+                      <p>License: <span className="font-mono text-[#1f2327]">{activeThread.agent.licenseNo}</span></p>
+                      <p className="flex items-center gap-1.5">
+                        <Phone className="size-3 text-[#9da4ae]" />
+                        <span>{activeThread.agent.phone}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 2: Request & Property Context */}
+            <div className="p-3 space-y-2">
+              <button
+                type="button"
+                onClick={() => toggleSection('property')}
+                className="w-full flex items-center justify-between font-bold text-[12px] text-[#1f2327] cursor-pointer"
+              >
+                <span>2. Request & Property</span>
+                <ChevronDown
+                  className={cn('size-3.5 text-[#6f777f] transition-transform', !expandedSections.property && '-rotate-90')}
+                />
+              </button>
+
+              {expandedSections.property && (
+                <div className="space-y-2 text-[11.5px]">
+                  <div className="rounded-[6px] border border-[#d3d5d7] overflow-hidden bg-white">
+                    <img
+                      src={activeThread.property.image}
+                      alt=""
+                      className="h-24 w-full object-cover"
+                    />
+                    <div className="p-2 space-y-1">
+                      <p className="font-bold text-[12px] text-[#1f2327]">{activeThread.property.title}</p>
+                      <div className="flex justify-between font-semibold">
+                        <span className="text-[#6f777f]">Price</span>
+                        <span className="font-bold text-[#00c2cb]">{activeThread.property.price}</span>
+                      </div>
+                      <div className="flex justify-between text-[#6f777f]">
+                        <span>Bedrooms</span>
+                        <span className="text-[#1f2327] font-medium">{activeThread.property.bedrooms} Beds</span>
+                      </div>
+                      <div className="flex justify-between text-[#6f777f]">
+                        <span>Area</span>
+                        <span className="text-[#1f2327] font-medium">{activeThread.property.area}</span>
+                      </div>
+                      <div className="flex justify-between text-[#6f777f]">
+                        <span>Location</span>
+                        <span className="text-[#1f2327] font-medium">{activeThread.property.location}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 3: Conversation Overview */}
+            <div className="p-3 space-y-2">
+              <button
+                type="button"
+                onClick={() => toggleSection('overview')}
+                className="w-full flex items-center justify-between font-bold text-[12px] text-[#1f2327] cursor-pointer"
+              >
+                <span>3. Room Metrics</span>
+                <ChevronDown
+                  className={cn('size-3.5 text-[#6f777f] transition-transform', !expandedSections.overview && '-rotate-90')}
+                />
+              </button>
+
+              {expandedSections.overview && (
+                <div className="space-y-1 text-[11.5px]">
+                  <div className="flex justify-between p-1.5 rounded-[5px] bg-[#fcfcfc] border border-[#d3d5d7]">
+                    <span className="text-[#6f777f]">Status</span>
+                    <FigmaStatusBadge
+                      status={activeThread.status === 'active' ? 'Active' : activeThread.status === 'closed' ? 'Closed' : 'Flagged'}
+                    />
+                  </div>
+                  <div className="flex justify-between p-1.5 rounded-[5px] bg-[#fcfcfc] border border-[#d3d5d7]">
+                    <span className="text-[#6f777f]">Started</span>
+                    <span className="font-mono text-[#1f2327]">{activeThread.startedDate}</span>
+                  </div>
+                  <div className="flex justify-between p-1.5 rounded-[5px] bg-[#fcfcfc] border border-[#d3d5d7]">
+                    <span className="text-[#6f777f]">Duration</span>
+                    <span className="font-bold text-[#1f2327]">{activeThread.duration}</span>
+                  </div>
+                  <div className="flex justify-between p-1.5 rounded-[5px] bg-[#fcfcfc] border border-[#d3d5d7]">
+                    <span className="text-[#6f777f]">Messages</span>
+                    <span className="font-bold text-[#1f2327]">{activeThread.messages.length}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 4: Media & Attachments */}
+            <div className="p-3 space-y-2">
+              <button
+                type="button"
+                onClick={() => toggleSection('media')}
+                className="w-full flex items-center justify-between font-bold text-[12px] text-[#1f2327] cursor-pointer"
+              >
+                <span>4. Media & Attachments</span>
+                <ChevronDown
+                  className={cn('size-3.5 text-[#6f777f] transition-transform', !expandedSections.media && '-rotate-90')}
+                />
+              </button>
+
+              {expandedSections.media && (
+                <div className="space-y-2 text-[11.5px]">
+                  {/* Filter Pills */}
+                  <div className="flex gap-1 overflow-x-auto pb-0.5">
+                    {(['all', 'images', 'docs', 'voice'] as const).map((filter) => (
+                      <button
+                        key={filter}
+                        type="button"
+                        onClick={() => setMediaTabFilter(filter)}
+                        className={cn(
+                          'h-[22px] px-2 rounded-[4px] text-[10px] font-bold capitalize transition-colors cursor-pointer',
+                          mediaTabFilter === filter
+                            ? 'bg-[#1f2327] text-white'
+                            : 'bg-[#eff1f3] text-[#6f777f] hover:bg-[#d3d5d7]'
+                        )}
+                      >
+                        {filter}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Media Grid */}
+                  <div className="space-y-1 max-h-36 overflow-y-auto">
+                    {threadAttachments.docs.map((doc, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-1.5 rounded-[5px] bg-[#fcfcfc] border border-[#d3d5d7]"
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <FileText className="size-3 text-[#d92d20] shrink-0" />
+                          <span className="font-semibold truncate text-[11px]">{doc.name}</span>
+                        </div>
+                        <span className="font-mono text-[9.5px] text-[#6f777f] shrink-0">{doc.size}</span>
+                      </div>
+                    ))}
+
+                    {threadAttachments.videos.map((vid, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => setVideoModalUrl(vid.url)}
+                        className="flex items-center justify-between p-1.5 rounded-[5px] bg-[#fcfcfc] border border-[#d3d5d7] cursor-pointer hover:bg-[#eff1f3]"
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Play className="size-3 text-[#00c2cb] shrink-0" />
+                          <span className="font-semibold truncate text-[11px]">Video Tour</span>
+                        </div>
+                        <span className="font-mono text-[9.5px] text-[#6f777f] shrink-0">{vid.duration}</span>
+                      </div>
+                    ))}
+
+                    {threadAttachments.voiceNotes.map((vn, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-1.5 rounded-[5px] bg-[#fcfcfc] border border-[#d3d5d7]"
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Volume2 className="size-3 text-[#00c2cb] shrink-0" />
+                          <span className="font-semibold truncate text-[11px]">Voice memo</span>
+                        </div>
+                        <span className="font-mono text-[9.5px] text-[#6f777f] shrink-0">{vn.duration}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => notify('Download Media', 'Downloading all media attachments archive (.zip)…')}
+                    className="w-full h-[28px] rounded-[5px] border border-[#d3d5d7] bg-white text-[11px] font-bold text-[#1f2327] hover:bg-[#eff1f3] flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <Download className="size-3" />
+                    <span>Download All Attachments</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 5: Timeline */}
+            <div className="p-3 space-y-2">
+              <button
+                type="button"
+                onClick={() => toggleSection('timeline')}
+                className="w-full flex items-center justify-between font-bold text-[12px] text-[#1f2327] cursor-pointer"
+              >
+                <span>5. Milestone Timeline</span>
+                <ChevronDown
+                  className={cn('size-3.5 text-[#6f777f] transition-transform', !expandedSections.timeline && '-rotate-90')}
+                />
+              </button>
+
+              {expandedSections.timeline && (
+                <div className="space-y-2.5 pt-0.5 text-[11px]">
+                  {activeThread.timeline?.map((ev) => (
+                    <div key={ev.id} className="relative pl-3.5 pb-1 border-l-2 border-[#00c2cb]/40 last:border-l-0">
+                      <span className="absolute -left-[4.5px] top-0 size-2 rounded-full bg-[#00c2cb]" />
+                      <p className="font-bold text-[#1f2327] text-[11.5px]">{ev.title}</p>
+                      <p className="text-[10.5px] text-[#6f777f] leading-snug">{ev.description}</p>
+                      <span className="font-mono text-[9.5px] text-[#9da4ae]">{ev.time}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 6: Surveillance & Risk Signals */}
+            <div className="p-3 space-y-2">
+              <button
+                type="button"
+                onClick={() => toggleSection('surveillance')}
+                className="w-full flex items-center justify-between font-bold text-[12px] text-[#1f2327] cursor-pointer"
+              >
+                <span>6. Surveillance & Signals</span>
+                <ChevronDown
+                  className={cn('size-3.5 text-[#6f777f] transition-transform', !expandedSections.surveillance && '-rotate-90')}
+                />
+              </button>
+
+              {expandedSections.surveillance && (
+                <div className="space-y-1.5 text-[11.5px]">
+                  <div className="flex items-center justify-between p-1.5 rounded-[5px] bg-[#dfefe8] text-[#17b26a] font-bold">
+                    <span className="flex items-center gap-1">
+                      <ShieldCheck className="size-3" />
+                      <span>AI Safety Score</span>
+                    </span>
+                    <span>CLEARED (99.4%)</span>
+                  </div>
+
+                  <div className="flex justify-between p-1.5 rounded-[5px] bg-[#fcfcfc] border border-[#d3d5d7]">
+                    <span className="text-[#6f777f]">Contact Leaks</span>
+                    <span className="font-bold text-[#17b26a]">0 Triggers</span>
+                  </div>
+
+                  <div className="flex justify-between p-1.5 rounded-[5px] bg-[#fcfcfc] border border-[#d3d5d7]">
+                    <span className="text-[#6f777f]">Escrow Protection</span>
+                    <span className="font-bold text-[#00c2cb]">Enforced</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 7: Internal Compliance Notes */}
+            <div className="p-3 space-y-2">
+              <button
+                type="button"
+                onClick={() => toggleSection('compliance')}
+                className="w-full flex items-center justify-between font-bold text-[12px] text-[#1f2327] cursor-pointer"
+              >
+                <span>7. Compliance Notes ({activeThread.complianceNotes?.length || 0})</span>
+                <ChevronDown
+                  className={cn('size-3.5 text-[#6f777f] transition-transform', !expandedSections.compliance && '-rotate-90')}
+                />
+              </button>
+
+              {expandedSections.compliance && (
+                <div className="space-y-2 text-[11.5px]">
+                  <form onSubmit={handleAddComplianceNote} className="space-y-1">
+                    <textarea
+                      value={newNoteText}
+                      onChange={(e) => setNewNoteText(e.target.value)}
+                      placeholder="Add private moderator note…"
+                      className="w-full h-14 p-1.5 rounded-[5px] border border-[#d3d5d7] text-[11.5px] outline-none focus:border-[#00c2cb] resize-none"
+                    />
+                    <div className="flex justify-between items-center">
+                      <select
+                        value={newNoteCategory}
+                        onChange={(e) => setNewNoteCategory(e.target.value as any)}
+                        className="h-[24px] px-1.5 rounded-[4px] border border-[#d3d5d7] text-[10.5px] outline-none"
+                      >
+                        <option value="compliance">Compliance</option>
+                        <option value="negotiation">Negotiation</option>
+                        <option value="risk">Risk Signal</option>
+                      </select>
+                      <button
+                        type="submit"
+                        disabled={!newNoteText.trim()}
+                        className="h-[24px] px-2.5 rounded-[4px] bg-[#1f2327] text-white text-[10.5px] font-bold hover:bg-black disabled:opacity-50 cursor-pointer"
+                      >
+                        Add Note
+                      </button>
+                    </div>
+                  </form>
+
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto pt-0.5">
+                    {activeThread.complianceNotes?.map((note) => (
+                      <div
+                        key={note.id}
+                        className="p-1.5 rounded-[5px] bg-[#fcfcfc] border border-[#d3d5d7] space-y-0.5 group/note"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-[#1f2327] text-[11px]">{note.author}</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-mono text-[9px] text-[#6f777f]">{note.date}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteNote(note.id)}
+                              className="opacity-0 group-hover/note:opacity-100 text-[#d92d20] hover:text-[#b42318] cursor-pointer"
+                              title="Delete note"
+                            >
+                              <Trash2 className="size-2.5" />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-[#1f2327] text-[11px] leading-snug">{note.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* =========================================================================
+          INTERACTIVE MODALS & CONFIRMATION DIALOGS
+         ========================================================================= */}
+
+      {/* 1. Image Lightbox Modal */}
+      {lightboxImage && (
+        <div
+          onClick={() => setLightboxImage(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-xs cursor-pointer ant-fade-in"
+        >
+          <div className="relative max-h-[90vh] max-w-[90vw]">
+            <button
+              type="button"
+              onClick={() => setLightboxImage(null)}
+              className="absolute -top-10 right-0 size-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/40"
+            >
+              <X className="size-5" />
+            </button>
+            <img
+              src={lightboxImage}
+              alt="High-Res Attachment"
+              className="max-h-[85vh] max-w-[85vw] rounded-[8px] object-contain shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 2. Video Player Modal */}
+      {videoModalUrl && (
+        <div
+          onClick={() => setVideoModalUrl(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-xs ant-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-3xl overflow-hidden rounded-[12px] bg-black shadow-2xl ant-modal-zoom"
+          >
+            <div className="flex items-center justify-between p-3 bg-zinc-900 text-white border-b border-zinc-800">
+              <span className="text-[13px] font-bold">Property Video Tour Playback</span>
+              <button
+                type="button"
+                onClick={() => setVideoModalUrl(null)}
+                className="size-7 rounded-full bg-zinc-800 text-zinc-300 flex items-center justify-center hover:text-white"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="aspect-video w-full flex items-center justify-center bg-zinc-950 text-white">
+              <div className="text-center space-y-2 p-6">
+                <Play className="size-12 mx-auto text-[#00c2cb]" />
+                <p className="font-bold text-[14px]">High Definition Video Stream Active</p>
+                <p className="text-[12px] text-zinc-400">Inspecting negotiation recording for {activeThread.id}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Delete Message Confirmation Modal */}
+      {deleteMessageTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs ant-fade-in">
+          <div className="w-full max-w-sm rounded-[14px] border border-[#d3d5d7] bg-white p-5 shadow-2xl space-y-3.5 ant-modal-zoom">
+            <div className="flex items-center gap-2.5 text-[#d92d20]">
+              <AlertTriangle className="size-5 shrink-0" />
+              <h3 className="text-[15px] font-bold text-[#1f2327]">Delete Message?</h3>
+            </div>
+            <p className="text-[12.5px] text-[#6f777f]">
+              Are you sure you want to permanently delete this message from the negotiation audit log? This action cannot be undone.
+            </p>
+            <div className="p-2.5 bg-[#fcfcfc] border border-[#d3d5d7] rounded-[6px] text-[12px] text-[#1f2327] max-h-20 overflow-y-auto">
+              {deleteMessageTarget.text || 'Media Message'}
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setDeleteMessageTarget(null)}
+                className="h-[34px] px-3.5 rounded-[6px] border border-[#d3d5d7] bg-white text-[12.5px] font-semibold text-[#1f2327] hover:bg-[#eff1f3]"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={handleSaveEditMessage}
-                className="rounded-[8px] bg-[#00c2cb] px-4 py-2 text-xs font-semibold text-white hover:bg-[#00a8b0] cursor-pointer"
+                onClick={handleConfirmDeleteMessage}
+                className="h-[34px] px-4 rounded-[6px] bg-[#d92d20] text-white text-[12.5px] font-bold hover:bg-[#b42318]"
               >
-                Save Changes
+                Delete Message
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 2. Broadcast System Notice Dialog */}
-      {showSystemDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 font-sans backdrop-blur-2xs">
-          <div className="w-full max-w-md rounded-[16px] border border-[#d3d5d7] bg-white p-5 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-[#d3d5d7] pb-3">
-              <h4 className="font-bold text-[16px] text-[#1f2327]">Broadcast System Notice</h4>
+      {/* 4. Close / Reopen Chat Modal */}
+      {showCloseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs ant-fade-in">
+          <div className="w-full max-w-md rounded-[14px] border border-[#d3d5d7] bg-white p-5 shadow-2xl space-y-3.5 ant-modal-zoom">
+            <div className="flex items-center gap-2.5 text-[#00c2cb]">
+              <Lock className="size-5 shrink-0" />
+              <h3 className="text-[15px] font-bold text-[#1f2327]">
+                {activeThread.status === 'closed' ? 'Reopen Negotiation Room?' : 'Close Negotiation Room?'}
+              </h3>
+            </div>
+            <p className="text-[12.5px] text-[#6f777f] leading-relaxed">
+              {activeThread.status === 'closed'
+                ? 'Reopening this room will restore messaging permissions for both the investor and agent.'
+                : 'Closing this chat will disable participant messaging. Only administrative announcements and official override messages can be sent.'}
+            </p>
+            <div className="flex justify-end gap-2 pt-1">
               <button
                 type="button"
-                onClick={() => setShowSystemDialog(false)}
-                className="size-7 rounded-full flex items-center justify-center text-[#6f777f] hover:bg-[#eff1f3] cursor-pointer"
+                onClick={() => setShowCloseModal(false)}
+                className="h-[34px] px-3.5 rounded-[6px] border border-[#d3d5d7] bg-white text-[12.5px] font-semibold text-[#1f2327] hover:bg-[#eff1f3]"
               >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleToggleChatLock}
+                className="h-[34px] px-4 rounded-[6px] bg-[#1f2327] text-white text-[12.5px] font-bold hover:bg-black"
+              >
+                {activeThread.status === 'closed' ? 'Confirm Reopen' : 'Confirm Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Flag Room Modal */}
+      {showFlagModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs ant-fade-in">
+          <div className="w-full max-w-md rounded-[14px] border border-[#d3d5d7] bg-white p-5 shadow-2xl space-y-3.5 ant-modal-zoom">
+            <div className="flex items-center gap-2.5 text-[#d92d20]">
+              <Flag className="size-5 shrink-0" />
+              <h3 className="text-[15px] font-bold text-[#1f2327]">Flag Conversation for Review</h3>
+            </div>
+            <p className="text-[12.5px] text-[#6f777f]">
+              Flagging this room marks it as high priority in the moderation dashboard and alerts the legal compliance team.
+            </p>
+            <div>
+              <label className="text-[11.5px] font-bold text-[#6f777f]">Primary Violation Category</label>
+              <select
+                value={flagReason}
+                onChange={(e) => setFlagReason(e.target.value)}
+                className="w-full h-[36px] rounded-[6px] border border-[#d3d5d7] bg-white px-3 text-[12.5px] outline-none mt-1"
+              >
+                <option value="Suspicious contact sharing attempt">Suspicious contact sharing attempt (Phone/Email)</option>
+                <option value="Off-platform payment negotiation">Off-platform payment / commission bypass</option>
+                <option value="Abusive or unprofessional communication">Abusive or unprofessional communication</option>
+                <option value="False property representation">False property representation</option>
+                <option value="Other compliance breach">Other compliance breach</option>
+              </select>
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowFlagModal(false)}
+                className="h-[34px] px-3.5 rounded-[6px] border border-[#d3d5d7] bg-white text-[12.5px] font-semibold text-[#1f2327] hover:bg-[#eff1f3]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleFlagSubmit}
+                className="h-[34px] px-4 rounded-[6px] bg-[#d92d20] text-white text-[12.5px] font-bold hover:bg-[#b42318]"
+              >
+                Flag Room
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. Export Transcript Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs ant-fade-in">
+          <div className="w-full max-w-sm rounded-[14px] border border-[#d3d5d7] bg-white p-5 shadow-2xl space-y-3.5 ant-modal-zoom">
+            <div className="flex items-center gap-2.5 text-[#00c2cb]">
+              <FileDown className="size-5 shrink-0" />
+              <h3 className="text-[15px] font-bold text-[#1f2327]">Export Audit Transcript</h3>
+            </div>
+            <p className="text-[12.5px] text-[#6f777f]">
+              Choose the preferred format to export the entire message transcript, timestamps, and participants record.
+            </p>
+            <div className="space-y-1.5">
+              {(['csv', 'txt', 'json'] as const).map((fmt) => (
+                <label
+                  key={fmt}
+                  onClick={() => setExportFormat(fmt)}
+                  className={cn(
+                    'flex items-center justify-between p-2.5 rounded-[6px] border cursor-pointer text-[12.5px]',
+                    exportFormat === fmt ? 'border-[#00c2cb] bg-[#e5f6f7]/50 font-bold text-[#1f2327]' : 'border-[#d3d5d7] text-[#6f777f]'
+                  )}
+                >
+                  <span className="uppercase">{fmt} Archive</span>
+                  <input
+                    type="radio"
+                    name="export_format"
+                    checked={exportFormat === fmt}
+                    onChange={() => setExportFormat(fmt)}
+                    className="accent-[#00c2cb]"
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowExportModal(false)}
+                className="h-[34px] px-3.5 rounded-[6px] border border-[#d3d5d7] bg-white text-[12.5px] font-semibold text-[#1f2327] hover:bg-[#eff1f3]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleExportDownload}
+                className="h-[34px] px-4 rounded-[6px] bg-[#00c2cb] text-[#1f2327] text-[12.5px] font-bold hover:bg-[#00a8b0]"
+              >
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. System Notice Broadcast Dialog */}
+      {showSystemDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs ant-fade-in">
+          <div className="w-full max-w-md rounded-[14px] border border-[#d3d5d7] bg-white p-5 shadow-2xl space-y-3.5 ant-modal-zoom">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[#b54708]">
+                <Sparkles className="size-4.5" />
+                <h3 className="text-[15px] font-bold text-[#1f2327]">Broadcast System Notice</h3>
+              </div>
+              <button type="button" onClick={() => setShowSystemDialog(false)} className="text-[#6f777f]">
                 <X className="size-4" />
               </button>
             </div>
 
-            <form onSubmit={handleBroadcastSystemNotice} className="space-y-3">
+            <div className="space-y-2.5">
               <div>
-                <label className="text-xs font-semibold text-[#6f777f]">Notice Category</label>
+                <label className="text-[11.5px] font-bold text-[#6f777f]">Notice Category</label>
                 <select
                   value={systemNoticeType}
                   onChange={(e) => setSystemNoticeType(e.target.value as any)}
-                  className="mt-1 w-full rounded-[8px] border border-[#d3d5d7] bg-white p-2.5 text-xs outline-none focus:border-[#00c2cb]"
+                  className="w-full h-[36px] rounded-[6px] border border-[#d3d5d7] bg-white px-3 text-[12.5px] outline-none mt-1"
                 >
-                  <option value="info">ℹ️ General Notice / Policy Reminder</option>
-                  <option value="deal_secured">👑 Deal Secured / Milestone Announcement</option>
-                  <option value="warning">⚠️ Compliance Warning / Escrow Notice</option>
+                  <option value="info">General Policy / Informational Notice</option>
+                  <option value="warning">Compliance Warning / Caution</option>
+                  <option value="deal_secured">Official Escrow Milestone Secured</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-[#6f777f]">Notice Text</label>
+                <label className="text-[11.5px] font-bold text-[#6f777f]">Notice Message</label>
                 <textarea
                   value={systemNoticeText}
                   onChange={(e) => setSystemNoticeText(e.target.value)}
-                  placeholder="Enter official Duseat system notice to be displayed to both parties..."
-                  className="mt-1 w-full rounded-[8px] border border-[#d3d5d7] p-3 text-xs outline-none focus:border-[#00c2cb]"
-                  rows={3}
-                  required
+                  placeholder="Enter notice text to broadcast to participants…"
+                  className="w-full h-24 p-2.5 rounded-[6px] border border-[#d3d5d7] text-[12.5px] outline-none resize-none mt-1"
                 />
               </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#d3d5d7]">
-                <button
-                  type="button"
-                  onClick={() => setShowSystemDialog(false)}
-                  className="rounded-[8px] border border-[#d3d5d7] px-4 py-2 text-xs font-semibold text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-[8px] bg-[#00c2cb] px-4 py-2 text-xs font-semibold text-white hover:bg-[#00a8b0] cursor-pointer"
-                >
-                  Broadcast Notice
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Lightbox Image Viewer */}
-      {lightboxImage && (
-        <div
-          onClick={() => setLightboxImage(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 cursor-zoom-out print:hidden"
-        >
-          <div className="relative max-w-3xl max-h-[85vh] rounded-[12px] overflow-hidden">
-            <img src={lightboxImage} alt="Fullscreen View" className="size-full object-contain" />
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================================
-          PRINT-ONLY OFFICIAL DUSEAT PDF REPORT (Formatted for window.print() / Save as PDF)
-         ========================================================================= */}
-      <div className="hidden print:block fixed inset-0 z-[9999] bg-white text-black p-10 font-sans space-y-6">
-        {/* Official Duseat Header */}
-        <div className="border-b-2 border-[#00c2cb] pb-5 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-black text-[#00c2cb] tracking-wide">DUSEAT</h1>
-            <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mt-0.5">
-              Official Real Estate Marketplace & Negotiation Audit
-            </p>
-          </div>
-          <div className="text-right text-xs text-gray-600 space-y-1">
-            <p>Chat Reference: <strong className="text-gray-900 font-mono">{activeThread.id}</strong></p>
-            <p>Request ID: <strong className="text-gray-900 font-mono">{activeThread.requestId}</strong></p>
-            <p>Export Date: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-            <p>Status: <strong className="uppercase text-[#00a4ac] font-bold">{activeThread.status}</strong></p>
-          </div>
-        </div>
-
-        {/* Participants & Deal Metadata */}
-        <div className="grid grid-cols-2 gap-6 p-4 rounded-lg bg-gray-50 border border-gray-200 text-xs">
-          <div className="space-y-1">
-            <p className="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Agent Profile</p>
-            <p className="text-sm font-bold text-gray-900">{activeThread.agent.name} ({activeThread.agent.id})</p>
-            <p className="text-gray-600">License: RERA Verified • Plan: {activeThread.agent.plan}</p>
-            <p className="text-gray-600">Country: {activeThread.agent.country || 'United Arab Emirates'}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Investor Profile</p>
-            <p className="text-sm font-bold text-gray-900">{activeThread.investor.name} ({activeThread.investor.id})</p>
-            <p className="text-gray-600">Verification: KYC Approved • Trust Score: {activeThread.investor.score}/100</p>
-            <p className="text-gray-600">Country: {activeThread.investor.country || 'United Arab Emirates'}</p>
-          </div>
-        </div>
-
-        {/* Property Context Banner */}
-        <div className="p-3 bg-cyan-50 border border-cyan-200 rounded-lg text-xs flex items-center justify-between text-cyan-950">
-          <div>
-            <span className="font-bold">Property Requirement: </span>
-            <span>{activeThread.context}</span>
-          </div>
-          {activeThread.dealPrice && (
-            <div>
-              <span className="font-bold">Agreed Value: </span>
-              <span className="font-bold text-[#00737a]">{activeThread.dealPrice}</span>
             </div>
-          )}
-        </div>
 
-        {/* Chronological Chat Messages Log */}
-        <div className="space-y-3 pt-2">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-700 border-b border-gray-300 pb-1">
-            Official Chronological Chat Transcript ({activeThread.messages.length} Events)
-          </h2>
-          <div className="space-y-3">
-            {activeThread.messages.map((m) => {
-              const isAgent = m.sender === 'agent' || m.sender === 'admin'
-              const isSys = m.sender === 'system'
-              return (
-                <div key={m.id} className="border-b border-gray-100 pb-2 text-xs">
-                  <div className="flex items-center justify-between font-semibold">
-                    <span
-                      className={
-                        isSys
-                          ? 'text-amber-700'
-                          : isAgent
-                          ? 'text-teal-700'
-                          : 'text-indigo-700'
-                      }
-                    >
-                      [{m.sender.toUpperCase()}] {m.senderName} {m.isEdited && '(edited)'}
-                    </span>
-                    <span className="text-gray-400 font-normal">{m.date ? `${m.date} • ` : ''}{m.time}</span>
-                  </div>
-                  <p className="mt-1 text-gray-800 leading-relaxed font-normal whitespace-pre-wrap">
-                    {m.text || `[Attachment: ${m.type.toUpperCase()}${m.duration ? ` (${m.duration})` : ''}]`}
-                  </p>
-                </div>
-              )
-            })}
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowSystemDialog(false)}
+                className="h-[34px] px-3.5 rounded-[6px] border border-[#d3d5d7] bg-white text-[12.5px] font-semibold text-[#1f2327]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSendSystemNotice}
+                disabled={!systemNoticeText.trim()}
+                className="h-[34px] px-4 rounded-[6px] bg-[#00c2cb] text-[#1f2327] text-[12.5px] font-bold disabled:opacity-40"
+              >
+                Broadcast Notice
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* Official Compliance Stamp & Legal Footer */}
-        <div className="pt-8 mt-8 border-t border-gray-300 flex items-center justify-between text-[10px] text-gray-500">
-          <p>This transcript is generated automatically by the Duseat Compliance & Audit Engine. Confidential and legally privileged.</p>
-          <div className="text-right">
-            <p className="font-mono font-bold text-gray-700">DUSEAT-VERIFIED-TRANSCRIPT-SECURE</p>
-            <p>Authorized Admin Audit Log</p>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   )
 }

@@ -11,17 +11,26 @@ export function TableCheckbox({
   className,
 }: {
   checked: boolean
-  onChange: () => void
+  onChange?: ((checked: boolean) => void) | (() => void)
   ariaLabel?: string
   className?: string
 }) {
+  const handleClick = () => {
+    if (!onChange) return
+    try {
+      ;(onChange as (c: boolean) => void)(!checked)
+    } catch {
+      ;(onChange as () => void)()
+    }
+  }
+
   return (
     <button
       type="button"
       role="checkbox"
       aria-checked={checked}
       aria-label={ariaLabel}
-      onClick={onChange}
+      onClick={handleClick}
       className={cn(
         'size-[14px] rounded-[4px] flex items-center justify-center transition-all cursor-pointer ant-wave-btn shrink-0',
         checked
