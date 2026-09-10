@@ -16,6 +16,11 @@ import {
   Headphones,
   History,
   Briefcase,
+  BarChart3,
+  Megaphone,
+  Activity,
+  ShieldCheck,
+  ServerCog,
   ChevronDown,
   ChevronRight,
   type LucideIcon,
@@ -36,6 +41,31 @@ const mainNav: NavItem[] = [
   { label: 'Conversations', icon: MessageSquare, id: 'conversations' },
   { label: 'Reports and moderation', icon: ShieldAlert, id: 'reports' },
   { label: 'Notifications', icon: Bell, id: 'notifications' },
+  { label: 'Subscriptions', icon: Briefcase, id: 'subscriptions' },
+  { label: 'Finance', icon: Briefcase, id: 'finance' },
+  { label: 'Analytics', icon: BarChart3, id: 'analytics', children: [
+    { label: 'Overview', id: 'analytics' },
+    { label: 'Users', id: 'analytics-users' },
+    { label: 'Investors', id: 'analytics-investors' },
+    { label: 'Agents', id: 'analytics-agents' },
+    { label: 'Revenue', id: 'analytics-revenue' },
+    { label: 'Reports', id: 'reports' },
+  ] },
+  { label: 'Content management', icon: FileText, id: 'cms', children: [
+    { label: 'Overview', id: 'cms' },
+    { label: 'Website', id: 'cms-website' },
+    { label: 'Mobile app', id: 'cms-mobile' },
+    { label: 'Help center', id: 'cms-help' },
+    { label: 'SEO', id: 'cms-seo' },
+    { label: 'Media library', id: 'cms-media' },
+  ] },
+  { label: 'Marketing', icon: Megaphone, id: 'marketing', children: [
+    { label: 'Overview', id: 'marketing' },
+    { label: 'Campaigns', id: 'marketing-campaigns' },
+    { label: 'Referrals', id: 'marketing-referrals' },
+    { label: 'Promo codes', id: 'marketing-promos' },
+    { label: 'Featured listings', id: 'marketing-featured' },
+  ] },
   { label: 'All Tools', icon: Menu, id: 'tools' },
 ]
 
@@ -44,6 +74,8 @@ const bottomNav: NavItem[] = [
   { label: 'Support center', icon: Headphones, id: 'support' },
   { label: 'Activity log', icon: History, id: 'activity' },
   { label: 'Admin management', icon: Briefcase, id: 'admin' },
+  { label: 'AI moderation', icon: ShieldCheck, id: 'ai-moderation' },
+  { label: 'System monitoring', icon: ServerCog, id: 'monitoring' },
 ]
 
 interface SidebarProps {
