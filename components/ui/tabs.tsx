@@ -39,7 +39,7 @@ export function FilterTabs({
   const currentTab = value !== undefined ? value : activeTab || ''
   if (layout === 'underline') {
     return (
-      <div className={cn('flex items-center gap-6 border-b border-[#d3d5d7]', className)}>
+      <div className={cn('flex items-center gap-6 border-b border-border', className)}>
         {tabs.map((tab) => {
           const Icon = tab.icon
           const isActive = currentTab === tab.id
@@ -52,8 +52,8 @@ export function FilterTabs({
               className={cn(
                 'relative flex items-center gap-2 pb-3 pt-1 text-[14px] font-medium transition-colors cursor-pointer select-none disabled:opacity-40 disabled:cursor-not-allowed',
                 isActive
-                  ? 'text-[#1f2327] font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#00c2cb]'
-                  : 'text-[#6f777f] hover:text-[#1f2327]'
+                  ? 'text-foreground font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand'
+                  : 'text-muted-foreground hover:text-foreground'
               )}
             >
               {Icon && <Icon className="size-4" />}
@@ -76,7 +76,7 @@ export function FilterTabs({
     return (
       <div
         className={cn(
-          'inline-flex items-center rounded-[8px] bg-[#eff1f3] p-1 gap-1 border border-[#d3d5d7]/50',
+          'inline-flex items-center rounded-lg bg-muted p-1 gap-1 border border-border/50',
           className
         )}
       >
@@ -90,11 +90,11 @@ export function FilterTabs({
               disabled={tab.disabled}
               onClick={() => onChange(tab.id)}
               className={cn(
-                'flex items-center gap-2 rounded-[6px] px-3 font-medium transition-all cursor-pointer select-none disabled:opacity-40',
+                'flex items-center gap-2 rounded-md px-3 font-medium transition-all cursor-pointer select-none disabled:opacity-40',
                 size === 'sm' ? 'h-[28px] text-[12px]' : 'h-[32px] text-[13px]',
                 isActive
-                  ? 'bg-white text-[#1f2327] font-bold shadow-xs'
-                  : 'text-[#6f777f] hover:text-[#1f2327]'
+                  ? 'bg-card text-foreground font-bold shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
               )}
             >
               {Icon && <Icon className="size-3.5" />}
@@ -126,7 +126,7 @@ export function FilterTabs({
             disabled={tab.disabled}
             onClick={() => onChange(tab.id)}
             className={cn(
-              'flex items-center gap-2 rounded-[8px] px-3.5 font-medium transition-colors cursor-pointer select-none ant-wave-btn disabled:opacity-40 disabled:cursor-not-allowed',
+              'flex items-center gap-2 rounded-lg px-3.5 font-medium transition-colors cursor-pointer select-none ant-wave-btn disabled:opacity-40 disabled:cursor-not-allowed',
               size === 'sm' ? 'h-[32px] text-[13px]' : 'h-[36px] text-[14px]',
               isActive
                 ? 'bg-[#1f2327] text-white shadow-2xs'

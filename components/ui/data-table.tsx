@@ -24,7 +24,7 @@ export function DataTableContainer({
   return (
     <section
       className={cn(
-        'overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] font-sans flex flex-col',
+        'overflow-visible rounded-xl border border-border bg-card shadow-sm font-sans flex flex-col',
         className
       )}
     >
@@ -53,7 +53,7 @@ export function DataTableToolbar({
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center justify-between gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4 bg-white',
+        'flex flex-wrap items-center justify-between gap-3 border-b border-border p-3.5 sm:p-4 bg-card',
         className
       )}
     >
@@ -148,7 +148,7 @@ export function DataTableHeader({
   className?: string
 }) {
   return (
-    <thead className={cn('bg-[#fcfcfc] border-b border-[#d3d5d7]', className)}>
+    <thead className={cn('bg-muted/60 border-b border-border', className)}>
       <tr className="h-12 whitespace-nowrap">{children}</tr>
     </thead>
   )

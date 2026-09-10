@@ -93,28 +93,28 @@ export function RevenueChart({ range }: RevenueChartProps) {
           <AreaChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
             <defs>
               <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#01ccd2" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="#01ccd2" stopOpacity={0} />
+                <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="var(--brand)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} stroke="#e5e7eb" strokeDasharray="4 4" />
+            <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
             <XAxis
               dataKey="date"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: '#6f777f', fontSize: 12 }}
+              tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
               dy={8}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fill: '#6f777f', fontSize: 12 }}
+              tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
               width={64}
               tickFormatter={(v) => `${symbol} ${Math.round((v * rate) / 1000)}K`}
             />
             <Tooltip
               content={<CustomTooltip currency={currency} />}
-              cursor={{ stroke: '#01ccd2', strokeWidth: 1, strokeDasharray: '4 4' }}
+              cursor={{ stroke: 'var(--brand)', strokeWidth: 1, strokeDasharray: '4 4' }}
             />
             <Area
               type="monotone"
