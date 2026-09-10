@@ -83,7 +83,7 @@ export function PlatformShell({
     <div className="flex min-h-dvh bg-background">
       <Sidebar collapsed={collapsed} active={active} onNavigate={navigate} mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-[#d3d5d7] bg-white/95 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-xl">
           <div className="flex min-h-[60px] sm:min-h-[64px] w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-2">
             {/* Left: Collapse toggle, divider, breadcrumbs & title */}
             <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -91,7 +91,7 @@ export function PlatformShell({
                 type="button"
                 onClick={() => setMobileOpen(true)}
                 aria-label="Open navigation menu"
-                className="flex size-9 items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white text-[#1f2327] transition-colors hover:bg-[#eff1f3] lg:hidden"
+                className="flex size-9 items-center justify-center rounded-lg border border-border bg-card text-foreground transition-colors hover:bg-[#eff1f3] lg:hidden"
               >
                 <Menu className="size-5" />
               </button>
@@ -99,7 +99,7 @@ export function PlatformShell({
                 type="button"
                 onClick={() => setCollapsed((value) => !value)}
                 aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                className="hidden size-[36px] items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white text-[#1f2327] transition-colors hover:bg-[#eff1f3] cursor-pointer lg:flex"
+                className="hidden size-[36px] items-center justify-center rounded-lg border border-border bg-card text-foreground transition-colors hover:bg-[#eff1f3] cursor-pointer lg:flex"
               >
                 {collapsed ? <PanelLeft className="size-4" /> : <PanelLeftClose className="size-4" />}
               </button>
@@ -133,7 +133,7 @@ export function PlatformShell({
                     onChange={(event) => onQueryChange(event.target.value)}
                     placeholder={`Search…`}
                     aria-label={`Search`}
-                    className="h-[36px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-8 text-sm outline-none placeholder:text-muted-foreground focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20 font-sans"
+                    className="h-[36px] w-full rounded-[8px] border border-[#d3d5d7] bg-card pl-9 pr-8 text-sm outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20 font-sans"
                   />
                   {query && (
                     <button

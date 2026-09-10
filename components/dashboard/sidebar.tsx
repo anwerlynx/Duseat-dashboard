@@ -89,11 +89,11 @@ export function Sidebar({ collapsed: collapsedProp, active, onNavigate, mobileOp
         aria-current={active === item.id ? 'page' : undefined}
         aria-expanded={item.children ? isOpen : undefined}
         className={cn(
-          'group flex w-full items-center gap-3 rounded-[8px] px-3 py-2 text-[14px] font-medium transition-all font-sans cursor-pointer',
+          'group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[14px] font-medium transition-all font-sans cursor-pointer',
           collapsed && 'justify-center px-0 size-10 mx-auto',
           isActive
-            ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
-            : 'text-[#1f2327] hover:bg-[#eff1f3]'
+            ? 'bg-primary text-primary-foreground shadow-2xs font-semibold'
+            : 'text-foreground hover:bg-secondary'
         )}
       >
         <Icon className={cn('size-5 shrink-0 transition-colors', isActive ? 'text-white' : 'text-[#1f2327]')} />
@@ -148,7 +148,7 @@ export function Sidebar({ collapsed: collapsedProp, active, onNavigate, mobileOp
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex h-dvh shrink-0 flex-col border-r border-[#d3d5d7] bg-white transition-[width,transform] duration-300 lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 font-sans',
+          'fixed inset-y-0 left-0 z-50 flex h-dvh shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width,transform] duration-300 lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 font-sans',
           collapsed ? 'w-[68px] lg:w-[68px]' : 'w-[230px] lg:w-[230px]',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
