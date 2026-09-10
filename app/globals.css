@@ -123,23 +123,23 @@
 :root {
   color-scheme: light;
 
-  --background: #f5f6f8;
-  --foreground: #14171a;
+  --background: #f7f8fa;
+  --foreground: #1f2327;
 
   --card: #ffffff;
-  --card-foreground: #14171a;
+  --card-foreground: #1f2327;
 
   --popover: #ffffff;
-  --popover-foreground: #14171a;
+  --popover-foreground: #1f2327;
 
-  --primary: #14171a;
+  --primary: #1f2327;
   --primary-foreground: #ffffff;
 
   --secondary: #eff1f3;
-  --secondary-foreground: #14171a;
+  --secondary-foreground: #1f2327;
 
-  --muted: #eff1f3;
-  --muted-foreground: #656d76;
+  --muted: #f5f6f8;
+  --muted-foreground: #6f777f;
 
   /* ==========================================================================
      Unified Semantic Color Tokens (10 Shades per family)
