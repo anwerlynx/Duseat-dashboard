@@ -181,7 +181,7 @@ function DashboardInner() {
           onExport={handleExportFullReport}
         />
 
-        <main className="w-full min-w-0 flex-1 px-4 sm:px-6 lg:px-8 py-5 space-y-5">
+        <main className="flex w-full min-w-0 flex-1 flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
           {loading ? (
             <LoadingSkeleton />
           ) : (

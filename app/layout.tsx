@@ -11,9 +11,9 @@ const geistSans = Geist({
 })
 
 export const metadata: Metadata = {
-  title: 'Duseat — Admin Dashboard',
+  title: 'Duseat Admin — Marketplace Operations',
   description:
-    'Monitor your Duseat marketplace and business performance in real time.',
+    'A focused operations workspace for managing Duseat users, deals, verification, and marketplace activity.',
   generator: 'v0.app',
 }
 

@@ -200,7 +200,7 @@ export function Sidebar({ collapsed: collapsedProp, active, onNavigate, mobileOp
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex h-dvh shrink-0 flex-col border-r border-[#d3d5d7] bg-white transition-[width,transform] duration-300 lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 font-sans',
+          'fixed inset-y-0 left-0 z-50 flex h-dvh shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width,transform] duration-300 lg:sticky lg:top-0 lg:z-30 lg:translate-x-0 font-sans',
           collapsed ? 'w-[68px] lg:w-[68px]' : 'w-[230px] lg:w-[230px]',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}

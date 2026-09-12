@@ -123,23 +123,23 @@
 :root {
   color-scheme: light;
 
-  --background: #F5F6F7;
-  --foreground: #202428;
+  --background: #f7f8fa;
+  --foreground: #1f2327;
 
-  --card: #FFFFFF;
-  --card-foreground: #202428;
+  --card: #ffffff;
+  --card-foreground: #1f2327;
 
-  --popover: #FFFFFF;
-  --popover-foreground: #202428;
+  --popover: #ffffff;
+  --popover-foreground: #1f2327;
 
-  --primary: #202428;
-  --primary-foreground: #FFFFFF;
+  --primary: #1f2327;
+  --primary-foreground: #ffffff;
 
-  --secondary: #F8F9FA;
-  --secondary-foreground: #202428;
+  --secondary: #eff1f3;
+  --secondary-foreground: #1f2327;
 
-  --muted: #F8F9FA;
-  --muted-foreground: #68727D;
+  --muted: #f5f6f8;
+  --muted-foreground: #6f777f;
 
   /* ==========================================================================
      Master Specification Color Tokens (Section 5)
