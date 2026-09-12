@@ -720,7 +720,7 @@ function AgentsInner() {
               <AgentMobileCard
                 key={agent.id}
                 agent={agent}
-                isDeleted={tab === 'Deleted users'}
+                isDeleted={false}
                 selected={selected.includes(agent.id)}
                 onSelect={() =>
                   setSelected((items) =>
@@ -759,7 +759,7 @@ function AgentsInner() {
                   <AgentRow
                     key={agent.id}
                     agent={agent}
-                    isDeleted={tab === 'Deleted users'}
+                    isDeleted={false}
                     selected={selected.includes(agent.id)}
                     onSelect={() =>
                       setSelected((items) =>

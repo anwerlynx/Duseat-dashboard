@@ -18,6 +18,7 @@ import {
   Sparkles,
   RefreshCw,
   Clock,
+  TrendingUp,
   MoreHorizontal,
   Eye,
   Edit,

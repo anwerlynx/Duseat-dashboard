@@ -679,7 +679,7 @@ function InvestorsInner() {
               <InvestorMobileCard
                 key={investor.id}
                 investor={investor}
-                isDeleted={tab === 'Deleted users'}
+                isDeleted={false}
                 selected={selected.includes(investor.id)}
                 onSelect={() =>
                   setSelected((items) =>
@@ -724,7 +724,7 @@ function InvestorsInner() {
                   <InvestorRow
                     key={investor.id}
                     investor={investor}
-                    isDeleted={tab === 'Deleted users'}
+                    isDeleted={false}
                     selected={selected.includes(investor.id)}
                     onSelect={() =>
                       setSelected((items) =>
