@@ -24,6 +24,14 @@ const DEDICATED_ROUTES = new Set([
   'all-tools',
   'apple-design',
   'design-system',
+  'request-insights',
+  'support',
+  'activity',
+  'ai-moderation',
+  'monitoring',
+  'admin',
+  'business-intelligence',
+  'bi',
 ])
 
 export function generateStaticParams() {

@@ -55,7 +55,20 @@ import { MainButton } from '@/components/ui/main-button'
 import { ToastProvider, useToast } from '@/components/dashboard/toast'
 import { FigmaStatusBadge } from '@/components/ui/figma-badges'
 import { TableAvatar } from '@/components/ui/table-avatar'
+import { Dropdown } from '@/components/dashboard/menu'
+import { MetricCard } from '@/components/ui/metric-card'
 import { cn, exportToCsv } from '@/lib/utils'
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+} from 'recharts'
 
 
 // ============================================================================
@@ -1190,28 +1203,7 @@ function SubscriptionsManagementInner() {
   return (
     <PlatformShell
       title="Subscriptions & Billing"
-      eyebrow="Monetization Engine"
-      actions={
-        <div className="flex items-center gap-2">
-          <MainButton
-            variant="Secondary"
-            size="sm"
-            iconLeft={<Download className="size-3.5" />}
-            label="Export Data"
-            onClick={handleExportSubscribers}
-          />
-          <MainButton
-            variant="Primary"
-            size="sm"
-            iconLeft={<Plus className="size-3.5" />}
-            label="+ Create Plan"
-            onClick={() => {
-              setEditingPlan(null)
-              setPlanEditorOpen(true)
-            }}
-          />
-        </div>
-      }
+      eyebrow="Monetization"
     >
       <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
         {/* =========================================================================
@@ -1220,13 +1212,6 @@ function SubscriptionsManagementInner() {
         <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#6f777f] uppercase tracking-wider mb-1">
-                <span>Platform</span>
-                <span>/</span>
-                <span>Subscriptions</span>
-                <span>/</span>
-                <span className="text-[#00c2cb]">Subscribers & Plans</span>
-              </div>
               <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
                 Subscription Plans & MRR
               </h1>
@@ -1257,6 +1242,42 @@ function SubscriptionsManagementInner() {
               </button>
             </div>
           </div>
+
+          {/* 4 Stat Metric Cards */}
+          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3">
+            <MetricCard
+              label="Active Subscribers"
+              value={activeSubscribers.toLocaleString()}
+              trend={{ value: '+12.4%', isPositive: true }}
+              icon={Users}
+              tone="neutral"
+              subtitle="Total paid accounts active"
+            />
+            <MetricCard
+              label="Monthly Recurring (MRR)"
+              value={`AED ${(totalMRR / 1000).toFixed(1)}k`}
+              trend={{ value: '+18.2%', isPositive: true }}
+              icon={CreditCard}
+              tone="info"
+              subtitle="Normalized MRR volume"
+            />
+            <MetricCard
+              label="Annual Run Rate (ARR)"
+              value={`AED ${(totalARR / 1000000).toFixed(2)}M`}
+              trend={{ value: '+24.8%', isPositive: true }}
+              icon={TrendingUp}
+              tone="success"
+              subtitle="Run-rate based on active terms"
+            />
+            <MetricCard
+              label="Monthly Churn Rate"
+              value="1.8%"
+              trend={{ value: '-0.4%', isPositive: true }}
+              icon={TrendingDown}
+              tone="warning"
+              subtitle="Industry benchmark: 3.5%"
+            />
+          </div>
         </header>
 
         {/* =========================================================================
@@ -1281,7 +1302,7 @@ function SubscriptionsManagementInner() {
                   className={cn(
                     'inline-flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn select-none',
                     active
-                      ? 'bg-[#1f2327] text-white shadow-2xs'
+                      ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                       : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                   )}
                 >
@@ -1320,130 +1341,71 @@ function SubscriptionsManagementInner() {
         {activeTab === 'overview' && (
           <div className="space-y-6 ant-fade-in">
             {/* 8 Primary KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
-              <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-[#6f777f]">Active Subscribers</span>
-                  <span className="flex items-center gap-0.5 text-[11px] font-bold text-[#12b76a]">
-                    <TrendingUp className="size-3" /> +12.4%
-                  </span>
-                </div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-[26px] font-bold tracking-tight text-[#1f2327]">
-                    {activeSubscribers.toLocaleString()}
-                  </span>
-                  <span className="text-[11.5px] text-[#8f969e]">accounts</span>
-                </div>
-                <p className="mt-1 text-[11px] text-[#6f777f]">Total paid subscriptions active today</p>
-              </div>
-
-              <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-[#6f777f]">Monthly Recurring Rev (MRR)</span>
-                  <span className="flex items-center gap-0.5 text-[11px] font-bold text-[#12b76a]">
-                    <TrendingUp className="size-3" /> +18.2%
-                  </span>
-                </div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-[26px] font-bold tracking-tight text-[#00838f]">
-                    AED {(totalMRR / 1000).toFixed(1)}k
-                  </span>
-                  <span className="text-[11.5px] text-[#8f969e]">/ mo</span>
-                </div>
-                <p className="mt-1 text-[11px] text-[#6f777f]">Normalized monthly recurring volume</p>
-              </div>
-
-              <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-[#6f777f]">Annual Run Rate (ARR)</span>
-                  <span className="flex items-center gap-0.5 text-[11px] font-bold text-[#12b76a]">
-                    <TrendingUp className="size-3" /> +24.8%
-                  </span>
-                </div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-[26px] font-bold tracking-tight text-[#1f2327]">
-                    AED {(totalARR / 1000000).toFixed(2)}M
-                  </span>
-                  <span className="text-[11.5px] text-[#8f969e]">/ yr</span>
-                </div>
-                <p className="mt-1 text-[11px] text-[#6f777f]">Annualized forward subscription projection</p>
-              </div>
-
-              <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-[#6f777f]">Active Trial Users</span>
-                  <span className="rounded-full bg-[#e5f6f7] px-2 py-0.5 text-[10px] font-bold text-[#00838f]">
-                    14-Day Free
-                  </span>
-                </div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-[26px] font-bold tracking-tight text-[#1f2327]">
-                    {trialUsers}
-                  </span>
-                  <span className="text-[11.5px] text-[#8f969e]">in evaluation</span>
-                </div>
-                <p className="mt-1 text-[11px] text-[#6f777f]">32% estimated conversion to Pro / Elite</p>
-              </div>
-
-              <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-[#6f777f]">Expiring in 7 Days</span>
-                  <span className="flex items-center gap-0.5 text-[11px] font-bold text-[#f79009]">
-                    <Clock className="size-3" /> Action req
-                  </span>
-                </div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-[26px] font-bold tracking-tight text-[#1f2327]">18</span>
-                  <span className="text-[11.5px] text-[#8f969e]">subscriptions</span>
-                </div>
-                <p className="mt-1 text-[11px] text-[#6f777f]">Upcoming auto-renewals queued</p>
-              </div>
-
-              <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-[#6f777f]">Failed Payments (Grace)</span>
-                  <span className="rounded-full bg-[#fef3f2] px-2 py-0.5 text-[10px] font-bold text-[#d92d20]">
-                    Needs Attention
-                  </span>
-                </div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-[26px] font-bold tracking-tight text-[#d92d20]">
-                    {failedPaymentsCount}
-                  </span>
-                  <span className="text-[11.5px] text-[#8f969e]">cards retrying</span>
-                </div>
-                <p className="mt-1 text-[11px] text-[#6f777f]">AED 3,196.00 currently in dunning cycle</p>
-              </div>
-
-              <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-[#6f777f]">Refunds This Month</span>
-                  <span className="text-[11px] font-bold text-[#6f777f]">0.4% rate</span>
-                </div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-[26px] font-bold tracking-tight text-[#1f2327]">
-                    {refundedCount}
-                  </span>
-                  <span className="text-[11.5px] text-[#8f969e]">AED 799.00</span>
-                </div>
-                <p className="mt-1 text-[11px] text-[#6f777f]">100% compliant with refund policy</p>
-              </div>
-
-              <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-[#6f777f]">Active Chargebacks</span>
-                  <span className="rounded-full bg-[#ecfdf3] px-2 py-0.5 text-[10px] font-bold text-[#027a48]">
-                    0.0% Risk
-                  </span>
-                </div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-[26px] font-bold tracking-tight text-[#1f2327]">
-                    {chargebackCount}
-                  </span>
-                  <span className="text-[11.5px] text-[#8f969e]">disputes</span>
-                </div>
-                <p className="mt-1 text-[11px] text-[#6f777f]">Zero open cardholder disputes</p>
-              </div>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              <MetricCard
+                label="Active Subscribers"
+                value={activeSubscribers.toLocaleString()}
+                trend={{ value: '+12.4%', isPositive: true }}
+                icon={Users}
+                tone="neutral"
+                subtitle="Total paid accounts active"
+              />
+              <MetricCard
+                label="Monthly Recurring (MRR)"
+                value={`AED ${(totalMRR / 1000).toFixed(1)}k`}
+                trend={{ value: '+18.2%', isPositive: true }}
+                icon={CreditCard}
+                tone="brand"
+                subtitle="Normalized MRR volume"
+              />
+              <MetricCard
+                label="Annual Run Rate (ARR)"
+                value={`AED ${(totalARR / 1000000).toFixed(2)}M`}
+                trend={{ value: '+24.8%', isPositive: true }}
+                icon={TrendingUp}
+                tone="success"
+                subtitle="Annual forward projection"
+              />
+              <MetricCard
+                label="Active Trial Users"
+                value={trialUsers}
+                trend={{ value: '+8.1%', isPositive: true }}
+                icon={Zap}
+                tone="warning"
+                subtitle="In 14-day evaluation"
+              />
+              <MetricCard
+                label="Expiring in 7 Days"
+                value={18}
+                trend={{ value: 'Action req', isPositive: false }}
+                icon={Clock}
+                tone="warning"
+                subtitle="Upcoming auto-renewals"
+              />
+              <MetricCard
+                label="Failed Payments"
+                value={failedPaymentsCount}
+                trend={{ value: 'Needs attention', isPositive: false }}
+                icon={AlertTriangle}
+                tone="destructive"
+                subtitle="AED 3,196 in dunning"
+              />
+              <MetricCard
+                label="Refunds This Month"
+                value={refundedCount}
+                trend={{ value: '0.4% rate', isPositive: true }}
+                icon={RotateCcw}
+                tone="neutral"
+                subtitle="AED 799 refunded"
+              />
+              <MetricCard
+                label="Active Chargebacks"
+                value={chargebackCount}
+                trend={{ value: '0.0% Risk', isPositive: true }}
+                icon={ShieldCheck}
+                tone="success"
+                subtitle="Zero cardholder disputes"
+              />
             </div>
 
             {/* Visual Revenue & Subscription Trend Chart */}
@@ -1471,45 +1433,91 @@ function SubscriptionsManagementInner() {
                 </div>
               </div>
 
-              {/* Responsive SVG Animated Bar Chart */}
-              <div className="mt-5 grid grid-cols-6 sm:grid-cols-12 gap-2 items-end h-[180px] pt-4">
-                {[
-                  { m: 'Jan', mrr: 120, neu: 40, up: 18, ch: 4 },
-                  { m: 'Feb', mrr: 145, neu: 48, up: 22, ch: 6 },
-                  { m: 'Mar', mrr: 168, neu: 54, up: 30, ch: 5 },
-                  { m: 'Apr', mrr: 195, neu: 62, up: 35, ch: 8 },
-                  { m: 'May', mrr: 230, neu: 75, up: 42, ch: 6 },
-                  { m: 'Jun', mrr: 265, neu: 84, up: 50, ch: 9 },
-                  { m: 'Jul', mrr: 290, neu: 92, up: 55, ch: 7 },
-                  { m: 'Aug', mrr: 320, neu: 104, up: 60, ch: 10 },
-                  { m: 'Sep', mrr: 355, neu: 115, up: 68, ch: 8 },
-                  { m: 'Oct', mrr: 390, neu: 124, up: 75, ch: 9 },
-                  { m: 'Nov', mrr: 430, neu: 138, up: 82, ch: 11 },
-                  { m: 'Dec', mrr: 485, neu: 155, up: 95, ch: 12 },
-                ].map((col, idx) => (
-                  <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end group cursor-pointer">
-                    <div className="w-full flex flex-col items-center gap-0.5">
-                      <div
-                        className="w-full max-w-[28px] rounded-t-[3px] bg-[#7a5af8] opacity-80 transition-all group-hover:opacity-100"
-                        style={{ height: `${col.up * 0.45}px` }}
-                        title={`Upgrades: +${col.up}`}
-                      />
-                      <div
-                        className="w-full max-w-[28px] bg-[#12b76a] opacity-85 transition-all group-hover:opacity-100"
-                        style={{ height: `${col.neu * 0.45}px` }}
-                        title={`New Subscriptions: +${col.neu}`}
-                      />
-                      <div
-                        className="w-full max-w-[28px] rounded-b-[2px] bg-[#00c2cb] transition-all group-hover:bg-[#00838f]"
-                        style={{ height: `${col.mrr * 0.22}px` }}
-                        title={`MRR Base: AED ${col.mrr}k`}
-                      />
-                    </div>
-                    <span className="text-[10.5px] font-bold text-[#6f777f] group-hover:text-[#1f2327]">
-                      {col.m}
-                    </span>
-                  </div>
-                ))}
+              {/* Responsive Recharts Multi-Metric Visualization */}
+              <div className="h-[250px] w-full pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={[
+                      { m: 'Jan', mrr: 120, neu: 40, up: 18, ch: 4 },
+                      { m: 'Feb', mrr: 145, neu: 48, up: 22, ch: 6 },
+                      { m: 'Mar', mrr: 168, neu: 54, up: 30, ch: 5 },
+                      { m: 'Apr', mrr: 195, neu: 62, up: 35, ch: 8 },
+                      { m: 'May', mrr: 230, neu: 75, up: 42, ch: 6 },
+                      { m: 'Jun', mrr: 265, neu: 84, up: 50, ch: 9 },
+                      { m: 'Jul', mrr: 290, neu: 92, up: 55, ch: 7 },
+                      { m: 'Aug', mrr: 320, neu: 104, up: 60, ch: 10 },
+                      { m: 'Sep', mrr: 355, neu: 115, up: 68, ch: 8 },
+                      { m: 'Oct', mrr: 390, neu: 124, up: 75, ch: 9 },
+                      { m: 'Nov', mrr: 430, neu: 138, up: 82, ch: 11 },
+                      { m: 'Dec', mrr: 485, neu: 155, up: 95, ch: 12 },
+                    ]}
+                    margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                  >
+                    <defs>
+                      <linearGradient id="subMrrGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#00c2cb" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#00c2cb" stopOpacity={0.0} />
+                      </linearGradient>
+                      <linearGradient id="subNewGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#12b76a" stopOpacity={0.25} />
+                        <stop offset="100%" stopColor="#12b76a" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} stroke="#eff1f3" strokeDasharray="3 3" />
+                    <XAxis dataKey="m" axisLine={false} tickLine={false} tick={{ fill: '#6f777f', fontSize: 11 }} />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#6f777f', fontSize: 11 }}
+                      tickFormatter={(v) => `AED ${v}k`}
+                    />
+                    <RechartsTooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null
+                        const item = payload[0].payload
+                        return (
+                          <div className="rounded-[8px] border border-[#d3d5d7] bg-white p-2.5 shadow-lg text-xs font-sans">
+                            <p className="font-bold text-[#1f2327] mb-1">{label} 2026</p>
+                            <div className="space-y-0.5">
+                              <p className="text-[#6f777f] flex justify-between gap-3">
+                                <span>MRR Base:</span>
+                                <strong className="text-[#00a4ac]">AED {item.mrr}k</strong>
+                              </p>
+                              <p className="text-[#6f777f] flex justify-between gap-3">
+                                <span>New Signups:</span>
+                                <strong className="text-[#12b76a]">+{item.neu}</strong>
+                              </p>
+                              <p className="text-[#6f777f] flex justify-between gap-3">
+                                <span>Upgrades:</span>
+                                <strong className="text-[#7a5af8]">+{item.up}</strong>
+                              </p>
+                              <p className="text-[#6f777f] flex justify-between gap-3">
+                                <span>Cancellations:</span>
+                                <span className="text-[#d92d20]">-{item.ch}</span>
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="mrr"
+                      name="MRR Base"
+                      stroke="#00c2cb"
+                      strokeWidth={2.5}
+                      fill="url(#subMrrGrad)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="neu"
+                      name="New Signups"
+                      stroke="#12b76a"
+                      strokeWidth={2}
+                      fill="url(#subNewGrad)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>
@@ -1543,25 +1551,25 @@ function SubscriptionsManagementInner() {
             {/* Plans Table */}
             <div className="rounded-[12px] border border-[#d3d5d7] bg-white overflow-hidden shadow-2xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-[12.5px] border-collapse">
-                  <thead>
-                    <tr className="border-b border-[#e5e7eb] bg-[#f8f9fa] text-[11.5px] font-bold uppercase tracking-wider text-[#6f777f]">
-                      <th className="px-4 py-3">Plan Name</th>
-                      <th className="px-3 py-3">Status</th>
-                      <th className="px-3 py-3">Monthly Price</th>
-                      <th className="px-3 py-3">Yearly Price</th>
-                      <th className="px-3 py-3">Subscribers</th>
-                      <th className="px-3 py-3">Offers Limit</th>
-                      <th className="px-3 py-3">Requests Limit</th>
-                      <th className="px-3 py-3">Visibility</th>
-                      <th className="px-3 py-3">AI Suite</th>
-                      <th className="px-3 py-3">Est. Monthly Rev</th>
-                      <th className="px-4 py-3 text-right">Actions</th>
+                <table className="w-full text-left text-[14px] border-collapse font-sans">
+                  <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
+                    <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
+                      <th className="px-4">Plan Name</th>
+                      <th className="px-3">Status</th>
+                      <th className="px-3">Monthly Price</th>
+                      <th className="px-3">Yearly Price</th>
+                      <th className="px-3">Subscribers</th>
+                      <th className="px-3">Offers Limit</th>
+                      <th className="px-3">Requests Limit</th>
+                      <th className="px-3">Visibility</th>
+                      <th className="px-3">AI Suite</th>
+                      <th className="px-3">Est. Monthly Rev</th>
+                      <th className="px-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#e5e7eb]">
+                  <tbody className="divide-y divide-[#d3d5d7]">
                     {plans.map((plan) => (
-                      <tr key={plan.id} className="hover:bg-[#f8f9fa] transition-colors">
+                      <tr key={plan.id} className="h-[64px] hover:bg-[#f8f9fa] transition-colors whitespace-nowrap font-sans">
                         <td className="px-4 py-3.5">
                           <div className="font-bold text-[#1f2327]">{plan.name}</div>
                           <div className="text-[11px] text-[#8f969e]">{plan.code} • {plan.trialDays}d trial</div>
@@ -1697,7 +1705,7 @@ function SubscriptionsManagementInner() {
                         className={cn(
                           'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn',
                           isActive
-                            ? 'bg-[#1f2327] text-white shadow-2xs'
+                            ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                             : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                         )}
                       >
@@ -1741,53 +1749,88 @@ function SubscriptionsManagementInner() {
                 </div>
 
                 {/* Plan Filter */}
-                <select
+                <Dropdown
+                  align="start"
                   value={planFilter}
-                  onChange={(e) => setPlanFilter(e.target.value)}
-                  className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-                >
-                  <option value="All">All Plans</option>
-                  {plans.map((p) => (
-                    <option key={p.name} value={p.name}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
+                  onSelect={setPlanFilter}
+                  ariaLabel="Filter by Plan"
+                  options={[{ label: 'All Plans', value: 'All' }, ...plans.map((p) => ({ label: p.name, value: p.name }))]}
+                  trigger={
+                    <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                      <Layers className="size-4 text-[#6f777f]" />
+                      <span>{planFilter === 'All' ? 'All Plans' : planFilter}</span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </span>
+                  }
+                />
 
                 {/* Country Filter */}
-                <select
+                <Dropdown
+                  align="start"
                   value={countryFilter}
-                  onChange={(e) => setCountryFilter(e.target.value)}
-                  className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-                >
-                  <option value="All">All Countries</option>
-                  <option value="United Arab Emirates">United Arab Emirates</option>
-                  <option value="Saudi Arabia">Saudi Arabia</option>
-                  <option value="United Kingdom">United Kingdom</option>
-                </select>
+                  onSelect={setCountryFilter}
+                  ariaLabel="Filter by Country"
+                  options={[
+                    { label: 'All Countries', value: 'All' },
+                    { label: 'United Arab Emirates', value: 'United Arab Emirates' },
+                    { label: 'Saudi Arabia', value: 'Saudi Arabia' },
+                    { label: 'United Kingdom', value: 'United Kingdom' },
+                  ]}
+                  trigger={
+                    <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                      <span>🌍</span>
+                      <span>{countryFilter === 'All' ? 'All Countries' : countryFilter}</span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </span>
+                  }
+                />
 
                 {/* User Type */}
-                <select
+                <Dropdown
+                  align="start"
                   value={userTypeFilter}
-                  onChange={(e) => setUserTypeFilter(e.target.value)}
-                  className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-                >
-                  <option value="All">All Types</option>
-                  <option value="Agent">Agent</option>
-                  <option value="Investor">Investor</option>
-                  <option value="Brokerage">Brokerage</option>
-                </select>
+                  onSelect={setUserTypeFilter}
+                  ariaLabel="Filter by User Type"
+                  options={[
+                    { label: 'All Types', value: 'All' },
+                    { label: 'Agent', value: 'Agent' },
+                    { label: 'Investor', value: 'Investor' },
+                    { label: 'Brokerage', value: 'Brokerage' },
+                  ]}
+                  trigger={
+                    <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                      <Users className="size-4 text-[#6f777f]" />
+                      <span>{userTypeFilter === 'All' ? 'All Types' : userTypeFilter}</span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </span>
+                  }
+                />
 
                 {/* Auto-Renewal */}
-                <select
+                <Dropdown
+                  align="start"
                   value={autoRenewalFilter}
-                  onChange={(e) => setAutoRenewalFilter(e.target.value)}
-                  className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-                >
-                  <option value="All">All Auto-Renewal</option>
-                  <option value="Enabled">Auto-Renewal ON</option>
-                  <option value="Disabled">Auto-Renewal OFF</option>
-                </select>
+                  onSelect={setAutoRenewalFilter}
+                  ariaLabel="Filter by Auto-Renewal"
+                  options={[
+                    { label: 'All Auto-Renewal', value: 'All' },
+                    { label: 'Auto-Renewal ON', value: 'Enabled' },
+                    { label: 'Auto-Renewal OFF', value: 'Disabled' },
+                  ]}
+                  trigger={
+                    <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                      <RefreshCw className="size-4 text-[#6f777f]" />
+                      <span>
+                        {autoRenewalFilter === 'Enabled'
+                          ? 'Auto-Renewal ON'
+                          : autoRenewalFilter === 'Disabled'
+                          ? 'Auto-Renewal OFF'
+                          : 'All Auto-Renewal'}
+                      </span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </span>
+                  }
+                />
 
                 {/* Reset Filters Link */}
                 {activeFilterCount > 0 && (
@@ -1822,21 +1865,21 @@ function SubscriptionsManagementInner() {
                       <tr
                         key={sub.id}
                         onClick={() => handleOpenSubscriberDetails(sub)}
-                        className="h-[60px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa] cursor-pointer"
+                        className="h-[64px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa] cursor-pointer"
                       >
                         <td className="px-4">
                           <div className="flex items-center gap-3">
                             <TableAvatar
                               src={sub.userAvatar}
                               name={sub.userName}
-                              size="sm"
+                              size="md"
                               variant="brand"
                             />
                             <div>
-                              <div className="font-semibold text-[13px] text-[#1f2327] hover:text-[#00838f]">
+                              <div className="font-semibold text-[14px] text-[#1f2327] hover:text-[#00838f]">
                                 {sub.userName}
                               </div>
-                              <div className="text-[11px] text-[#6f777f]">{sub.userEmail}</div>
+                              <div className="text-[12px] text-[#6f777f]">{sub.userEmail}</div>
                             </div>
                           </div>
                         </td>
@@ -1935,24 +1978,24 @@ function SubscriptionsManagementInner() {
             {/* Payments Table */}
             <div className="rounded-[12px] border border-[#d3d5d7] bg-white overflow-hidden shadow-2xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-[12.5px] border-collapse">
-                  <thead>
-                    <tr className="border-b border-[#e5e7eb] bg-[#f8f9fa] text-[11.5px] font-bold uppercase tracking-wider text-[#6f777f]">
-                      <th className="px-4 py-3">Payment ID</th>
-                      <th className="px-3 py-3">Subscriber</th>
-                      <th className="px-3 py-3">Plan</th>
-                      <th className="px-3 py-3">Amount</th>
-                      <th className="px-3 py-3">Tax (5%)</th>
-                      <th className="px-3 py-3">Method</th>
-                      <th className="px-3 py-3">Status</th>
-                      <th className="px-3 py-3">Date</th>
-                      <th className="px-3 py-3">Invoice</th>
-                      <th className="px-4 py-3 text-right">Actions</th>
+                <table className="w-full text-left text-[14px] border-collapse font-sans">
+                  <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
+                    <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
+                      <th className="px-4">Payment ID</th>
+                      <th className="px-3">Subscriber</th>
+                      <th className="px-3">Plan</th>
+                      <th className="px-3">Amount</th>
+                      <th className="px-3">Tax (5%)</th>
+                      <th className="px-3">Method</th>
+                      <th className="px-3">Status</th>
+                      <th className="px-3">Date</th>
+                      <th className="px-3">Invoice</th>
+                      <th className="px-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#e5e7eb]">
+                  <tbody className="divide-y divide-[#d3d5d7]">
                     {payments.map((p) => (
-                      <tr key={p.id} className="hover:bg-[#f8f9fa] transition-colors">
+                      <tr key={p.id} className="h-[64px] hover:bg-[#f8f9fa] transition-colors whitespace-nowrap font-sans">
                         <td className="px-4 py-3.5 font-bold text-[#1f2327] font-mono">{p.id}</td>
                         <td className="px-3 py-3.5">
                           <div className="font-bold text-[#1f2327]">{p.userName}</div>
@@ -2046,23 +2089,23 @@ function SubscriptionsManagementInner() {
             </div>
 
             <div className="rounded-[12px] border border-[#d3d5d7] bg-white overflow-hidden shadow-2xs">
-              <table className="w-full text-left text-[12.5px] border-collapse">
-                <thead>
-                  <tr className="border-b border-[#e5e7eb] bg-[#f8f9fa] text-[11.5px] font-bold uppercase tracking-wider text-[#6f777f]">
-                    <th className="px-4 py-3">Promo Code</th>
-                    <th className="px-3 py-3">Discount</th>
-                    <th className="px-3 py-3">Discount Type</th>
-                    <th className="px-3 py-3">Target Plan</th>
-                    <th className="px-3 py-3">Country</th>
-                    <th className="px-3 py-3">Usage vs Limit</th>
-                    <th className="px-3 py-3">Expiration Date</th>
-                    <th className="px-3 py-3">Status</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
+              <table className="w-full text-left text-[14px] border-collapse font-sans">
+                <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
+                  <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
+                    <th className="px-4">Promo Code</th>
+                    <th className="px-3">Discount</th>
+                    <th className="px-3">Discount Type</th>
+                    <th className="px-3">Target Plan</th>
+                    <th className="px-3">Country</th>
+                    <th className="px-3">Usage vs Limit</th>
+                    <th className="px-3">Expiration Date</th>
+                    <th className="px-3">Status</th>
+                    <th className="px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#e5e7eb]">
+                <tbody className="divide-y divide-[#d3d5d7]">
                   {promoCodes.map((c) => (
-                    <tr key={c.id} className="hover:bg-[#f8f9fa] transition-colors">
+                    <tr key={c.id} className="h-[64px] hover:bg-[#f8f9fa] transition-colors whitespace-nowrap font-sans">
                       <td className="px-4 py-3.5 font-bold font-mono text-[#00838f]">{c.code}</td>
                       <td className="px-3 py-3.5 font-bold text-[#1f2327]">
                         {c.discountType === 'Percentage' ? `${c.discountValue}% Off` : `AED ${c.discountValue} Off`}
@@ -2125,23 +2168,23 @@ function SubscriptionsManagementInner() {
         {activeTab === 'invoices' && (
           <div className="space-y-4 ant-fade-in">
             <div className="rounded-[12px] border border-[#d3d5d7] bg-white overflow-hidden shadow-2xs">
-              <table className="w-full text-left text-[12.5px] border-collapse">
-                <thead>
-                  <tr className="border-b border-[#e5e7eb] bg-[#f8f9fa] text-[11.5px] font-bold uppercase tracking-wider text-[#6f777f]">
-                    <th className="px-4 py-3">Invoice #</th>
-                    <th className="px-3 py-3">Subscriber</th>
-                    <th className="px-3 py-3">Plan / Description</th>
-                    <th className="px-3 py-3">Amount</th>
-                    <th className="px-3 py-3">Tax</th>
-                    <th className="px-3 py-3">Total</th>
-                    <th className="px-3 py-3">Status</th>
-                    <th className="px-3 py-3">Issued Date</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
+              <table className="w-full text-left text-[14px] border-collapse font-sans">
+                <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
+                  <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
+                    <th className="px-4">Invoice #</th>
+                    <th className="px-3">Subscriber</th>
+                    <th className="px-3">Plan / Description</th>
+                    <th className="px-3">Amount</th>
+                    <th className="px-3">Tax</th>
+                    <th className="px-3">Total</th>
+                    <th className="px-3">Status</th>
+                    <th className="px-3">Issued Date</th>
+                    <th className="px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#e5e7eb]">
+                <tbody className="divide-y divide-[#d3d5d7]">
                   {invoices.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-[#f8f9fa] transition-colors">
+                    <tr key={inv.id} className="h-[64px] hover:bg-[#f8f9fa] transition-colors whitespace-nowrap font-sans">
                       <td className="px-4 py-3.5 font-bold font-mono text-[#00838f]">{inv.invoiceNumber}</td>
                       <td className="px-3 py-3.5">
                         <div className="font-bold text-[#1f2327]">{inv.userName}</div>
@@ -2404,7 +2447,7 @@ function SubscriptionsManagementInner() {
                 <select
                   value={selectedNewPlanId}
                   onChange={(e) => setSelectedNewPlanId(e.target.value)}
-                  className="mt-1 w-full rounded-[6px] border border-[#d3d5d7] bg-white px-3 py-2 text-[12.5px] font-bold outline-none"
+                  className="mt-1 h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20"
                 >
                   {plans
                     .filter((p) => p.monthlyPrice > selectedSubscriber.amount)
@@ -2463,7 +2506,7 @@ function SubscriptionsManagementInner() {
                 <select
                   value={selectedNewPlanId}
                   onChange={(e) => setSelectedNewPlanId(e.target.value)}
-                  className="mt-1 w-full rounded-[6px] border border-[#d3d5d7] bg-white px-3 py-2 text-[12.5px] font-bold outline-none"
+                  className="mt-1 h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20"
                 >
                   {plans.map((p) => (
                     <option key={p.id} value={p.id}>

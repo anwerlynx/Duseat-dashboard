@@ -53,7 +53,20 @@ import { MainButton } from '@/components/ui/main-button'
 import { ToastProvider, useToast } from '@/components/dashboard/toast'
 import { FigmaStatusBadge } from '@/components/ui/figma-badges'
 import { TableAvatar } from '@/components/ui/table-avatar'
+import { Dropdown } from '@/components/dashboard/menu'
+import { MetricCard } from '@/components/ui/metric-card'
 import { cn, exportToCsv } from '@/lib/utils'
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+} from 'recharts'
 
 
 // ============================================================================
@@ -807,31 +820,7 @@ function FinanceManagementInner() {
   return (
     <PlatformShell
       title="Finance & Revenue Management"
-      eyebrow="Financial Operations Command"
-      actions={
-        <div className="flex items-center gap-2">
-          <MainButton
-            variant="Secondary"
-            size="sm"
-            iconLeft={<Download className="size-3.5" />}
-            label="Export Financial Reports"
-            onClick={() => setExportModalOpen(true)}
-          />
-          <MainButton
-            variant="Primary"
-            size="sm"
-            iconLeft={<RefreshCw className="size-3.5" />}
-            label="Run Reconciliation"
-            onClick={() => {
-              toast({
-                variant: 'success',
-                title: 'Reconciliation check complete',
-                description: 'Duseat ledger perfectly matches gateway balances. Zero discrepancies found.',
-              })
-            }}
-          />
-        </div>
-      }
+      eyebrow="Financial Operations"
     >
       <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
         {/* =========================================================================
@@ -840,13 +829,6 @@ function FinanceManagementInner() {
         <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#6f777f] uppercase tracking-wider mb-1">
-                <span>Platform</span>
-                <span>/</span>
-                <span>Operations</span>
-                <span>/</span>
-                <span className="text-[#00c2cb]">Finance & Revenue</span>
-              </div>
               <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
                 Finance & Revenue Operations
               </h1>
@@ -880,6 +862,46 @@ function FinanceManagementInner() {
               </button>
             </div>
           </div>
+
+          {/* 4 Stat Metric Cards */}
+          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3">
+            <MetricCard
+              label="Revenue Today"
+              value="AED 32,840"
+              trend="+8.4%"
+              trendDirection="up"
+              icon={DollarSign}
+              tone="neutral"
+              subtitle="vs AED 30,290 yesterday"
+            />
+            <MetricCard
+              label="Revenue This Week"
+              value="AED 194,520"
+              trend="+14.2%"
+              trendDirection="up"
+              icon={TrendingUp}
+              tone="info"
+              subtitle="vs AED 170,300 last week"
+            />
+            <MetricCard
+              label="Revenue This Month (MTD)"
+              value="AED 824,600"
+              trend="+18.7%"
+              trendDirection="up"
+              icon={Wallet}
+              tone="brand"
+              subtitle="vs AED 694,700 prev month"
+            />
+            <MetricCard
+              label="Revenue This Year (YTD)"
+              value="AED 9.84M"
+              trend="+28.5%"
+              trendDirection="up"
+              icon={TrendingUp}
+              tone="success"
+              subtitle="Ahead of annual pacing"
+            />
+          </div>
         </header>
 
         {/* =========================================================================
@@ -907,7 +929,7 @@ function FinanceManagementInner() {
                   className={cn(
                     'inline-flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn select-none',
                     active
-                      ? 'bg-[#1f2327] text-white shadow-2xs'
+                      ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                       : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                   )}
                 >
@@ -945,59 +967,44 @@ function FinanceManagementInner() {
            ========================================================================= */}
         {activeTab === 'overview' && (
           <div className="space-y-6 ant-fade-in">
-            {/* Top KPI Row: Revenue Horizons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
-              <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-[#6f777f]">Revenue Today</span>
-                  <span className="flex items-center gap-0.5 text-[11px] font-bold text-[#12b76a]">
-                    <TrendingUp className="size-3" /> +8.4%
-                  </span>
-                </div>
-                <div className="mt-2 text-[26px] font-bold tracking-tight text-[#1f2327]">
-                  AED 32,840<span className="text-[12px] font-normal text-[#8f969e]">.00</span>
-                </div>
-                <p className="mt-1 text-[11px] text-[#6f777f]">vs AED 30,290 yesterday</p>
-              </div>
-
-              <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-[#6f777f]">Revenue This Week</span>
-                  <span className="flex items-center gap-0.5 text-[11px] font-bold text-[#12b76a]">
-                    <TrendingUp className="size-3" /> +14.2%
-                  </span>
-                </div>
-                <div className="mt-2 text-[26px] font-bold tracking-tight text-[#1f2327]">
-                  AED 194,520<span className="text-[12px] font-normal text-[#8f969e]">.00</span>
-                </div>
-                <p className="mt-1 text-[11px] text-[#6f777f]">vs AED 170,300 last week</p>
-              </div>
-
-              <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-[#6f777f]">Revenue This Month (MTD)</span>
-                  <span className="flex items-center gap-0.5 text-[11px] font-bold text-[#12b76a]">
-                    <TrendingUp className="size-3" /> +18.7%
-                  </span>
-                </div>
-                <div className="mt-2 text-[26px] font-bold tracking-tight text-[#00838f]">
-                  AED 824,600<span className="text-[12px] font-normal text-[#8f969e]">.00</span>
-                </div>
-                <p className="mt-1 text-[11px] text-[#6f777f]">vs AED 694,700 previous month</p>
-              </div>
-
-              <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-[#6f777f]">Revenue This Year (YTD)</span>
-                  <span className="flex items-center gap-0.5 text-[11px] font-bold text-[#12b76a]">
-                    <TrendingUp className="size-3" /> +28.5%
-                  </span>
-                </div>
-                <div className="mt-2 text-[26px] font-bold tracking-tight text-[#1f2327]">
-                  AED 9.84M
-                </div>
-                <p className="mt-1 text-[11px] text-[#6f777f]">Annualized pacing ahead of budget</p>
-              </div>
+            {/* Top KPI Row: Standardized Metric Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              <MetricCard
+                label="Revenue Today"
+                value="AED 32,840"
+                trend="+8.4%"
+                trendDirection="up"
+                icon={DollarSign}
+                tone="neutral"
+                subtitle="vs AED 30,290 yesterday"
+              />
+              <MetricCard
+                label="Revenue This Week"
+                value="AED 194,520"
+                trend="+14.2%"
+                trendDirection="up"
+                icon={TrendingUp}
+                tone="brand"
+                subtitle="vs AED 170,300 last week"
+              />
+              <MetricCard
+                label="Revenue This Month (MTD)"
+                value="AED 824,600"
+                trend="+18.7%"
+                trendDirection="up"
+                icon={Wallet}
+                tone="brand"
+                subtitle="vs AED 694,700 prev month"
+              />
+              <MetricCard
+                label="Revenue This Year (YTD)"
+                value="AED 9.84M"
+                trend="+28.5%"
+                trendDirection="up"
+                icon={TrendingUp}
+                tone="success"
+                subtitle="Ahead of annual pacing"
+              />
             </div>
 
             {/* Second KPI Row: Financial Health, MRR, ARR, ARPU, LTV */}
@@ -1083,7 +1090,7 @@ function FinanceManagementInner() {
             </div>
 
             {/* Interactive Revenue Chart over time */}
-            <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-5 shadow-2xs">
+            <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-5 shadow-2xs space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#e5e7eb] pb-4">
                 <div>
                   <h3 className="text-[16px] font-bold text-[#1f2327]">Revenue Timeline & Pacing</h3>
@@ -1111,40 +1118,148 @@ function FinanceManagementInner() {
                 </div>
               </div>
 
-              {/* Chart Visual */}
-              <div className="mt-5 grid grid-cols-6 sm:grid-cols-12 gap-2 items-end h-[190px] pt-4">
-                {[
-                  { m: 'Jan', val: 195, tax: 9.75 },
-                  { m: 'Feb', val: 240, tax: 12.0 },
-                  { m: 'Mar', val: 285, tax: 14.25 },
-                  { m: 'Apr', val: 340, tax: 17.0 },
-                  { m: 'May', val: 410, tax: 20.5 },
-                  { m: 'Jun', val: 490, tax: 24.5 },
-                  { m: 'Jul', val: 560, tax: 28.0 },
-                  { m: 'Aug', val: 640, tax: 32.0 },
-                  { m: 'Sep', val: 730, tax: 36.5 },
-                  { m: 'Oct', val: 820, tax: 41.0 },
-                  { m: 'Nov', val: 910, tax: 45.5 },
-                  { m: 'Dec', val: 1040, tax: 52.0 },
-                ].map((col, idx) => (
-                  <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end group cursor-pointer">
-                    <div className="w-full flex flex-col items-center gap-0.5">
-                      <div
-                        className="w-full max-w-[28px] rounded-t-[3px] bg-[#6f777f] opacity-70 transition-all group-hover:opacity-100"
-                        style={{ height: `${col.tax * 0.9}px` }}
-                        title={`VAT Tax: AED ${col.tax}k`}
+              {/* Chart Visual with Recharts */}
+              <div className="h-[250px] w-full pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  {activeMetric === 'Transactions' ? (
+                    <BarChart
+                      data={[
+                        { m: 'Jan', val: 1240 },
+                        { m: 'Feb', val: 1510 },
+                        { m: 'Mar', val: 1780 },
+                        { m: 'Apr', val: 2100 },
+                        { m: 'May', val: 2580 },
+                        { m: 'Jun', val: 3040 },
+                        { m: 'Jul', val: 3490 },
+                        { m: 'Aug', val: 4020 },
+                        { m: 'Sep', val: 4580 },
+                        { m: 'Oct', val: 5120 },
+                        { m: 'Nov', val: 5740 },
+                        { m: 'Dec', val: 6510 },
+                      ]}
+                      margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                    >
+                      <CartesianGrid vertical={false} stroke="#eff1f3" strokeDasharray="3 3" />
+                      <XAxis dataKey="m" axisLine={false} tickLine={false} tick={{ fill: '#6f777f', fontSize: 11 }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6f777f', fontSize: 11 }} />
+                      <RechartsTooltip
+                        content={({ active, payload, label }) => {
+                          if (!active || !payload?.length) return null
+                          return (
+                            <div className="rounded-[8px] border border-[#d3d5d7] bg-white p-2.5 shadow-lg text-xs font-sans">
+                              <p className="font-bold text-[#1f2327] mb-1">{label} 2026</p>
+                              <p className="text-[#6f777f]">
+                                Transactions: <strong className="text-[#1f2327]">{Number(payload[0].value).toLocaleString()}</strong>
+                              </p>
+                            </div>
+                          )
+                        }}
                       />
-                      <div
-                        className="w-full max-w-[28px] rounded-b-[2px] bg-[#00c2cb] transition-all group-hover:bg-[#00838f]"
-                        style={{ height: `${col.val * 0.14}px` }}
-                        title={`Gross: AED ${col.val}k`}
+                      <Bar dataKey="val" fill="#1f2327" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  ) : activeMetric === 'Refunds' ? (
+                    <BarChart
+                      data={[
+                        { m: 'Jan', val: 1200 },
+                        { m: 'Feb', val: 800 },
+                        { m: 'Mar', val: 1500 },
+                        { m: 'Apr', val: 400 },
+                        { m: 'May', val: 950 },
+                        { m: 'Jun', val: 1100 },
+                        { m: 'Jul', val: 600 },
+                        { m: 'Aug', val: 750 },
+                        { m: 'Sep', val: 1300 },
+                        { m: 'Oct', val: 900 },
+                        { m: 'Nov', val: 1150 },
+                        { m: 'Dec', val: 1598 },
+                      ]}
+                      margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                    >
+                      <CartesianGrid vertical={false} stroke="#eff1f3" strokeDasharray="3 3" />
+                      <XAxis dataKey="m" axisLine={false} tickLine={false} tick={{ fill: '#6f777f', fontSize: 11 }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6f777f', fontSize: 11 }} tickFormatter={(v) => `AED ${v}`} />
+                      <RechartsTooltip
+                        content={({ active, payload, label }) => {
+                          if (!active || !payload?.length) return null
+                          return (
+                            <div className="rounded-[8px] border border-[#d3d5d7] bg-white p-2.5 shadow-lg text-xs font-sans">
+                              <p className="font-bold text-[#1f2327] mb-1">{label} 2026</p>
+                              <p className="text-[#d92d20]">
+                                Refunds: <strong>AED {Number(payload[0].value).toLocaleString()}</strong>
+                              </p>
+                            </div>
+                          )
+                        }}
                       />
-                    </div>
-                    <span className="text-[10.5px] font-bold text-[#6f777f] group-hover:text-[#1f2327]">
-                      {col.m}
-                    </span>
-                  </div>
-                ))}
+                      <Bar dataKey="val" fill="#d92d20" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  ) : (
+                    <AreaChart
+                      data={[
+                        { m: 'Jan', val: 195000, net: 185250, tax: 9750 },
+                        { m: 'Feb', val: 240000, net: 228000, tax: 12000 },
+                        { m: 'Mar', val: 285000, net: 270750, tax: 14250 },
+                        { m: 'Apr', val: 340000, net: 323000, tax: 17000 },
+                        { m: 'May', val: 410000, net: 389500, tax: 20500 },
+                        { m: 'Jun', val: 490000, net: 465500, tax: 24500 },
+                        { m: 'Jul', val: 560000, net: 532000, tax: 28000 },
+                        { m: 'Aug', val: 640000, net: 608000, tax: 32000 },
+                        { m: 'Sep', val: 730000, net: 693500, tax: 36500 },
+                        { m: 'Oct', val: 820000, net: 779000, tax: 41000 },
+                        { m: 'Nov', val: 910000, net: 864500, tax: 45500 },
+                        { m: 'Dec', val: 1040000, net: 988000, tax: 52000 },
+                      ]}
+                      margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient id="finGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#00c2cb" stopOpacity={0.35} />
+                          <stop offset="100%" stopColor="#00c2cb" stopOpacity={0.0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid vertical={false} stroke="#eff1f3" strokeDasharray="3 3" />
+                      <XAxis dataKey="m" axisLine={false} tickLine={false} tick={{ fill: '#6f777f', fontSize: 11 }} />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#6f777f', fontSize: 11 }}
+                        tickFormatter={(v) => `AED ${(v / 1000).toFixed(0)}k`}
+                      />
+                      <RechartsTooltip
+                        content={({ active, payload, label }) => {
+                          if (!active || !payload?.length) return null
+                          const item = payload[0].payload
+                          return (
+                            <div className="rounded-[8px] border border-[#d3d5d7] bg-white p-2.5 shadow-lg text-xs font-sans">
+                              <p className="font-bold text-[#1f2327] mb-1">{label} 2026</p>
+                              <div className="space-y-0.5">
+                                <p className="text-[#6f777f] flex justify-between gap-3">
+                                  <span>Gross:</span>
+                                  <strong className="text-[#1f2327]">AED {item.val.toLocaleString()}</strong>
+                                </p>
+                                <p className="text-[#6f777f] flex justify-between gap-3">
+                                  <span>Net Realized:</span>
+                                  <strong className="text-[#00a4ac]">AED {item.net.toLocaleString()}</strong>
+                                </p>
+                                <p className="text-[#6f777f] flex justify-between gap-3">
+                                  <span>VAT 5%:</span>
+                                  <span className="text-[#8f969e]">AED {item.tax.toLocaleString()}</span>
+                                </p>
+                              </div>
+                            </div>
+                          )
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey={activeMetric === 'Net Revenue' ? 'net' : 'val'}
+                        stroke="#00c2cb"
+                        strokeWidth={2.5}
+                        fill="url(#finGrad)"
+                      />
+                    </AreaChart>
+                  )}
+                </ResponsiveContainer>
               </div>
             </div>
 
@@ -1279,7 +1394,7 @@ function FinanceManagementInner() {
                         className={cn(
                           'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn',
                           isActive
-                            ? 'bg-[#1f2327] text-white shadow-2xs'
+                            ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                             : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                         )}
                       >
@@ -1323,40 +1438,67 @@ function FinanceManagementInner() {
                 </div>
 
                 {/* Gateway Filter */}
-                <select
+                <Dropdown
+                  align="start"
                   value={gatewayFilter}
-                  onChange={(e) => setGatewayFilter(e.target.value)}
-                  className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-                >
-                  <option value="All">All Gateways</option>
-                  <option value="Stripe UAE">Stripe UAE</option>
-                  <option value="Checkout.com">Checkout.com</option>
-                  <option value="Network International">Network International</option>
-                </select>
+                  onSelect={setGatewayFilter}
+                  ariaLabel="Filter by Gateway"
+                  options={[
+                    { label: 'All Gateways', value: 'All' },
+                    { label: 'Stripe UAE', value: 'Stripe UAE' },
+                    { label: 'Checkout.com', value: 'Checkout.com' },
+                    { label: 'Network International', value: 'Network International' },
+                  ]}
+                  trigger={
+                    <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                      <Server className="size-4 text-[#6f777f]" />
+                      <span>{gatewayFilter === 'All' ? 'All Gateways' : gatewayFilter}</span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </span>
+                  }
+                />
 
                 {/* Method Filter */}
-                <select
+                <Dropdown
+                  align="start"
                   value={methodFilter}
-                  onChange={(e) => setMethodFilter(e.target.value)}
-                  className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-                >
-                  <option value="All">All Payment Methods</option>
-                  <option value="Credit Card">Credit Card</option>
-                  <option value="Apple Pay">Apple Pay</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                </select>
+                  onSelect={setMethodFilter}
+                  ariaLabel="Filter by Method"
+                  options={[
+                    { label: 'All Payment Methods', value: 'All' },
+                    { label: 'Credit Card', value: 'Credit Card' },
+                    { label: 'Apple Pay', value: 'Apple Pay' },
+                    { label: 'Bank Transfer', value: 'Bank Transfer' },
+                  ]}
+                  trigger={
+                    <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                      <Wallet className="size-4 text-[#6f777f]" />
+                      <span>{methodFilter === 'All' ? 'All Payment Methods' : methodFilter}</span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </span>
+                  }
+                />
 
                 {/* Country Filter */}
-                <select
+                <Dropdown
+                  align="start"
                   value={countryFilter}
-                  onChange={(e) => setCountryFilter(e.target.value)}
-                  className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-                >
-                  <option value="All">All Countries</option>
-                  <option value="United Arab Emirates">United Arab Emirates</option>
-                  <option value="Saudi Arabia">Saudi Arabia</option>
-                  <option value="United Kingdom">United Kingdom</option>
-                </select>
+                  onSelect={setCountryFilter}
+                  ariaLabel="Filter by Country"
+                  options={[
+                    { label: 'All Countries', value: 'All' },
+                    { label: 'United Arab Emirates', value: 'United Arab Emirates' },
+                    { label: 'Saudi Arabia', value: 'Saudi Arabia' },
+                    { label: 'United Kingdom', value: 'United Kingdom' },
+                  ]}
+                  trigger={
+                    <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                      <span>🌍</span>
+                      <span>{countryFilter === 'All' ? 'All Countries' : countryFilter}</span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </span>
+                  }
+                />
 
                 {/* Reset Filters Link */}
                 {activeFilterCount > 0 && (
@@ -1392,7 +1534,7 @@ function FinanceManagementInner() {
                       <tr
                         key={t.id}
                         onClick={() => handleOpenTxnDetails(t)}
-                        className="h-[60px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa] cursor-pointer"
+                        className="h-[64px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa] cursor-pointer"
                       >
                         <td className="px-4 font-semibold font-mono text-[13px] text-[#00c2cb] hover:underline">{t.id}</td>
                         <td className="px-4">
@@ -1400,12 +1542,12 @@ function FinanceManagementInner() {
                             <TableAvatar
                               src={t.userAvatar}
                               name={t.userName}
-                              size="sm"
+                              size="md"
                               variant="brand"
                             />
                             <div>
-                              <div className="font-semibold text-[13px] text-[#1f2327]">{t.userName}</div>
-                              <div className="text-[11px] text-[#6f777f]">{t.userEmail}</div>
+                              <div className="font-semibold text-[14px] text-[#1f2327]">{t.userName}</div>
+                              <div className="text-[12px] text-[#6f777f]">{t.userEmail}</div>
                             </div>
                           </div>
                         </td>
@@ -1474,23 +1616,23 @@ function FinanceManagementInner() {
             </div>
 
             <div className="rounded-[12px] border border-[#d3d5d7] bg-white overflow-hidden shadow-2xs">
-              <table className="w-full text-left text-[12.5px] border-collapse">
-                <thead>
-                  <tr className="border-b border-[#e5e7eb] bg-[#f8f9fa] text-[11.5px] font-bold uppercase tracking-wider text-[#6f777f]">
-                    <th className="px-4 py-3">Refund ID</th>
-                    <th className="px-3 py-3">Transaction</th>
-                    <th className="px-3 py-3">Customer</th>
-                    <th className="px-3 py-3">Amount</th>
-                    <th className="px-3 py-3">Reason</th>
-                    <th className="px-3 py-3">Gateway</th>
-                    <th className="px-3 py-3">Status</th>
-                    <th className="px-3 py-3">Requested Date</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
+              <table className="w-full text-left text-[14px] border-collapse font-sans">
+                <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
+                  <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
+                    <th className="px-4">Refund ID</th>
+                    <th className="px-3">Transaction</th>
+                    <th className="px-3">Customer</th>
+                    <th className="px-3">Amount</th>
+                    <th className="px-3">Reason</th>
+                    <th className="px-3">Gateway</th>
+                    <th className="px-3">Status</th>
+                    <th className="px-3">Requested Date</th>
+                    <th className="px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#e5e7eb]">
+                <tbody className="divide-y divide-[#d3d5d7]">
                   {refunds.map((r) => (
-                    <tr key={r.id} className="hover:bg-[#f8f9fa] transition-colors">
+                    <tr key={r.id} className="h-[64px] hover:bg-[#f8f9fa] transition-colors whitespace-nowrap font-sans">
                       <td className="px-4 py-3.5 font-bold font-mono text-[#00838f]">{r.id}</td>
                       <td className="px-3 py-3.5 font-mono text-[#1f2327]">{r.transactionId}</td>
                       <td className="px-3 py-3.5">
@@ -1678,21 +1820,21 @@ function FinanceManagementInner() {
             </div>
 
             <div className="rounded-[12px] border border-[#d3d5d7] bg-white overflow-hidden shadow-2xs">
-              <table className="w-full text-left text-[12.5px] border-collapse">
-                <thead>
-                  <tr className="border-b border-[#e5e7eb] bg-[#f8f9fa] text-[11.5px] font-bold uppercase tracking-wider text-[#6f777f]">
-                    <th className="px-4 py-3">Jurisdiction</th>
-                    <th className="px-3 py-3">Applicable Tax Rate</th>
-                    <th className="px-3 py-3">Taxable Revenue</th>
-                    <th className="px-3 py-3">Gross VAT Collected</th>
-                    <th className="px-3 py-3">Transactions</th>
-                    <th className="px-3 py-3">Refunded VAT</th>
-                    <th className="px-4 py-3 text-right">Net Tax Payable</th>
+              <table className="w-full text-left text-[14px] border-collapse font-sans">
+                <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
+                  <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
+                    <th className="px-4">Jurisdiction</th>
+                    <th className="px-3">Applicable Tax Rate</th>
+                    <th className="px-3">Taxable Revenue</th>
+                    <th className="px-3">Gross VAT Collected</th>
+                    <th className="px-3">Transactions</th>
+                    <th className="px-3">Refunded VAT</th>
+                    <th className="px-4 text-right">Net Tax Payable</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#e5e7eb]">
+                <tbody className="divide-y divide-[#d3d5d7]">
                   {TAX_COUNTRY_REPORTS.map((t, idx) => (
-                    <tr key={idx} className="hover:bg-[#f8f9fa] transition-colors">
+                    <tr key={idx} className="h-[64px] hover:bg-[#f8f9fa] transition-colors whitespace-nowrap font-sans">
                       <td className="px-4 py-3.5 font-bold text-[#1f2327]">{t.country}</td>
                       <td className="px-3 py-3.5 font-medium text-[#1f2327]">{t.taxRate}</td>
                       <td className="px-3 py-3.5 font-bold text-[#1f2327]">
@@ -1727,20 +1869,20 @@ function FinanceManagementInner() {
             </div>
 
             <div className="rounded-[12px] border border-[#d3d5d7] bg-white overflow-hidden shadow-2xs">
-              <table className="w-full text-left text-[12.5px] border-collapse">
-                <thead>
-                  <tr className="border-b border-[#e5e7eb] bg-[#f8f9fa] text-[11.5px] font-bold uppercase tracking-wider text-[#6f777f]">
-                    <th className="px-4 py-3">Closing Period</th>
-                    <th className="px-3 py-3">Duseat Total</th>
-                    <th className="px-3 py-3">Gateway Total</th>
-                    <th className="px-3 py-3">Variance</th>
-                    <th className="px-3 py-3">Status</th>
-                    <th className="px-4 py-3">Reconciliation Notes</th>
+              <table className="w-full text-left text-[14px] border-collapse font-sans">
+                <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
+                  <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
+                    <th className="px-4">Closing Period</th>
+                    <th className="px-3">Duseat Total</th>
+                    <th className="px-3">Gateway Total</th>
+                    <th className="px-3">Variance</th>
+                    <th className="px-3">Status</th>
+                    <th className="px-4">Reconciliation Notes</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#e5e7eb]">
+                <tbody className="divide-y divide-[#d3d5d7]">
                   {RECONCILIATION_DATA.map((r) => (
-                    <tr key={r.id} className="hover:bg-[#f8f9fa] transition-colors">
+                    <tr key={r.id} className="h-[64px] hover:bg-[#f8f9fa] transition-colors whitespace-nowrap font-sans">
                       <td className="px-4 py-3.5 font-bold text-[#1f2327]">{r.period}</td>
                       <td className="px-3 py-3.5 font-bold text-[#1f2327]">
                         AED {r.duseatTotalAed.toLocaleString()} ({r.duseatCount} txns)
@@ -1808,20 +1950,20 @@ function FinanceManagementInner() {
         {activeTab === 'audit' && (
           <div className="space-y-4 ant-fade-in">
             <div className="rounded-[12px] border border-[#d3d5d7] bg-white overflow-hidden shadow-2xs">
-              <table className="w-full text-left text-[12.5px] border-collapse">
-                <thead>
-                  <tr className="border-b border-[#e5e7eb] bg-[#f8f9fa] text-[11.5px] font-bold uppercase tracking-wider text-[#6f777f]">
-                    <th className="px-4 py-3">Event</th>
-                    <th className="px-3 py-3">Actor & Role</th>
-                    <th className="px-3 py-3">Affected Entity</th>
-                    <th className="px-3 py-3">State Change</th>
-                    <th className="px-3 py-3">Timestamp</th>
-                    <th className="px-4 py-3">IP Address</th>
+              <table className="w-full text-left text-[14px] border-collapse font-sans">
+                <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
+                  <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
+                    <th className="px-4">Event</th>
+                    <th className="px-3">Actor & Role</th>
+                    <th className="px-3">Affected Entity</th>
+                    <th className="px-3">State Change</th>
+                    <th className="px-3">Timestamp</th>
+                    <th className="px-4">IP Address</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#e5e7eb]">
+                <tbody className="divide-y divide-[#d3d5d7]">
                   {AUDIT_LOGS_DATA.map((aud) => (
-                    <tr key={aud.id} className="hover:bg-[#f8f9fa] transition-colors">
+                    <tr key={aud.id} className="h-[64px] hover:bg-[#f8f9fa] transition-colors whitespace-nowrap font-sans">
                       <td className="px-4 py-3.5 font-bold text-[#1f2327]">{aud.event}</td>
                       <td className="px-3 py-3.5">
                         <div className="font-bold text-[#1f2327]">{aud.actor}</div>
@@ -2005,7 +2147,7 @@ function FinanceManagementInner() {
                 <select
                   value={exportType}
                   onChange={(e) => setExportType(e.target.value)}
-                  className="mt-1 w-full rounded-[6px] border border-[#d3d5d7] p-2 font-bold outline-none"
+                  className="mt-1 h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20"
                 >
                   <option value="Transactions & Revenue">Transactions & Revenue Summary</option>
                   <option value="VAT & Tax Reports">Regional VAT & Tax Returns (FTA UAE & ZATCA)</option>

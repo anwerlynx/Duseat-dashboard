@@ -56,7 +56,9 @@ import { DocumentViewerModal } from './document-viewer-modal'
 import { OfferDetailsModal, type OfferDetail } from './offer-details-modal'
 import { ChatModerator } from './chat-moderator'
 import { RequestCard } from './request-card'
+import { AgentOfferCard, type AgentOfferData } from './agent-offer-card'
 import { Flag, getCountryCode, AvatarFlagOverlay } from '@/components/ui/flag'
+import { AvatarLightboxModal } from '@/components/ui/avatar-lightbox-modal'
 import { Tag, StatusTag } from '@/components/ui/badge-tag'
 import { FigmaStatusBadge } from '@/components/ui/figma-badges'
 import { cn } from '@/lib/utils'
@@ -128,6 +130,7 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
   const [notifModalOpen, setNotifModalOpen] = React.useState(false)
   const [notifMsg, setNotifMsg] = React.useState('')
   const [isEditProfileOpen, setIsEditProfileOpen] = React.useState(false)
+  const [avatarModalOpen, setAvatarModalOpen] = React.useState(false)
   const [viewAllMode, setViewAllMode] = React.useState(false)
   const [filterCategory, setFilterCategory] = React.useState<'All' | 'Core' | 'Activity & Deals' | 'Security & Compliance'>('All')
 
@@ -313,7 +316,13 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
             {/* Left: Avatar + Identity + Status Badges */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <AvatarFlagOverlay code={getCountryCode(investor.country || 'United Arab Emirates')}>
-                <div className="size-[72px] sm:size-[80px] rounded-[12px] overflow-hidden bg-gradient-to-br from-amber-500 to-rose-600 flex items-center justify-center shadow-xs">
+                <div
+                  onClick={() => setAvatarModalOpen(true)}
+                  role="button"
+                  tabIndex={0}
+                  title="Click to view and download photo"
+                  className="size-[72px] sm:size-[80px] rounded-[12px] overflow-hidden bg-gradient-to-br from-amber-500 to-rose-600 flex items-center justify-center shadow-xs cursor-pointer hover:ring-2 hover:ring-[#00c2cb] hover:scale-105 active:scale-95 transition-all select-none"
+                >
                   {investor.avatar ? (
                     <img src={investor.avatar} alt={investor.name} className="size-full object-cover" />
                   ) : (
@@ -326,6 +335,18 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                   )}
                 </div>
               </AvatarFlagOverlay>
+
+              {avatarModalOpen && (
+                <AvatarLightboxModal
+                  isOpen={avatarModalOpen}
+                  onClose={() => setAvatarModalOpen(false)}
+                  src={investor.avatar}
+                  name={investor.name}
+                  country={investor.country}
+                  countryCode={getCountryCode(investor.country || 'AE')}
+                  subtitle={`Investor ID: ${investor.id} • ${investor.verification}`}
+                />
+              )}
 
               <div className="space-y-1 font-sans">
                 <div className="flex flex-wrap items-center gap-2.5">
@@ -547,24 +568,35 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                 <div className="space-y-6 xl:col-span-8">
                   {/* Active Property Requests */}
                   <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-6 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] flex flex-col gap-6">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="text-[22px] sm:text-[24px] font-bold text-[#1f2327]">Active Property Requests</h3>
+                    <div className="flex flex-col gap-2.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <h3 className="text-[20px] sm:text-[22px] font-bold text-[#1f2327]">Active Property Requests</h3>
+                          <span className="inline-flex items-center rounded-full bg-[#e5f6f7] px-2.5 py-0.5 text-[12px] font-bold text-[#00848b]">
+                            {investor.requestsList.length} Total
+                          </span>
+                        </div>
                         <button
                           type="button"
                           onClick={() => setActiveTab('requests')}
-                          className="text-[18px] sm:text-[20px] font-normal text-[#00c2cb] underline cursor-pointer hover:opacity-80"
+                          className="flex items-center gap-1 text-[14px] sm:text-[15px] font-semibold text-[#00c2cb] hover:underline cursor-pointer"
                         >
-                          View all
+                          <span>View all ({investor.requestsList.length})</span>
+                          <span aria-hidden="true">→</span>
                         </button>
                       </div>
-                      <p className="text-[16px] sm:text-[20px] text-[#6f777f]">
-                        Buyer requirements published on Duseat UAE network
-                      </p>
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[13px] text-[#6f777f]">
+                        <p>
+                          Showing latest <strong className="font-semibold text-[#1f2327]">2</strong> of <strong className="font-semibold text-[#1f2327]">{investor.requestsList.length}</strong> requirements published on Duseat UAE network
+                        </p>
+                        <span className="text-[12px] font-medium text-[#6f777f] bg-[#f8f9fa] px-2 py-0.5 rounded-[6px] border border-[#e5e7eb]">
+                          Showing 2 of {investor.requestsList.length}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="grid gap-6 md:grid-cols-3">
-                      {investor.requestsList.slice(0, 3).map((req) => (
+                    <div className="grid gap-5 grid-cols-1 sm:grid-cols-2">
+                      {investor.requestsList.slice(0, 2).map((req) => (
                         <RequestCard
                           key={req.id}
                           request={req}
@@ -572,6 +604,22 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                         />
                       ))}
                     </div>
+
+                    {investor.requestsList.length > 2 && (
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#f0f2f5] text-[13px]">
+                        <span className="text-[#6f777f]">
+                          + {investor.requestsList.length - 2} more requests published by {investor.name.split(' ')[0]}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('requests')}
+                          className="font-semibold text-[#00c2cb] hover:underline cursor-pointer flex items-center gap-1"
+                        >
+                          <span>Browse all {investor.requestsList.length} requests</span>
+                          <span>→</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Recent Activity */}
@@ -1056,7 +1104,7 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                 </div>
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
                 {investor.requestsList.map((req) => (
                   <RequestCard
                     key={req.id}
@@ -1069,211 +1117,181 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
           )}
 
           {/* =========================================================================
-              8. OFFERS RECEIVED (Figma Node 297:46017)
+          {/* =========================================================================
+              8. OFFERS RECEIVED (Figma Node 312:33338)
              ========================================================================= */}
           {activeTab === 'offers' && (
-            <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-6 shadow-sm space-y-5 font-sans">
-              <div className="border-b border-[#d3d5d7] pb-3">
-                <h3 className="text-[20px] font-bold text-[#1f2327]">Offers Received ({investor.offersReceived.length})</h3>
-                <p className="text-[13px] text-[#6f777f]">Property options pitched directly to this investor by verified agents</p>
+            <div className="rounded-[16px] border border-[#d3d5d7] bg-white p-6 sm:p-7 shadow-xs space-y-6 font-sans">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#E5E7EB] pb-4">
+                <div>
+                  <h3 className="text-[20px] sm:text-[22px] font-bold text-[#1f2327]">
+                    Submitted Property Offers ({investor.offersReceived.length})
+                  </h3>
+                  <p className="text-xs text-[#6f777f]">Property options pitched directly to this investor by verified agents matching Figma specs.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-[8px] border border-[#d3d5d7] bg-[#F9FAFB] px-3.5 py-1.5 text-xs font-semibold text-[#1f2327] shadow-2xs">
+                    Showing {investor.offersReceived.length} offers
+                  </span>
+                </div>
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {investor.offersReceived.map((offer, idx) => (
-                  <div
-                    key={offer.id}
-                    className="flex flex-col justify-between rounded-[12px] border border-[#d3d5d7] bg-white p-5 space-y-3.5 shadow-2xs hover:border-[#00c2cb] transition-all font-sans"
-                  >
-                    <div className="space-y-3">
-                      {/* Top Row: Tag, Agent Info, Price, Status */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2.5">
-                          <div className="size-10 rounded-full bg-gradient-to-br from-[#00c2cb] to-[#0a8288] flex items-center justify-center text-white font-bold text-xs shrink-0">
-                            {offer.agentName.split(' ').map((p) => p[0]).join('')}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-[14px] text-[#1f2327]">{offer.agentName}</span>
-                              <span className="inline-flex items-center gap-0.5 bg-[#e5f6f7] text-[#00c2cb] px-1.5 py-0.2 rounded text-[11px] font-semibold">
-                                Pro
-                              </span>
-                            </div>
-                            <p className="text-[12px] text-[#6f777f]">{offer.agency} • ★ {offer.rating || 4.9}</p>
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <span className="block font-bold text-[15px] text-[#1f2327]">{offer.price}</span>
-                          <span className="inline-flex items-center rounded-full bg-[#dfefe8] px-2 py-0.5 text-[11px] font-semibold text-[#17b26a]">
-                            {offer.status}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Property Title & Proposal */}
-                      <div>
-                        <p className="font-bold text-[14px] text-[#1f2327]">{offer.propertyTitle}</p>
-                        <p className="text-[12px] text-[#6f777f] line-clamp-2 mt-1 leading-relaxed">
-                          {offer.description || 'Rare chance to own a luxury golf-view villa with premium finishes, spacious interiors, and prime location in Al Barsha.'}
-                        </p>
-                      </div>
-
-                      {/* Photos Strip */}
-                      <div className="grid grid-cols-4 gap-1.5 pt-1">
-                        {[
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-2 2xl:grid-cols-3">
+                {investor.offersReceived.map((offer, idx) => {
+                  const offerData: AgentOfferData = {
+                    id: offer.id,
+                    requestId: offer.requestId ? (offer.requestId.startsWith('#') ? offer.requestId : `#${offer.requestId}`) : `#REQ-${1024 + idx}`,
+                    status: (offer.status as any) || 'Under review',
+                    name: offer.agentName,
+                    agentName: offer.agentName,
+                    agentId: offer.agentId || `AG-${1057 - idx}`,
+                    dealsCount: 64 - idx * 4,
+                    rating: offer.rating || 4.9,
+                    subscriptionPlan: 'Pro agent',
+                    isVerified: true,
+                    timeAgo: offer.submitted || '4 min ago',
+                    proposalDescription:
+                      offer.description ||
+                      `Exclusive proposal for ${offer.propertyTitle}. Premium finishes and prime location.`,
+                    note: offer.paymentPlan ? `Payment Plan: ${offer.paymentPlan}` : 'Family-friendly community with schools and parks nearby.',
+                    photos: (offer.photos && offer.photos.length > 0)
+                      ? offer.photos
+                      : [
                           'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&auto=format&fit=crop&q=80',
                           'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&auto=format&fit=crop&q=80',
-                          'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&auto=format&fit=crop&q=80',
-                          'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&auto=format&fit=crop&q=80',
-                        ].map((img, i) => (
-                          <div key={i} className="h-12 rounded-[6px] overflow-hidden bg-muted">
-                            <img src={img} alt={`Preview ${i + 1}`} className="size-full object-cover" />
-                          </div>
-                        ))}
-                      </div>
+                          'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&auto=format&fit=crop&q=80',
+                          'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&auto=format&fit=crop&q=80',
+                        ],
+                    location: offer.location || 'Palm Jumeirah, Dubai',
+                    brochureName: 'Brochure.pdf',
+                    amount: offer.price,
+                  }
 
-                      {/* Attachments Tags */}
-                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                        <span className="inline-flex items-center gap-1 rounded bg-[#f8f9fa] border border-[#d3d5d7] px-2 py-0.5 text-[11px] font-medium text-[#6f777f]">
-                          <FileText className="size-3 text-[#00c2cb]" />
-                          Floor.zip (32.5MB)
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded bg-[#f8f9fa] border border-[#d3d5d7] px-2 py-0.5 text-[11px] font-medium text-[#6f777f]">
-                          <FileText className="size-3 text-[#00c2cb]" />
-                          Brochure.pdf
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* View Details Button */}
-                    <button
-                      type="button"
-                      onClick={() =>
+                  return (
+                    <AgentOfferCard
+                      key={offer.id}
+                      offer={offerData}
+                      onOpenChat={() => {
+                        const matchedChat = investor.conversations.find(
+                          (c) => c.offerRef === offer.id || c.requestRef === offer.requestId || c.with === offer.agentName
+                        )
+                        if (matchedChat) {
+                          setActiveChatId(matchedChat.id)
+                        }
+                        setActiveTab('conversations')
+                        notify('Chat opened', `Opening conversation with ${offer.agentName}.`, 'info')
+                      }}
+                      onViewDetails={() =>
                         setSelectedOfferModal({
                           id: offer.id,
                           agentName: offer.agentName,
-                          agentId: `AG-${1040 + idx}`,
+                          agentId: offer.agentId || `AG-${1040 + idx}`,
                           agentDeals: 64,
                           agentRating: offer.rating || 4.9,
                           agentSubscription: 'Pro agent',
                           agentVerified: true,
-                          proposalText: offer.description || 'Rare chance to own a luxury golf-view villa with premium finishes, spacious interiors, and prime location in Al Barsha.',
-                          photos: [
-                            'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
-                            'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80',
-                          ],
+                          proposalText: offer.description || `Proposal for ${offer.propertyTitle}. Offered Price: ${offer.price}.`,
+                          photos: (offer.photos && offer.photos.length > 0)
+                            ? offer.photos
+                            : [
+                                'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
+                                'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80',
+                              ],
                           price: offer.price,
                         })
                       }
-                      className="w-full rounded-[8px] border border-[#00c2cb] bg-white py-2 text-[13px] font-semibold text-[#00c2cb] hover:bg-[#e5f6f7] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
-                    >
-                      View Offer Details
-                    </button>
-                  </div>
-                ))}
+                    />
+                  )
+                })}
               </div>
             </div>
           )}
 
           {/* =========================================================================
-              9. ACCEPTED OFFERS (Figma Node 297:46017)
+              9. ACCEPTED OFFERS (Figma Node 312:33338)
              ========================================================================= */}
           {activeTab === 'accepted-offers' && (
-            <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-6 shadow-sm space-y-5 font-sans">
-              <div className="border-b border-[#d3d5d7] pb-3">
-                <h3 className="text-[20px] font-bold text-[#1f2327]">Accepted Offers ({investor.acceptedOffers.length})</h3>
-                <p className="text-[13px] text-[#6f777f]">Offers accepted by the investor and moved into escrow/closing phase</p>
+            <div className="rounded-[16px] border border-[#d3d5d7] bg-white p-6 sm:p-7 shadow-xs space-y-6 font-sans">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#E5E7EB] pb-4">
+                <div>
+                  <h3 className="text-[20px] sm:text-[22px] font-bold text-[#1f2327]">
+                    Accepted Offers ({investor.acceptedOffers.length})
+                  </h3>
+                  <p className="text-xs text-[#6f777f]">Offers accepted by the investor and moved into escrow/closing phase.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-[8px] border border-[#d3d5d7] bg-[#F9FAFB] px-3.5 py-1.5 text-xs font-semibold text-[#1f2327] shadow-2xs">
+                    Showing {investor.acceptedOffers.length} accepted offers
+                  </span>
+                </div>
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {investor.acceptedOffers.map((offer, idx) => (
-                  <div
-                    key={offer.id}
-                    className="flex flex-col justify-between rounded-[12px] border border-[#d3d5d7] bg-white p-5 space-y-3.5 shadow-2xs hover:border-[#00c2cb] transition-all font-sans"
-                  >
-                    <div className="space-y-3">
-                      {/* Top Row: Agent Info & Accepted Badge */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2.5">
-                          <div className="size-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
-                            <Check className="size-5" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-[14px] text-[#1f2327]">{offer.agentName}</span>
-                              <span className="inline-flex items-center gap-0.5 bg-[#dfefe8] text-[#17b26a] px-1.5 py-0.2 rounded text-[11px] font-semibold">
-                                Verified
-                              </span>
-                            </div>
-                            <p className="text-[12px] text-[#6f777f]">{offer.agency}</p>
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <span className="block font-bold text-[15px] text-[#1f2327]">{offer.price}</span>
-                          <span className="inline-flex items-center rounded-full bg-[#dfefe8] px-2 py-0.5 text-[11px] font-semibold text-[#17b26a]">
-                            Accepted
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Title & Description */}
-                      <div>
-                        <p className="font-bold text-[14px] text-[#1f2327]">{offer.propertyTitle}</p>
-                        <p className="text-[12px] text-[#6f777f] line-clamp-2 mt-1 leading-relaxed">
-                          Accepted offer on {offer.propertyTitle}. Payment plan: {offer.paymentPlan || '40/60 on handover'}.
-                        </p>
-                      </div>
-
-                      {/* Photos Strip */}
-                      <div className="grid grid-cols-4 gap-1.5 pt-1">
-                        {[
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-2 2xl:grid-cols-3">
+                {investor.acceptedOffers.map((offer, idx) => {
+                  const offerData: AgentOfferData = {
+                    id: offer.id,
+                    requestId: offer.requestId ? (offer.requestId.startsWith('#') ? offer.requestId : `#${offer.requestId}`) : `#REQ-${1024 + idx}`,
+                    status: 'Accepted',
+                    name: offer.agentName,
+                    agentName: offer.agentName,
+                    agentId: offer.agentId || `AG-${1050 + idx}`,
+                    dealsCount: 42,
+                    rating: offer.rating || 4.9,
+                    subscriptionPlan: 'Pro agent',
+                    isVerified: true,
+                    timeAgo: offer.submitted || 'Today',
+                    proposalDescription:
+                      offer.description ||
+                      `Accepted offer on ${offer.propertyTitle}. Payment plan: ${offer.paymentPlan || '10% Escrow Deposit / Balance at DLD'}. Premium finishing and ready for closing.`,
+                    note: 'Escrow account active. Title deed conveyance scheduled.',
+                    photos: (offer.photos && offer.photos.length > 0)
+                      ? offer.photos
+                      : [
+                          'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&auto=format&fit=crop&q=80',
                           'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&auto=format&fit=crop&q=80',
                           'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&auto=format&fit=crop&q=80',
-                          'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&auto=format&fit=crop&q=80',
-                          'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&auto=format&fit=crop&q=80',
-                        ].map((img, i) => (
-                          <div key={i} className="h-12 rounded-[6px] overflow-hidden bg-muted">
-                            <img src={img} alt={`Preview ${i + 1}`} className="size-full object-cover" />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                          'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&auto=format&fit=crop&q=80',
+                        ],
+                    location: offer.location || 'Palm Jumeirah, Dubai',
+                    brochureName: 'Brochure.pdf',
+                    amount: offer.price,
+                  }
 
-                    {/* Action Buttons */}
-                    <div className="space-y-2 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('conversations')}
-                        className="w-full rounded-[8px] bg-[#00c2cb] py-2 text-[13px] font-bold text-white hover:opacity-90 transition-opacity cursor-pointer ant-wave-btn shadow-2xs"
-                      >
-                        Open Negotiation Chat
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSelectedOfferModal({
-                            id: offer.id,
-                            agentName: offer.agentName,
-                            agentId: `AG-${1050 + idx}`,
-                            agentDeals: 42,
-                            agentRating: 4.8,
-                            agentSubscription: 'Pro agent',
-                            agentVerified: true,
-                            proposalText: `Accepted offer for ${offer.propertyTitle}. Agreed Price: ${offer.price}.`,
-                            photos: [
-                              'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
-                            ],
-                            price: offer.price,
-                          })
+                  return (
+                    <AgentOfferCard
+                      key={offer.id}
+                      offer={offerData}
+                      onOpenChat={() => {
+                        const matchedChat = investor.conversations.find(
+                          (c) => c.offerRef === offer.id || c.requestRef === offer.requestId || c.with === offer.agentName
+                        )
+                        if (matchedChat) {
+                          setActiveChatId(matchedChat.id)
                         }
-                        className="w-full rounded-[8px] border border-[#d3d5d7] bg-white py-2 text-[13px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn"
-                      >
-                        View Offer Details
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                        setActiveTab('conversations')
+                        notify('Chat opened', `Opening conversation with ${offer.agentName}.`, 'info')
+                      }}
+                      onViewDetails={() =>
+                        setSelectedOfferModal({
+                          id: offer.id,
+                          agentName: offer.agentName,
+                          agentId: offer.agentId || `AG-${1050 + idx}`,
+                          agentDeals: 42,
+                          agentRating: offer.rating || 4.9,
+                          agentSubscription: 'Pro agent',
+                          agentVerified: true,
+                          proposalText: offer.description || `Accepted offer for ${offer.propertyTitle}. Agreed Price: ${offer.price}.`,
+                          photos: (offer.photos && offer.photos.length > 0)
+                            ? offer.photos
+                            : [
+                                'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&auto=format&fit=crop&q=80',
+                              ],
+                          price: offer.price,
+                        })
+                      }
+                    />
+                  )
+                })}
               </div>
             </div>
           )}
@@ -1301,8 +1319,11 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="font-bold text-[15px] text-[#1f2327]">{deal.property}</p>
-                          <span className="rounded-full bg-[#e5f6f7] text-[#00c2cb] px-2 py-0.5 text-[11px] font-semibold">
-                            Under Escrow
+                          <span className="font-mono text-[11px] font-semibold text-[#00c2cb] bg-[#e5f6f7] px-2 py-0.5 rounded-[4px]">
+                            {deal.id}
+                          </span>
+                          <span className="rounded-full bg-[#dfefe8] text-[#17b26a] px-2 py-0.5 text-[11px] font-semibold">
+                            {deal.status || 'Completed'}
                           </span>
                         </div>
                         <p className="text-[12px] text-[#6f777f]">Agent: {deal.agent} ({deal.agency}) • Closed {deal.date || 'Today, 11:30'}</p>
@@ -1318,6 +1339,13 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                         <span className="text-[11px] text-[#6f777f] block">Total Amount</span>
                         <span className="font-bold text-[16px] text-[#1f2327]">{deal.amount}</span>
                       </div>
+                      <Link
+                        href={`/deals?search=${deal.id}`}
+                        className="flex h-[32px] items-center gap-1 rounded-[6px] border border-[#d3d5d7] bg-white px-2.5 text-[12px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer shrink-0"
+                      >
+                        <span>View Deal</span>
+                        <ExternalLink className="size-3 text-[#00c2cb]" />
+                      </Link>
                     </div>
                   </div>
                 ))}
@@ -1336,7 +1364,10 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                   <p className="text-xs text-[#6f777f]">Direct moderation room, broker negotiations, and message audits.</p>
                 </div>
               </div>
-              <ChatModerator initialThreadId="CHAT-917212" />
+              <ChatModerator
+                key={activeChatId || investor.conversations[0]?.id || 'CHAT-DEAL-4820'}
+                initialThreadId={activeChatId || investor.conversations[0]?.id || 'CHAT-DEAL-4820'}
+              />
             </div>
           )}
 

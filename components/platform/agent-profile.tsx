@@ -44,9 +44,11 @@ import { DocumentViewerModal } from './document-viewer-modal'
 import { EditAgentBadgeModal } from './edit-agent-badge-modal'
 import { EditAgentProfileModal } from './edit-agent-profile-modal'
 import { OfferDetailsModal, type OfferDetail } from './offer-details-modal'
+import { AgentOfferCard, type AgentOfferData } from './agent-offer-card'
 import { ChatModerator } from './chat-moderator'
 import { AgentPlanBadge, FigmaStatusBadge, RateBadge } from '@/components/ui/figma-badges'
 import { Flag, getCountryCode, AvatarFlagOverlay } from '@/components/ui/flag'
+import { AvatarLightboxModal } from '@/components/ui/avatar-lightbox-modal'
 import { cn } from '@/lib/utils'
 import type { ActivityItem, Conversation, PlatformAgent, VerificationDocument } from '@/lib/platform-users'
 
@@ -82,6 +84,7 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
   const [selectedOfferModal, setSelectedOfferModal] = React.useState<OfferDetail | null>(null)
   const [isEditBadgeOpen, setIsEditBadgeOpen] = React.useState(false)
   const [isEditProfileOpen, setIsEditProfileOpen] = React.useState(false)
+  const [avatarModalOpen, setAvatarModalOpen] = React.useState(false)
   const [viewAllMode, setViewAllMode] = React.useState(false)
 
   // Internal Notes State
@@ -112,6 +115,50 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
       reviewNotes: 'Verified with Dubai Land Department (RERA) / DED database.',
     }))
   }, [agent.documents])
+
+  const formattedOffers: AgentOfferData[] = React.useMemo(() => {
+    return agent.offersList.map((off, i) => {
+      const isAccepted = off.status === 'Accepted'
+      const isDeclined = off.status === 'Declined'
+      const status: 'Accepted' | 'Pending' | 'Declined' = isAccepted
+        ? 'Accepted'
+        : isDeclined
+        ? 'Declined'
+        : 'Pending'
+
+      const photos = off.photos && off.photos.length > 0 ? off.photos : [
+        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&auto=format&fit=crop&q=80',
+      ]
+
+      return {
+        id: off.id || `OFF-${agent.id}-${i + 1}`,
+        requestId: `#REQ-${1024 + i}`,
+        status,
+        name: agent.name,
+        avatar: agent.avatar,
+        agentId: agent.id,
+        dealsCount: agent.accepted,
+        rating: agent.rating,
+        subscriptionPlan: agent.subscription,
+        isVerified: agent.verification === 'Verified' || agent.verification === 'RERA + KYC',
+        investorName: off.investor,
+        investorRole: off.investorRole || 'Investor',
+        investorAvatar: off.investorAvatar,
+        proposalDescription:
+          off.proposalDescription ||
+          'Rare chance to own a luxury golf-view villa with premium finishes, spacious interiors, and prime location in Al Barsha. Ideal for upscale living.',
+        note: 'Family-friendly community with schools and parks nearby.',
+        photos,
+        location: off.location || 'Palm Jumeirah',
+        brochureName: off.brochureName || 'Brochure.pdf',
+        amount: off.amount,
+        timeAgo: off.date || `${4 + i * 12} min ago`,
+      }
+    })
+  }, [agent, agent.offersList])
 
   const notify = (title: string, description: string, variant: 'success' | 'info' | 'error' = 'success') =>
     toast({ variant, title, description })
@@ -247,7 +294,13 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
             {/* Left: Avatar + Identity + Status Badges */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <AvatarFlagOverlay code={getCountryCode(agent.country || 'Egypt')}>
-                <div className="size-[72px] sm:size-[80px] rounded-[12px] overflow-hidden bg-gradient-to-br from-[#00c2cb] to-[#0a8288] flex items-center justify-center shadow-xs">
+                <div
+                  onClick={() => setAvatarModalOpen(true)}
+                  role="button"
+                  tabIndex={0}
+                  title="Click to view and download photo"
+                  className="size-[72px] sm:size-[80px] rounded-[12px] overflow-hidden bg-gradient-to-br from-[#00c2cb] to-[#0a8288] flex items-center justify-center shadow-xs cursor-pointer hover:ring-2 hover:ring-[#00c2cb] hover:scale-105 active:scale-95 transition-all select-none"
+                >
                   {agent.avatar ? (
                     <img src={agent.avatar} alt={agent.name} className="size-full object-cover" />
                   ) : (
@@ -260,6 +313,18 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                   )}
                 </div>
               </AvatarFlagOverlay>
+
+              {avatarModalOpen && (
+                <AvatarLightboxModal
+                  isOpen={avatarModalOpen}
+                  onClose={() => setAvatarModalOpen(false)}
+                  src={agent.avatar}
+                  name={agent.name}
+                  country={agent.country}
+                  countryCode={getCountryCode(agent.country || 'EG')}
+                  subtitle={`Agent ID: ${agent.id} • ${agent.agency || 'Licensed Broker'}`}
+                />
+              )}
 
               <div className="space-y-1 font-sans">
                 <div className="flex flex-wrap items-center gap-2.5">
@@ -538,30 +603,45 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                   </div>
                 </div>
 
-                {/* Recent Offers */}
+                {/* Recent Offers matching Figma cards */}
                 <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-6 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] flex flex-col gap-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-[22px] sm:text-[24px] font-bold text-[#1f2327]">Recent Property Offers</h3>
+                    <div>
+                      <h3 className="text-[20px] sm:text-[22px] font-bold text-[#1f2327]">Recent Property Offers</h3>
+                      <p className="text-xs text-[#6f777f]">Latest proposals sent to investors with real-time status.</p>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setActiveTab('offers')}
-                      className="text-[18px] sm:text-[20px] font-normal text-[#00c2cb] underline cursor-pointer hover:opacity-80"
+                      className="text-[15px] sm:text-[16px] font-semibold text-[#00c2cb] hover:underline cursor-pointer"
                     >
-                      View all offers
+                      View all ({formattedOffers.length})
                     </button>
                   </div>
-                  <div className="divide-y divide-[#d3d5d7]">
-                    {agent.offersList.map((off, i) => (
-                      <div key={i} className="flex items-center justify-between py-3">
-                        <div>
-                          <p className="font-semibold text-[#1f2327]">{off.request}</p>
-                          <p className="text-xs text-[#6f777f]">Investor: {off.investor}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-[#1f2327]">{off.amount}</p>
-                          <span className="inline-block text-xs font-semibold text-[#17b26a]">{off.status}</span>
-                        </div>
-                      </div>
+                  <div className="grid gap-5 grid-cols-1 md:grid-cols-2 pt-2">
+                    {formattedOffers.slice(0, 2).map((offer) => (
+                      <AgentOfferCard
+                        key={offer.id}
+                        offer={offer}
+                        onOpenChat={() => {
+                          setActiveTab('chats')
+                          notify('Chat opened', `Opening negotiation thread with ${offer.investorName}.`, 'info')
+                        }}
+                        onViewDetails={() =>
+                          setSelectedOfferModal({
+                            id: offer.id,
+                            agentName: agent.name,
+                            agentId: agent.id,
+                            agentDeals: agent.accepted,
+                            agentRating: agent.rating,
+                            agentSubscription: agent.subscription,
+                            agentVerified: agent.verification === 'Verified' || agent.verification === 'RERA + KYC',
+                            proposalText: offer.proposalDescription,
+                            photos: offer.photos,
+                            price: offer.amount || 'AED 2.4M',
+                          })
+                        }
+                      />
                     ))}
                   </div>
                 </div>
@@ -764,166 +844,50 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
           )}
 
           {/* =========================================================================
-              7. OFFERS (Figma Node 312:38277)
+              7. OFFERS (Figma Nodes 815:9706, 815:9276, 815:9575)
              ========================================================================= */}
           {activeTab === 'offers' && (
-            <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-6 shadow-sm space-y-5 font-sans">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#d3d5d7] pb-3">
+            <div className="rounded-[16px] border border-[#d3d5d7] bg-white p-6 sm:p-7 shadow-xs space-y-6 font-sans">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#E5E7EB] pb-4">
                 <div>
                   <h3 className="text-[20px] sm:text-[22px] font-bold text-[#1f2327]">
-                    Submitted Property Offers ({agent.offersList.length})
+                    Submitted Property Offers ({formattedOffers.length})
                   </h3>
-                  <p className="text-xs text-[#6f777f]">Active pipeline and client proposals submitted across all emirates.</p>
+                  <p className="text-xs text-[#6f777f]">Active proposals submitted by {agent.name} to investors, matching Figma design specs.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-[8px] border border-[#d3d5d7] bg-white px-3 py-1.5 text-xs font-semibold text-[#1f2327] shadow-2xs">
-                    Filter ({agent.offersList.length})
+                  <span className="rounded-[8px] border border-[#d3d5d7] bg-[#F9FAFB] px-3.5 py-1.5 text-xs font-semibold text-[#1f2327] shadow-2xs">
+                    Showing {formattedOffers.length} offers
                   </span>
                 </div>
               </div>
 
-              {/* Offer Cards Grid matching Figma Requests component */}
-              <div className="grid gap-5 lg:grid-cols-2">
-                {agent.offersList.map((row, i) => {
-                  const isAccepted = row.status === 'Accepted'
-                  const isDeclined = row.status === 'Declined'
-                  const photos = [
-                    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&auto=format&fit=crop&q=80',
-                    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&auto=format&fit=crop&q=80',
-                    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&auto=format&fit=crop&q=80',
-                    'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&auto=format&fit=crop&q=80',
-                  ]
-
-                  return (
-                    <div
-                      key={i}
-                      className="rounded-[16px] border border-[#d3d5d7] bg-white p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-3.5 hover:border-[#00c2cb]/50 transition-colors"
-                    >
-                      {/* Card Header: Request ID + Status Tag */}
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-[15px] text-[#00c2cb] underline cursor-pointer">
-                          #REQ-{1024 + i}
-                        </span>
-                        {isAccepted ? (
-                          <span className="inline-flex items-center gap-1 rounded-[12px] bg-[#dfefe8] border border-[#9cdabd] px-2 py-0.5 text-xs font-medium text-[#17b26a]">
-                            <Check className="size-3" />
-                            <span>Accepted offer</span>
-                          </span>
-                        ) : isDeclined ? (
-                          <span className="inline-flex items-center gap-1 rounded-[12px] bg-[#f3e1e0] border border-[#eaa5a0] px-2 py-0.5 text-xs font-medium text-[#d92d20]">
-                            <span className="text-xs">✕</span>
-                            <span>Declined</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-[12px] bg-[#e5f6f7] border border-[#a1e5e8] px-2 py-0.5 text-xs font-medium text-[#00a4ac]">
-                            <span>Under review</span>
-                          </span>
-                        )}
-                      </div>
-
-                      {/* User Row: Avatar + Name + Badges + Time */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="size-10 rounded-full bg-gradient-to-br from-[#00c2cb] to-[#0a8288] flex items-center justify-center text-white font-bold text-xs shadow-2xs">
-                            {row.investor
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')}
-                          </div>
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-semibold text-[15px] text-[#010413]">{row.investor}</span>
-                              <AgentPlanBadge plan={agent.subscription} />
-                              <FigmaStatusBadge status="Verified" />
-                              <RateBadge rate="4.9" />
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-[#6f777f] mt-0.5">
-                              <span>{agent.id}</span>
-                              <span>•</span>
-                              <span>{agent.accepted} Deals</span>
-                            </div>
-                          </div>
-                        </div>
-                        <span className="text-xs text-[#9da4ae] shrink-0">4 min ago</span>
-                      </div>
-
-                      {/* Request Summary & Note */}
-                      <div className="space-y-1.5 pt-1">
-                        <p className="text-[14px] text-[#010413] font-medium leading-snug">
-                          {row.request ||
-                            'Rare chance to own a luxury golf-view villa with premium finishes, spacious interiors, and prime location in Al Barsha.'}
-                        </p>
-                        <div className="flex items-center gap-1.5 text-xs text-[#6f777f]">
-                          <span className="text-[#90969c] font-medium">Note:</span>
-                          <span>Family-friendly community with schools and parks nearby.</span>
-                        </div>
-                      </div>
-
-                      {/* Photo Thumbnail Strip */}
-                      <div className="grid grid-cols-4 gap-2 pt-1">
-                        {photos.map((src, pIdx) => (
-                          <div
-                            key={pIdx}
-                            className="h-[64px] rounded-[10px] overflow-hidden border border-[#d3d5d7] bg-[#f8f9fa] relative group"
-                          >
-                            <img
-                              src={src}
-                              alt="Property Preview"
-                              className="size-full object-cover group-hover:scale-105 transition-transform"
-                            />
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Location & File Pills */}
-                      <div className="flex flex-wrap items-center gap-2 pt-1">
-                        <div className="inline-flex h-[32px] items-center gap-1.5 rounded-[8px] bg-[#f8f9fa] border border-[#d3d5d7] px-3 text-xs font-medium text-[#1f2327]">
-                          <span className="text-[#00c2cb]">📍</span>
-                          <span>Palm Jumeirah</span>
-                        </div>
-                        <div className="inline-flex h-[32px] items-center gap-1.5 rounded-[8px] bg-[#f8f9fa] border border-[#d3d5d7] px-3 text-xs font-medium text-[#1f2327]">
-                          <FileText className="size-3.5 text-[#6f777f]" />
-                          <span>Brochure.pdf</span>
-                        </div>
-                        <div className="ml-auto font-bold text-[#1f2327] text-[15px]">{row.amount}</div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex flex-col gap-2 pt-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTab('chats')
-                            notify('Chat opened', `Opening negotiation thread with ${row.investor}.`, 'info')
-                          }}
-                          className="flex h-[40px] w-full items-center justify-center rounded-[8px] bg-[#00c2cb] text-sm font-semibold text-white hover:bg-[#00a8b0] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
-                        >
-                          Open negotiation chat
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSelectedOfferModal({
-                              id: `OFF-${8000 + i}`,
-                              agentName: agent.name,
-                              agentId: agent.id,
-                              agentDeals: agent.accepted,
-                              agentRating: agent.rating,
-                              agentSubscription: agent.subscription,
-                              agentVerified: agent.verification === 'Verified' || agent.verification === 'RERA + KYC',
-                              proposalText: `Submitted proposal for ${row.request} (${row.investor}). Premium luxury finishing, golf-course view, and flexible payment plan.`,
-                              photos,
-                              price: row.amount,
-                            })
-                          }
-                          className="flex h-[40px] w-full items-center justify-center rounded-[8px] border border-[#00c2cb] bg-white text-sm font-semibold text-[#00c2cb] hover:bg-[#00c2cb]/10 transition-colors cursor-pointer ant-wave-btn"
-                        >
-                          View Offer details
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
+              {/* Offer Cards Grid matching Figma Nodes (Declined, Pending, Accepted) scaled to Dashboard */}
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+                {formattedOffers.map((offer) => (
+                  <AgentOfferCard
+                    key={offer.id}
+                    offer={offer}
+                    onOpenChat={() => {
+                      setActiveTab('chats')
+                      notify('Chat opened', `Opening negotiation thread with ${offer.investorName}.`, 'info')
+                    }}
+                    onViewDetails={() =>
+                      setSelectedOfferModal({
+                        id: offer.id,
+                        agentName: agent.name,
+                        agentId: agent.id,
+                        agentDeals: agent.accepted,
+                        agentRating: agent.rating,
+                        agentSubscription: agent.subscription,
+                        agentVerified: agent.verification === 'Verified' || agent.verification === 'RERA + KYC',
+                        proposalText: offer.proposalDescription,
+                        photos: offer.photos,
+                        price: offer.amount || 'AED 2.4M',
+                      })
+                    }
+                  />
+                ))}
               </div>
             </div>
           )}

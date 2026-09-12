@@ -53,7 +53,19 @@ function DashboardInner() {
   const [query, setQuery] = React.useState('')
   const [loading, setLoading] = React.useState(true)
   const [allToolsOpen, setAllToolsOpen] = React.useState(false)
-  const [kpiFilter, setKpiFilter] = React.useState<'all' | 'users' | 'marketplace' | 'finance'>('all')
+  const PRIMARY_KPI_IDS = React.useMemo(
+    () =>
+      new Set([
+        'total-users',
+        'open-requests',
+        'active-deals',
+        'revenue-this-month',
+        'pending-verifications',
+        'active-subscriptions',
+      ]),
+    []
+  )
+  const [kpiFilter, setKpiFilter] = React.useState<'primary' | 'all' | 'users' | 'marketplace' | 'finance'>('primary')
 
   React.useEffect(() => {
     const t = setTimeout(() => setLoading(false), 400)
@@ -136,6 +148,7 @@ function DashboardInner() {
   }
 
   const filteredKpis = allKpiCards.filter((card) => {
+    if (kpiFilter === 'primary') return PRIMARY_KPI_IDS.has(card.id) && matchesQuery(card, query)
     const matchCategory = kpiFilter === 'all' || card.category === kpiFilter
     return matchCategory && matchesQuery(card, query)
   })
@@ -176,15 +189,17 @@ function DashboardInner() {
               {/* 1. Quick Actions Suite (Figma & User Spec) */}
               <DashboardQuickActions />
 
-              {/* 2. Complete 19 KPI Cards Grid with Category Filter */}
+              {/* 2. Executive KPI Cards with 6 Primary Default per Section 13 */}
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
                   <div>
-                    <h2 className="text-[18px] sm:text-[20px] font-bold text-[#1f2327]">
-                      Executive KPI Metrics ({filteredKpis.length} Cards)
+                    <h2 className="text-[18px] sm:text-[20px] font-bold text-[#202428]">
+                      {kpiFilter === 'primary' ? 'Primary Operational KPIs (6)' : `Executive KPI Metrics (${filteredKpis.length})`}
                     </h2>
-                    <p className="text-[13px] text-[#6f777f]">
-                      Real-time telemetry across users, marketplace demand, closed deals, and revenue
+                    <p className="text-[13px] text-[#68727D]">
+                      {kpiFilter === 'primary'
+                        ? 'Core marketplace velocity, user acquisition, closing pipeline, and revenue'
+                        : 'Granular telemetry breakdown across users, marketplace pipelines, and monetization'}
                     </p>
                   </div>
 
@@ -192,7 +207,8 @@ function DashboardInner() {
                   <div className="flex flex-wrap items-center gap-1.5 text-xs">
                     {(
                       [
-                        { id: 'all', label: 'All (19)' },
+                        { id: 'primary', label: 'Primary (6)' },
+                        { id: 'all', label: 'All Metrics (19)' },
                         { id: 'users', label: 'Users (8)' },
                         { id: 'marketplace', label: 'Marketplace (5)' },
                         { id: 'finance', label: 'Finance & Ops (6)' },
@@ -203,10 +219,10 @@ function DashboardInner() {
                         type="button"
                         onClick={() => setKpiFilter(pill.id)}
                         className={cn(
-                          'px-3 py-1.5 rounded-[8px] font-bold transition-all cursor-pointer',
+                          'px-3 py-1.5 rounded-[8px] font-semibold transition-all cursor-pointer',
                           kpiFilter === pill.id
-                            ? 'bg-[#00c2cb] text-white shadow-2xs'
-                            : 'bg-white border border-[#d3d5d7] text-[#6f777f] hover:text-[#1f2327] hover:bg-[#eff1f3]'
+                            ? 'bg-[#06B6C9] text-white shadow-xs'
+                            : 'bg-white border border-[#E2E5E8] text-[#68727D] hover:text-[#202428] hover:bg-[#F8F9FA]'
                         )}
                       >
                         {pill.label}
@@ -215,7 +231,14 @@ function DashboardInner() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div
+                  className={cn(
+                    'grid gap-3',
+                    kpiFilter === 'primary'
+                      ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6'
+                      : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                  )}
+                >
                   {filteredKpis.map((card, i) => (
                     <KpiCard key={card.id} card={card} index={i} onOpen={openCard} onAction={cardAction} />
                   ))}

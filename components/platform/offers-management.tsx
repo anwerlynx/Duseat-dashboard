@@ -30,6 +30,7 @@ import {
   LayoutGrid,
   List,
   X,
+  MoreHorizontal,
 } from 'lucide-react'
 import { PlatformShell } from './platform-shell'
 import { ToastProvider, useToast } from '@/components/dashboard/toast'
@@ -83,7 +84,8 @@ export function OffersManagementInner() {
   const [offers, setOffers] = React.useState<PlatformOffer[]>(initialPlatformOffers)
   const [viewMode, setViewMode] = React.useState<'table' | 'grid'>('table')
   const [query, setQuery] = React.useState('')
-  const [statusFilter, setStatusFilter] = React.useState<string>('All')
+  const initialStatus = searchParams?.get('status') || searchParams?.get('tab') || 'All'
+  const [statusFilter, setStatusFilter] = React.useState<string>(initialStatus)
   const [priceFilter, setPriceFilter] = React.useState<string>('All')
   const [typeFilter, setTypeFilter] = React.useState<string>('All')
   const [agencyFilter, setAgencyFilter] = React.useState<string>('All')
@@ -368,7 +370,7 @@ export function OffersManagementInner() {
         {/* =========================================================================
             1. TOP HEADER CARD
            ========================================================================= */}
-        <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)]">
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
@@ -387,7 +389,7 @@ export function OffersManagementInner() {
                   onClick={() => setViewMode('table')}
                   className={cn(
                     'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-medium transition-all cursor-pointer',
-                    viewMode === 'table' ? 'bg-[#1f2327] text-white shadow-2xs' : 'text-[#6f777f] hover:text-[#1f2327]'
+                    viewMode === 'table' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
                   )}
                 >
                   <List className="size-3.5" />
@@ -398,7 +400,7 @@ export function OffersManagementInner() {
                   onClick={() => setViewMode('grid')}
                   className={cn(
                     'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-medium transition-all cursor-pointer',
-                    viewMode === 'grid' ? 'bg-[#1f2327] text-white shadow-2xs' : 'text-[#6f777f] hover:text-[#1f2327]'
+                    viewMode === 'grid' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
                   )}
                 >
                   <LayoutGrid className="size-3.5" />
@@ -417,223 +419,256 @@ export function OffersManagementInner() {
               </button>
             </div>
           </div>
-        </div>
 
-        {/* =========================================================================
-            2. KPI STAT CARDS (5 Metrics)
-           ========================================================================= */}
-        <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-5 lg:gap-3">
-          <MetricCard
-            label="Total Offers"
-            value={stats.total}
-            tone="neutral"
-            active={statusFilter === 'All'}
-            onClick={() => setStatusFilter('All')}
-          />
-          <MetricCard
-            label="Pending Review"
-            value={stats.pending}
-            tone="warning"
-            active={statusFilter === 'Pending'}
-            onClick={() => setStatusFilter('Pending')}
-          />
-          <MetricCard
-            label="Accepted Deals"
-            value={stats.accepted}
-            tone="success"
-            active={statusFilter === 'Accepted'}
-            onClick={() => setStatusFilter('Accepted')}
-          />
-          <MetricCard
-            label="Rejected / Flagged"
-            value={stats.rejected + stats.flagged}
-            tone="destructive"
-            active={statusFilter === 'Rejected' || statusFilter === 'Flagged'}
-            onClick={() => setStatusFilter('Rejected')}
-          />
-          <MetricCard
-            label="Avg Offer Price"
-            value={
-              offers.length > 0
-                ? `AED ${(offers.reduce((sum, o) => sum + o.priceNumber, 0) / offers.length / 1_000_000).toFixed(1)}M`
-                : '—'
-            }
-            tone="brand"
-          />
-        </div>
+          {/* 5 Stat Metric Cards */}
+          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-5 lg:gap-3">
+            <MetricCard
+              label="Total Offers"
+              value={stats.total}
+              tone="neutral"
+              active={statusFilter === 'All'}
+              onClick={() => setStatusFilter('All')}
+            />
+            <MetricCard
+              label="Pending Review"
+              value={stats.pending}
+              tone="warning"
+              active={statusFilter === 'Pending'}
+              onClick={() => setStatusFilter('Pending')}
+            />
+            <MetricCard
+              label="Accepted Deals"
+              value={stats.accepted}
+              tone="success"
+              active={statusFilter === 'Accepted'}
+              onClick={() => setStatusFilter('Accepted')}
+            />
+            <MetricCard
+              label="Rejected / Flagged"
+              value={stats.rejected + stats.flagged}
+              tone="destructive"
+              active={statusFilter === 'Rejected' || statusFilter === 'Flagged'}
+              onClick={() => setStatusFilter('Rejected')}
+            />
+            <MetricCard
+              label="Avg Offer Price"
+              value={
+                offers.length > 0
+                  ? `AED ${(offers.reduce((sum, o) => sum + o.priceNumber, 0) / offers.length / 1_000_000).toFixed(1)}M`
+                  : '—'
+              }
+              tone="info"
+            />
+          </div>
+        </header>
 
         {/* =========================================================================
             3. TABLE WORKSPACE (Original GitHub Design: Top Tabs + Horizontal Filter Toolbar + Table)
            ========================================================================= */}
-        <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)]">
-          {/* Top Status Tabs & Actions Row */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eff1f3] p-4 sm:p-5">
-            <div className="flex flex-wrap items-center gap-2">
-              {(
-                [
-                  { id: 'All', label: 'All offers', count: stats.total },
-                  { id: 'Pending', label: 'Pending review', count: stats.pending },
-                  { id: 'Accepted', label: 'Accepted deals', count: stats.accepted },
-                  { id: 'Rejected', label: 'Rejected', count: stats.rejected },
-                  { id: 'Flagged', label: 'Flagged', count: stats.flagged },
-                  { id: 'Withdrawn', label: 'Withdrawn', count: stats.withdrawn },
-                  { id: 'Expired', label: 'Expired', count: stats.expired },
-                ] as const
-              ).map((item) => {
-                const isActive = statusFilter === item.id
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setStatusFilter(item.id as OfferStatus | 'All')}
-                    className={cn(
-                      'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn',
-                      isActive
-                        ? 'bg-[#1f2327] text-white shadow-2xs'
-                        : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
-                    )}
-                  >
-                    <span>{item.label}</span>
-                    <span
+        <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
+          {/* Top Status Tabs & Actions Header Bar */}
+          <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              {/* Left Status Tabs */}
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+                {(
+                  [
+                    { id: 'All', label: 'All offers', count: stats.total },
+                    { id: 'Pending', label: 'Pending review', count: stats.pending },
+                    { id: 'Accepted', label: 'Accepted deals', count: stats.accepted },
+                    { id: 'Rejected', label: 'Rejected', count: stats.rejected },
+                    { id: 'Flagged', label: 'Flagged', count: stats.flagged },
+                    { id: 'Withdrawn', label: 'Withdrawn', count: stats.withdrawn },
+                    { id: 'Expired', label: 'Expired', count: stats.expired },
+                  ] as const
+                ).map((item) => {
+                  const isActive = statusFilter === item.id
+                  return (
+                    <a
+                      key={item.id}
+                      href={`/offers?status=${encodeURIComponent(item.id)}`}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey || e.button === 1) {
+                          return
+                        }
+                        e.preventDefault()
+                        setStatusFilter(item.id as OfferStatus | 'All')
+                      }}
                       className={cn(
-                        'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
-                        item.id === 'Flagged'
-                          ? 'bg-[#f04438] text-white'
-                          : isActive
-                          ? 'bg-white/20 text-white'
-                          : 'bg-[#eff1f3] text-[#1f2327]'
+                        'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap no-underline',
+                        isActive
+                          ? item.id === 'Accepted'
+                            ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
+                            : item.id === 'Flagged'
+                            ? 'bg-[#f04438] text-white shadow-2xs font-semibold'
+                            : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                          : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                       )}
                     >
-                      {item.count}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
+                      <span className="whitespace-nowrap">{item.label}</span>
+                      <span
+                        className={cn(
+                          'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
+                          item.id === 'Flagged'
+                            ? 'bg-[#f04438] text-white'
+                            : isActive
+                            ? 'bg-white/20 text-white'
+                            : 'bg-[#eff1f3] text-[#1f2327]'
+                        )}
+                      >
+                        {item.count}
+                      </span>
+                    </a>
+                  )
+                })}
+              </div>
 
-            <div className="flex items-center gap-2">
-              {/* Sort Selector */}
-              <div className="flex items-center gap-1.5 text-[13px] text-[#6f777f]">
-                <span className="hidden sm:inline">Sort:</span>
-                <select
+              {/* Right Controls: Sort, Switcher, Export */}
+              <div className="flex items-center gap-2 shrink-0">
+                <Dropdown
+                  align="end"
                   value={sortOption}
-                  onChange={(e) => setSortOption(e.target.value)}
-                  className="h-[36px] rounded-[8px] border border-[#d3d5d7] bg-white px-2.5 text-[13px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-                >
-                  <option value="newest">Newest Submitted</option>
-                  <option value="highest-price">Highest Price</option>
-                  <option value="lowest-price">Lowest Price</option>
-                </select>
-              </div>
+                  onSelect={setSortOption}
+                  ariaLabel="Sort by"
+                  options={[
+                    { label: 'Newest Submitted', value: 'newest' },
+                    { label: 'Highest Price', value: 'highest-price' },
+                    { label: 'Lowest Price', value: 'lowest-price' },
+                  ]}
+                  trigger={
+                    <span className="inline-flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs whitespace-nowrap shrink-0">
+                      <ArrowUpDown className="size-3.5 text-[#6f777f]" />
+                      <span className="whitespace-nowrap">
+                        {sortOption === 'highest-price'
+                          ? 'Highest Price'
+                          : sortOption === 'lowest-price'
+                          ? 'Lowest Price'
+                          : 'Newest Submitted'}
+                      </span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </span>
+                  }
+                />
 
-              {/* View Switchers */}
-              <div className="flex items-center rounded-[8px] border border-[#d3d5d7] bg-[#fcfcfc] p-0.5 shadow-2xs">
+                <div className="flex items-center rounded-[8px] border border-[#d3d5d7] bg-[#fcfcfc] p-0.5 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('table')}
+                    className={cn(
+                      'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 text-[12.5px] font-medium transition-all cursor-pointer whitespace-nowrap',
+                      viewMode === 'table' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
+                    )}
+                  >
+                    <List className="size-3.5" />
+                    <span className="hidden sm:inline whitespace-nowrap">Table</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('grid')}
+                    className={cn(
+                      'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 text-[12.5px] font-medium transition-all cursor-pointer whitespace-nowrap',
+                      viewMode === 'grid' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
+                    )}
+                  >
+                    <LayoutGrid className="size-3.5" />
+                    <span className="hidden sm:inline whitespace-nowrap">Cards</span>
+                  </button>
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => setViewMode('table')}
-                  className={cn(
-                    'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 text-[12.5px] font-medium transition-all cursor-pointer',
-                    viewMode === 'table' ? 'bg-[#1f2327] text-white shadow-2xs' : 'text-[#6f777f] hover:text-[#1f2327]'
-                  )}
+                  onClick={handleExportCSV}
+                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
                 >
-                  <List className="size-3.5" />
-                  <span className="hidden sm:inline">Table</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('grid')}
-                  className={cn(
-                    'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 text-[12.5px] font-medium transition-all cursor-pointer',
-                    viewMode === 'grid' ? 'bg-[#1f2327] text-white shadow-2xs' : 'text-[#6f777f] hover:text-[#1f2327]'
-                  )}
-                >
-                  <LayoutGrid className="size-3.5" />
-                  <span className="hidden sm:inline">Cards</span>
+                  <Download className="size-4 text-[#6f777f]" />
+                  <span className="whitespace-nowrap">Export CSV</span>
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* Horizontal Filters Toolbar */}
-          <div className="flex flex-wrap items-center gap-2.5 p-4 sm:p-5 pb-3">
-            {/* Search Input */}
-            <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9da4ae]" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search ID, agent, property..."
-                className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-3 text-[14px] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20"
+            {/* Horizontal Filters Toolbar Row */}
+            <div className="flex flex-wrap items-center gap-2.5 pt-1">
+              <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9da4ae]" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search ID, agent, property..."
+                  className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-8 text-[14px] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20 transition-all"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9da4ae] hover:text-[#1f2327]"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <Dropdown
+                align="start"
+                value={typeFilter}
+                onSelect={setTypeFilter}
+                ariaLabel="Filter by Property Type"
+                options={[{ label: 'All Property Types', value: 'All' }, ...PROPERTY_TYPE_OPTIONS]}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs whitespace-nowrap shrink-0">
+                    <Building className="size-4 text-[#6f777f]" />
+                    <span className="whitespace-nowrap">{typeFilter === 'All' ? 'All Property Types' : typeFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
               />
-              {query && (
+
+              <Dropdown
+                align="start"
+                value={priceFilter}
+                onSelect={setPriceFilter}
+                ariaLabel="Filter by Price Tier"
+                options={PRICE_RANGE_OPTIONS}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs whitespace-nowrap shrink-0">
+                    <DollarSign className="size-4 text-[#6f777f]" />
+                    <span className="whitespace-nowrap">{PRICE_RANGE_OPTIONS.find((p) => p.value === priceFilter)?.label || priceFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
+              />
+
+              <Dropdown
+                align="start"
+                value={agencyFilter}
+                onSelect={setAgencyFilter}
+                ariaLabel="Filter by Agency"
+                options={agencyOptions}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs whitespace-nowrap shrink-0">
+                    <Building className="size-4 text-[#6f777f]" />
+                    <span className="whitespace-nowrap">{agencyFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
+              />
+
+              <DateRangePicker value={dateRange} onChange={setDateRange} />
+
+              {(query ||
+                statusFilter !== 'All' ||
+                typeFilter !== 'All' ||
+                priceFilter !== 'All' ||
+                agencyFilter !== 'All' ||
+                dateRange !== 'All Time') && (
                 <button
                   type="button"
-                  onClick={() => setQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9da4ae] hover:text-[#1f2327]"
+                  onClick={resetAllFilters}
+                  className="text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer shrink-0 whitespace-nowrap"
                 >
-                  <X className="size-3.5" />
+                  Reset filters
                 </button>
               )}
             </div>
-
-            {/* Property Type Filter */}
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-            >
-              <option value="All">All Property Types</option>
-              {PROPERTY_TYPE_OPTIONS.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Price Tier Filter */}
-            <select
-              value={priceFilter}
-              onChange={(e) => setPriceFilter(e.target.value)}
-              className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-            >
-              {PRICE_RANGE_OPTIONS.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Brokerage Agency Filter */}
-            <select
-              value={agencyFilter}
-              onChange={(e) => setAgencyFilter(e.target.value)}
-              className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-            >
-              {agencyOptions.map((a) => (
-                <option key={a.value} value={a.value}>
-                  {a.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Date Range Picker */}
-            <DateRangePicker value={dateRange} onChange={setDateRange} />
-
-            {/* Reset Filters Link */}
-            {(query ||
-              statusFilter !== 'All' ||
-              typeFilter !== 'All' ||
-              priceFilter !== 'All' ||
-              agencyFilter !== 'All' ||
-              dateRange !== 'All Time') && (
-              <button
-                type="button"
-                onClick={resetAllFilters}
-                className="text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer ml-1"
-              >
-                Reset filters
-              </button>
-            )}
           </div>
 
           {/* BULK ACTIONS BAR */}
@@ -721,7 +756,10 @@ export function OffersManagementInner() {
                       return (
                         <tr
                           key={item.id}
-                          className={cn('h-[60px] transition-colors font-sans hover:bg-[#f8f9fa] whitespace-nowrap', isSelected && 'bg-[#e5f6f7]/40')}
+                          className={cn(
+                            'h-[64px] transition-colors font-sans hover:bg-[#f8f9fa] whitespace-nowrap',
+                            isSelected && 'bg-[#e5f6f7]/40'
+                          )}
                         >
                           <td className="w-12 px-4 whitespace-nowrap">
                             <TableCheckbox
@@ -730,33 +768,50 @@ export function OffersManagementInner() {
                               ariaLabel={`Select offer ${item.id}`}
                             />
                           </td>
-                          <td className="px-4 font-mono text-[13px] font-semibold text-[#1f2327] whitespace-nowrap">
+                          <td className="px-4 font-mono text-[14px] leading-[20px] font-semibold text-[#1f2327] whitespace-nowrap">
                             {item.id}
                           </td>
-                          <td className="px-4 whitespace-nowrap">
+                          <td className="px-4 whitespace-nowrap font-sans">
                             <div className="flex items-center gap-2.5 whitespace-nowrap">
-                              <TableAvatar
-                                src={item.agentAvatar}
-                                name={item.agentName}
-                                size="md"
-                                variant="brand"
-                              />
+                              <Link href={`/agents/${item.agentId}`} className="cursor-pointer">
+                                <TableAvatar
+                                  src={item.agentAvatar}
+                                  name={item.agentName}
+                                  size="md"
+                                  variant="brand"
+                                />
+                              </Link>
                               <div className="min-w-0">
-                                <p className="font-semibold text-[#1f2327] text-[13px]">{item.agentName}</p>
-                                <span className="text-[11px] text-[#6f777f] block whitespace-nowrap">{item.agentAgency}</span>
+                                <Link
+                                  href={`/agents/${item.agentId}`}
+                                  className="font-semibold text-[#1f2327] text-[14px] leading-[20px] hover:text-[#00c2cb] hover:underline transition-colors block"
+                                >
+                                  {item.agentName}
+                                </Link>
+                                <span className="text-[12px] leading-[16px] text-[#6f777f] block whitespace-nowrap">{item.agentAgency}</span>
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 whitespace-nowrap">
+                          <td className="px-4 whitespace-nowrap font-sans">
                             <div>
-                              <p className="font-semibold text-[#1f2327] text-[13px]">{item.investorName}</p>
-                              <p className="font-mono text-[11px] text-[#6f777f]">{item.requestId}</p>
+                              <Link
+                                href={`/investors/${item.investorId || 'IN-2045'}`}
+                                className="font-semibold text-[#1f2327] text-[14px] leading-[20px] hover:text-[#00c2cb] hover:underline transition-colors block"
+                              >
+                                {item.investorName}
+                              </Link>
+                              <Link
+                                href={`/request-insights?id=${item.requestId}`}
+                                className="font-mono text-[12px] text-[#00c2cb] hover:underline block"
+                              >
+                                {item.requestId}
+                              </Link>
                             </div>
                           </td>
-                          <td className="px-4 whitespace-nowrap">
+                          <td className="px-4 whitespace-nowrap font-sans">
                             <div>
-                              <p className="font-medium text-[#1f2327] text-[13px]">{item.propertyTitle}</p>
-                              <div className="flex items-center gap-1 text-[11px] text-[#6f777f]">
+                              <p className="font-semibold text-[#1f2327] text-[14px] leading-[20px]">{item.propertyTitle}</p>
+                              <div className="flex items-center gap-1 text-[12px] leading-[16px] text-[#6f777f]">
                                 <span>{item.propertyType}</span>
                                 <span>•</span>
                                 <span>{item.bedrooms}</span>
@@ -765,77 +820,68 @@ export function OffersManagementInner() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 whitespace-nowrap">
-                            <span className="text-[13px] text-[#6f777f] flex items-center gap-1">
-                              <MapPin className="size-3 text-[#00c2cb]" />
+                          <td className="px-4 whitespace-nowrap font-sans">
+                            <span className="text-[13px] leading-[18px] text-[#1f2327] flex items-center gap-1.5">
+                              <MapPin className="size-3.5 text-[#00c2cb]" />
                               {item.propertyLocation}
                             </span>
                           </td>
-                          <td className="px-4 whitespace-nowrap">
-                            <span className="font-semibold text-[#1f2327] text-[13px]">{item.price}</span>
+                          <td className="px-4 whitespace-nowrap font-sans">
+                            <span className="font-semibold text-[#1f2327] text-[14px] leading-[20px]">{item.price}</span>
                           </td>
-                          <td className="px-4 whitespace-nowrap">
-                            <span className="inline-flex items-center gap-1 rounded-[6px] border border-[#d3d5d7] bg-[#eff1f3] px-2 py-0.5 text-[11px] font-medium text-[#1f2327]">
-                              <FileCheck className="size-3 text-[#17b26a]" />
+                          <td className="px-4 whitespace-nowrap font-sans">
+                            <span className="inline-flex items-center gap-1 rounded-[6px] border border-[#d3d5d7] bg-[#eff1f3] px-2 py-0.5 text-[12px] font-medium text-[#1f2327]">
+                              <FileCheck className="size-3.5 text-[#17b26a]" />
                               {item.documents.length} files
                             </span>
                           </td>
-                          <td className="px-4 whitespace-nowrap">
+                          <td className="px-4 whitespace-nowrap font-sans">
                             <FigmaStatusBadge status={item.status} />
                           </td>
-                          <td className="px-4 text-[13px] text-[#6f777f] whitespace-nowrap">
+                          <td className="px-4 text-[13px] leading-[18px] text-[#6f777f] whitespace-nowrap font-sans">
                             {item.submittedAt}
                           </td>
-                          <td className="px-4 whitespace-nowrap">
+                          <td className="px-4 whitespace-nowrap text-right font-sans">
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 type="button"
                                 onClick={() => setSelectedOffer(item)}
-                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-[#eff1f3] hover:bg-[#d3d5d7] transition-colors cursor-pointer"
+                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
                                 title="Inspect Offer 360"
                               >
-                                <Eye className="size-4 text-[#00c2cb]" />
+                                <Eye className="size-4" />
                               </button>
-
-                              {item.status !== 'Accepted' && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleApprove(item.id)}
-                                  className="flex size-8 items-center justify-center rounded-[6px] border border-[#17b26a]/30 bg-[#dfefe8] text-[#17b26a] hover:bg-[#dfefe8]/80 cursor-pointer"
-                                  title="Approve Offer"
-                                >
-                                  <CheckCircle2 className="size-4" />
-                                </button>
-                              )}
-
-                              {item.status !== 'Rejected' && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleReject(item.id, 'Standard compliance rejection')}
-                                  className="flex size-8 items-center justify-center rounded-[6px] border border-[#d92d20]/30 bg-[#f3e1e0] text-[#d92d20] hover:bg-[#f3e1e0]/80 cursor-pointer"
-                                  title="Reject Offer"
-                                >
-                                  <XCircle className="size-4" />
-                                </button>
-                              )}
-
-                              <button
-                                type="button"
-                                onClick={() => handleFlag(item.id, 'Flagged during dashboard review')}
-                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#f79009]/30 bg-[#fffaf0] text-[#b54708] hover:bg-[#fffaf0]/80 cursor-pointer"
-                                title="Flag for Review"
-                              >
-                                <FlagIcon className="size-3.5" />
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(item.id)}
-                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] text-[#6f777f] hover:bg-[#f3e1e0] hover:text-[#d92d20] cursor-pointer"
-                                title="Delete"
-                              >
-                                <Trash2 className="size-4" />
-                              </button>
+                              <Dropdown
+                                align="end"
+                                floating
+                                ariaLabel={`Actions for offer ${item.id}`}
+                                options={[
+                                  { label: 'Inspect Offer 360', value: 'inspect', icon: <Eye className="size-4 text-[#00c2cb]" /> },
+                                  ...(item.status !== 'Accepted' ? [
+                                    { label: 'Approve Offer', value: 'approve', icon: <CheckCircle2 className="size-4 text-emerald-600" /> },
+                                  ] : []),
+                                  ...(item.status !== 'Rejected' ? [
+                                    { label: 'Reject Offer', value: 'reject', destructive: true, icon: <XCircle className="size-4 text-rose-600" /> },
+                                  ] : []),
+                                  { label: 'Flag for Review', value: 'flag', icon: <FlagIcon className="size-4 text-amber-600" /> },
+                                  { label: 'Delete Record', value: 'delete', destructive: true, icon: <Trash2 className="size-4 text-rose-600" /> },
+                                ]}
+                                onSelect={(val) => {
+                                  if (val === 'inspect') setSelectedOffer(item)
+                                  else if (val === 'approve') handleApprove(item.id)
+                                  else if (val === 'reject') handleReject(item.id, 'Standard compliance rejection')
+                                  else if (val === 'flag') handleFlag(item.id, 'Flagged during dashboard review')
+                                  else if (val === 'delete') handleDelete(item.id)
+                                }}
+                                trigger={
+                                  <button
+                                    type="button"
+                                    className="flex size-8 items-center justify-center rounded-[6px] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+                                  >
+                                    <MoreHorizontal className="size-4" />
+                                  </button>
+                                }
+                              />
                             </div>
                           </td>
                         </tr>

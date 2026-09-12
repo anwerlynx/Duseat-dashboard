@@ -1,6 +1,8 @@
+import { Suspense } from 'react'
 import type { Metadata, Viewport } from 'next'
 import { Geist } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { TableScrollProvider } from '@/components/providers/table-scroll-provider'
 import './globals.css'
 
 const geistSans = Geist({
@@ -28,7 +30,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} bg-background`}>
       <body className="font-sans antialiased">
-        {children}
+        <TableScrollProvider>
+          <Suspense fallback={null}>
+            {children}
+          </Suspense>
+        </TableScrollProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

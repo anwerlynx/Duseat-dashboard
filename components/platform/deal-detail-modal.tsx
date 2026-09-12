@@ -424,8 +424,11 @@ export function DealDetailModal({
                   <p className="text-[13px] font-medium text-[#1f2327]">
                     Request ID: <strong className="font-mono text-[#00c2cb]">{deal.requestId}</strong> ({deal.propertyType} in {deal.propertyLocation})
                   </p>
-                  <Link href="/requests" className="text-[12px] font-semibold text-[#00c2cb] hover:underline flex items-center gap-1">
-                    View Request <ArrowRight className="size-3" />
+                  <Link
+                    href={deal.requestId ? `/request-insights?id=${deal.requestId}` : '/requests'}
+                    className="text-[12px] font-semibold text-[#00c2cb] hover:underline flex items-center gap-1"
+                  >
+                    View Request Insights <ArrowRight className="size-3" />
                   </Link>
                 </div>
               </div>

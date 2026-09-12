@@ -96,7 +96,7 @@ export function FigmaTableFilterHeader({
     <div className={cn('flex flex-col bg-white select-none', className)} ref={dropdownRef}>
       {/* ROW 1: Segmented Tabs on Left + Columns & Reset on Right */}
       {(tabs && tabs.length > 0) || onCustomizeColumns || onResetFilters || extraActions ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-[#e2e8f0]/80">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-[#d3d5d7]">
           {/* Left: Tab Pills */}
           {tabs && tabs.length > 0 && onTabChange ? (
             <div className="inline-flex items-center gap-1 rounded-full bg-[#f2f4f7] p-1 overflow-x-auto max-w-full">
@@ -158,7 +158,7 @@ export function FigmaTableFilterHeader({
       ) : null}
 
       {/* ROW 2: Filter Chips on Left + Records Count on Right */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-white border-b border-[#e2e8f0]/80">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-white border-b border-[#d3d5d7]">
         {/* Left Filter Chips */}
         <div className="flex flex-wrap items-center gap-2 min-w-0">
           {filterChips?.map((chip) => {

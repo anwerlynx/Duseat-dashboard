@@ -32,6 +32,7 @@ import {
   Check,
   X,
   SlidersHorizontal,
+  MoreHorizontal,
   ExternalLink,
   Settings2,
   UserCheck,
@@ -111,7 +112,8 @@ export function VerificationCenterInner() {
   const [isRefreshing, setIsRefreshing] = React.useState(false)
 
   // Navigation & URL sync
-  const [activeTab, setActiveTab] = React.useState<MainTab>('queue')
+  const initialTab = (searchParams.get('tab') as MainTab) || 'queue'
+  const [activeTab, setActiveTab] = React.useState<MainTab>(initialTab)
   const statusParam = (searchParams.get('status')?.toLowerCase() as StatusFilter) || 'All'
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>(statusParam)
 
@@ -686,8 +688,8 @@ export function VerificationCenterInner() {
             </div>
           </div>
 
-          {/* SECTION 2: 5 STANDARDIZED KPI / SUMMARY CARDS WITH CLICKABLE FILTERING */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {/* 5 Stat Metric Cards */}
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 lg:gap-3">
             <MetricCard
               label="Pending Reviews"
               count={pendingCount}
@@ -734,7 +736,7 @@ export function VerificationCenterInner() {
               trend="2 awaiting check"
               trendDirection="up"
               icon={RefreshCw}
-              tone="brand"
+              tone="info"
               isActive={statusFilter === 'resubmitted'}
               onClick={() => handleKpiClick(statusFilter === 'resubmitted' ? 'All' : 'resubmitted')}
             />
@@ -753,14 +755,24 @@ export function VerificationCenterInner() {
                   { label: 'Verification History', value: 'history', count: history.length },
                   { label: 'Internal Notes', value: 'notes', count: notes.length },
                 ].map((item) => (
-                  <button
-                    type="button"
+                  <a
                     key={item.value}
-                    onClick={() => setActiveTab(item.value as MainTab)}
+                    href={`/verification?tab=${encodeURIComponent(item.value)}`}
+                    onClick={(e) => {
+                      if (e.ctrlKey || e.metaKey || e.button === 1) {
+                        return
+                      }
+                      e.preventDefault()
+                      setActiveTab(item.value as MainTab)
+                    }}
                     className={cn(
-                      'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn',
+                      'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn no-underline',
                       activeTab === item.value
-                        ? 'bg-[#1f2327] text-white shadow-2xs'
+                        ? item.value === 'approved'
+                          ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
+                          : item.value === 'expired'
+                          ? 'bg-[#f04438] text-white shadow-2xs font-semibold'
+                          : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                         : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                     )}
                   >
@@ -777,7 +789,7 @@ export function VerificationCenterInner() {
                     >
                       {item.count}
                     </span>
-                  </button>
+                  </a>
                 ))}
               </div>
 
@@ -1002,7 +1014,7 @@ export function VerificationCenterInner() {
             <div className="overflow-x-auto table-scrollbar flex-1">
               <table className="w-full min-w-[1350px] border-collapse text-left text-[14px]">
                 <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
-                  <tr className="h-12 text-[13px] font-semibold text-[#1f2327]">
+                  <tr className="h-12 text-[14px] font-semibold text-[#1f2327]">
                     <th className="w-12 px-4">
                       <TableCheckbox
                         checked={paginatedCases.length > 0 && selectedIds.length === paginatedCases.length}
@@ -1054,6 +1066,7 @@ export function VerificationCenterInner() {
                       </button>
                     </th>
                     <th className="px-4 whitespace-nowrap">Status</th>
+                    <th className="px-4 whitespace-nowrap">Trust Signal</th>
                     <th className="px-4 whitespace-nowrap">Reviewer</th>
                     <th className="px-4 text-right whitespace-nowrap">Actions</th>
                   </tr>
@@ -1068,12 +1081,12 @@ export function VerificationCenterInner() {
                       <tr
                         key={caseItem.id}
                         className={cn(
-                          'hover:bg-[#fcfcfc] transition-colors whitespace-nowrap',
+                          'h-[64px] font-sans hover:bg-[#f8f9fa] transition-colors whitespace-nowrap',
                           isSelected && 'bg-[#e5f6f7]/40'
                         )}
                       >
                         {/* Checkbox */}
-                        <td className="w-12 px-4 py-3.5 whitespace-nowrap">
+                        <td className="w-12 px-4 whitespace-nowrap">
                           <TableCheckbox
                             checked={isSelected}
                             onChange={() =>
@@ -1088,7 +1101,7 @@ export function VerificationCenterInner() {
                         </td>
 
                         {/* 1. User Column (Avatar + Name -> /users/:userId) */}
-                        <td className="px-4 py-3.5 whitespace-nowrap">
+                        <td className="px-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             <Link href={`/users/${caseItem.userId}`} className="cursor-pointer group">
                               <TableAvatar
@@ -1104,19 +1117,19 @@ export function VerificationCenterInner() {
                               <div className="flex items-center gap-1.5">
                                 <Link
                                   href={`/users/${caseItem.userId}`}
-                                  className="font-bold text-[#1f2327] hover:text-[#00c2cb] hover:underline transition-colors"
+                                  className="font-semibold text-[14px] leading-[20px] text-[#1f2327] hover:text-[#00c2cb] hover:underline transition-colors truncate"
                                 >
                                   {caseItem.applicantName}
                                 </Link>
                                 <span className="text-[11px] font-mono text-[#6f777f]">({caseItem.userId})</span>
                               </div>
-                              <p className="text-[12px] text-[#6f777f]">{caseItem.applicantEmail}</p>
+                              <p className="text-[12px] leading-[16px] text-[#6f777f] truncate">{caseItem.applicantEmail}</p>
                             </div>
                           </div>
                         </td>
 
                         {/* 2. User Type Badge */}
-                        <td className="px-4 py-3.5 whitespace-nowrap">
+                        <td className="px-4 whitespace-nowrap">
                           <span
                             className={cn(
                               'inline-flex items-center rounded-[6px] px-2.5 py-0.5 text-[12px] font-bold uppercase tracking-wider',
@@ -1128,7 +1141,7 @@ export function VerificationCenterInner() {
                         </td>
 
                         {/* 3. Verification ID (Click -> /verification/:id, with copy button) */}
-                        <td className="px-4 py-3.5 font-mono text-[13px] whitespace-nowrap">
+                        <td className="px-4 font-mono text-[13px] whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
                             <Link
                               href={`/verification/${caseItem.id}`}
@@ -1148,7 +1161,7 @@ export function VerificationCenterInner() {
                         </td>
 
                         {/* 4. Verification Type */}
-                        <td className="px-4 py-3.5 whitespace-nowrap text-[13px] text-[#1f2327]">
+                        <td className="px-4 whitespace-nowrap text-[13px] text-[#1f2327]">
                           <Link
                             href={`/verification/${caseItem.id}`}
                             className="hover:text-[#00c2cb] hover:underline"
@@ -1160,7 +1173,7 @@ export function VerificationCenterInner() {
                         </td>
 
                         {/* 5. Documents column */}
-                        <td className="px-4 py-3.5 whitespace-nowrap">
+                        <td className="px-4 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() =>
@@ -1189,22 +1202,34 @@ export function VerificationCenterInner() {
                         </td>
 
                         {/* 6. Submitted Date */}
-                        <td className="px-4 py-3.5 text-[13px] text-[#6f777f] whitespace-nowrap" title={caseItem.submittedDateExact}>
+                        <td className="px-4 text-[13px] text-[#6f777f] whitespace-nowrap" title={caseItem.submittedDateExact}>
                           {caseItem.submittedAt}
                         </td>
 
                         {/* 7. Last Updated */}
-                        <td className="px-4 py-3.5 text-[13px] text-[#6f777f] whitespace-nowrap">
+                        <td className="px-4 text-[13px] text-[#6f777f] whitespace-nowrap">
                           {caseItem.lastUpdatedAt}
                         </td>
 
                         {/* 8. Status Badge */}
-                        <td className="px-4 py-3.5 whitespace-nowrap">
+                        <td className="px-4 whitespace-nowrap">
                           <FigmaStatusBadge status={caseItem.status} />
                         </td>
 
+                        {/* 8.5 Trust Signal per Section 16 */}
+                        <td className="px-4 whitespace-nowrap text-[12px]">
+                          <span
+                            className={cn(
+                              'font-semibold',
+                              caseItem.riskScore > 75 ? 'text-[#16A86B]' : caseItem.riskScore > 40 ? 'text-[#E99A18]' : 'text-[#E5484D]'
+                            )}
+                          >
+                            Trust: {caseItem.riskScore}/100 ({caseItem.riskScore > 75 ? 'High' : caseItem.riskScore > 40 ? 'Moderate' : 'Low'})
+                          </span>
+                        </td>
+
                         {/* 9. Reviewer */}
-                        <td className="px-4 py-3.5 whitespace-nowrap text-[13px]">
+                        <td className="px-4 whitespace-nowrap text-[13px]">
                           {caseItem.assignedReviewer ? (
                             <div className="flex items-center gap-2">
                               {caseItem.assignedReviewer.avatar && (
@@ -1224,25 +1249,27 @@ export function VerificationCenterInner() {
                         </td>
 
                         {/* 10. Actions Dropdown */}
-                        <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        <td className="px-4 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1.5">
                             <Link
                               href={`/verification/${caseItem.id}`}
-                              className="flex h-[32px] items-center gap-1.5 rounded-[6px] bg-[#1f2327] px-3 text-[13px] font-medium text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn"
+                              className="flex size-8 items-center justify-center rounded-[6px] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+                              title="Review Verification"
                             >
-                              <Eye className="size-3.5" />
-                              <span>Review</span>
+                              <Eye className="size-4" />
                             </Link>
 
                             <Dropdown
                               align="end"
+                              floating
+                              ariaLabel={`Actions for ${caseItem.applicantName}`}
                               options={[
-                                { label: 'Review Verification', value: 'review' },
-                                { label: 'View User Profile', value: 'view-user' },
-                                { label: 'Inspect Documents', value: 'view-docs' },
-                                { label: 'Assign Reviewer', value: 'assign' },
-                                { label: 'Request Resubmission', value: 'resubmit' },
-                                { label: 'Add Compliance Note', value: 'note' },
+                                { label: 'Review Verification', value: 'review', icon: <Eye className="size-4 text-[#00c2cb]" /> },
+                                { label: 'View User Profile', value: 'view-user', icon: <User className="size-4 text-[#00c2cb]" /> },
+                                { label: 'Inspect Documents', value: 'view-docs', icon: <FileText className="size-4 text-[#00c2cb]" /> },
+                                { label: 'Assign Reviewer', value: 'assign', icon: <UserCheck className="size-4 text-[#00c2cb]" /> },
+                                { label: 'Request Resubmission', value: 'resubmit', icon: <RefreshCw className="size-4 text-amber-600" /> },
+                                { label: 'Add Compliance Note', value: 'note', icon: <Edit2 className="size-4 text-[#6f777f]" /> },
                               ]}
                               onSelect={(action) => {
                                 if (action === 'review') router.push(`/verification/${caseItem.id}`)
@@ -1259,9 +1286,13 @@ export function VerificationCenterInner() {
                                 else if (action === 'note') setNoteTargetCase(caseItem)
                               }}
                               trigger={
-                                <span className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] cursor-pointer">
-                                  •••
-                                </span>
+                                <button
+                                  type="button"
+                                  className="flex size-8 items-center justify-center rounded-[6px] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+                                  title="More actions"
+                                >
+                                  <MoreHorizontal className="size-4" />
+                                </button>
                               }
                             />
                           </div>
@@ -1295,7 +1326,7 @@ export function VerificationCenterInner() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1000px] border-collapse text-left text-[14px]">
                 <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
-                  <tr className="h-12 text-[13px] font-semibold text-[#1f2327]">
+                  <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
                     <th className="px-4">User</th>
                     <th className="px-4">Expired Document</th>
                     <th className="px-4">Expiry Date</th>
@@ -1307,17 +1338,17 @@ export function VerificationCenterInner() {
                 </thead>
                 <tbody className="divide-y divide-[#d3d5d7]">
                   {expiredDocsList.map(({ caseItem, document }) => (
-                    <tr key={`${caseItem.id}-${document.id}`} className="hover:bg-[#fcfcfc]">
-                      <td className="px-4 py-3.5">
+                    <tr key={`${caseItem.id}-${document.id}`} className="h-[64px] font-sans hover:bg-[#f8f9fa] transition-colors whitespace-nowrap">
+                      <td className="px-4 whitespace-nowrap">
                         <Link
                           href={`/users/${caseItem.userId}`}
-                          className="font-bold text-[#1f2327] hover:text-[#00c2cb] hover:underline"
+                          className="font-semibold text-[14px] leading-[20px] text-[#1f2327] hover:text-[#00c2cb] hover:underline"
                         >
                           {caseItem.applicantName}
                         </Link>
-                        <span className="text-[12px] text-[#6f777f] block">({caseItem.role})</span>
+                        <span className="text-[12px] leading-[16px] text-[#6f777f] block">({caseItem.role})</span>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() =>
@@ -1333,19 +1364,19 @@ export function VerificationCenterInner() {
                           {document.type} ({document.name})
                         </button>
                       </td>
-                      <td className="px-4 py-3.5 font-bold text-[#d92d20]">
+                      <td className="px-4 whitespace-nowrap font-bold text-[#d92d20]">
                         {document.expiryDate || 'Expired'}
                       </td>
-                      <td className="px-4 py-3.5 font-mono text-[#d92d20] font-semibold">
+                      <td className="px-4 whitespace-nowrap font-mono text-[#d92d20] font-semibold">
                         {document.daysExpired || 90}+ days
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 whitespace-nowrap">
                         <FigmaStatusBadge status="Expired" />
                       </td>
-                      <td className="px-4 py-3.5 text-[13px] text-[#6f777f]">
+                      <td className="px-4 whitespace-nowrap text-[13px] text-[#6f777f]">
                         {caseItem.assignedReviewer?.name || 'Unassigned'}
                       </td>
-                      <td className="px-4 py-3.5 text-right">
+                      <td className="px-4 whitespace-nowrap text-right">
                         <button
                           type="button"
                           onClick={() => setRequestUpdateDoc({ caseItem, document })}

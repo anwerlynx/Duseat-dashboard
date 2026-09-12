@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Search,
@@ -57,6 +58,8 @@ export function PlatformShell({
   const [allToolsOpen, setAllToolsOpen] = React.useState(false)
   const active = pathname === '/' ? 'dashboard' : pathname.split('/')[1]
 
+  const [mobileSearchOpen, setMobileSearchOpen] = React.useState(false)
+
   React.useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement
@@ -80,18 +83,18 @@ export function PlatformShell({
   }
 
   return (
-    <div className="flex min-h-dvh bg-background">
+    <div className="flex min-h-dvh bg-background w-full overflow-x-clip">
       <Sidebar collapsed={collapsed} active={active} onNavigate={navigate} mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-[#d3d5d7] bg-white/95 backdrop-blur-xl">
-          <div className="flex min-h-[60px] sm:min-h-[64px] w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-2">
+      <div className="flex min-w-0 flex-1 flex-col w-full overflow-x-clip">
+        <header className="sticky top-0 z-30 border-b border-[#E2E5E8] bg-white/95 backdrop-blur-xl">
+          <div className="flex min-h-[56px] sm:min-h-[60px] w-full items-center justify-between gap-2 sm:gap-3 px-3 sm:px-6 lg:px-8 py-2">
             {/* Left: Collapse toggle, divider, breadcrumbs & title */}
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial">
               <button
                 type="button"
                 onClick={() => setMobileOpen(true)}
                 aria-label="Open navigation menu"
-                className="flex size-9 items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white text-[#1f2327] transition-colors hover:bg-[#eff1f3] lg:hidden"
+                className="flex size-9 items-center justify-center rounded-[8px] border border-[#E2E5E8] bg-white text-[#202428] transition-colors hover:bg-[#F8F9FA] lg:hidden cursor-pointer shrink-0"
               >
                 <Menu className="size-5" />
               </button>
@@ -99,53 +102,66 @@ export function PlatformShell({
                 type="button"
                 onClick={() => setCollapsed((value) => !value)}
                 aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                className="hidden size-[36px] items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white text-[#1f2327] transition-colors hover:bg-[#eff1f3] cursor-pointer lg:flex"
+                className="hidden size-[36px] items-center justify-center rounded-[8px] border border-[#E2E5E8] bg-white text-[#202428] transition-colors hover:bg-[#F8F9FA] cursor-pointer lg:flex shrink-0"
               >
                 {collapsed ? <PanelLeft className="size-4" /> : <PanelLeftClose className="size-4" />}
               </button>
-              <div className="hidden h-9 w-[1px] bg-[#d9d9d9] sm:block" />
+              <div className="hidden h-8 w-[1px] bg-[#E2E5E8] sm:block" />
               <div className="min-w-0 flex flex-col justify-center">
-                <div className="flex items-center gap-1.5 text-[12px] leading-[16px] text-[#6f777f] font-sans">
-                  <span className="cursor-pointer hover:text-[#1f2327] transition-colors" onClick={() => router.push('/')}>
+                <div className="flex items-center gap-1 text-[11px] sm:text-[12px] leading-[16px] text-[#68727D] font-medium font-sans truncate">
+                  <Link href="/" className="cursor-pointer hover:text-[#202428] transition-colors shrink-0">
                     Duseat
-                  </span>
-                  <ChevronRight className="size-3.5 text-[#9da4ae]" />
-                  <span className="cursor-pointer hover:text-[#1f2327] transition-colors" onClick={() => router.push('/investors')}>
-                    Users
-                  </span>
-                  <ChevronRight className="size-3.5 text-[#9da4ae]" />
-                  <span className="text-[#6f777f] font-normal capitalize">{eyebrow || 'investor'}</span>
+                  </Link>
+                  {eyebrow && (
+                    <>
+                      <ChevronRight className="size-3 text-[#8A939D] shrink-0" />
+                      <span className="capitalize truncate">{eyebrow}</span>
+                    </>
+                  )}
+                  <ChevronRight className="size-3 text-[#8A939D] shrink-0" />
+                  <span className="text-[#202428] font-semibold truncate">{title}</span>
                 </div>
-                <h1 className="truncate text-[20px] sm:text-[24px] font-bold leading-[28px] sm:leading-[32px] text-[#1f2327] font-sans">
+                <h1 className="truncate text-[18px] sm:text-[22px] font-bold leading-[26px] sm:leading-[28px] text-[#202428] font-sans tracking-tight">
                   {title}
                 </h1>
               </div>
             </div>
 
             {/* Right: Export button, Refresh status, messaging, notifs, profile */}
-            <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
               {onQueryChange && (
-                <div className="relative hidden w-48 md:block xl:w-64">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    id="platform-search"
-                    value={query}
-                    onChange={(event) => onQueryChange(event.target.value)}
-                    placeholder={`Search…`}
-                    aria-label={`Search`}
-                    className="h-[36px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-8 text-sm outline-none placeholder:text-muted-foreground focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20 font-sans"
-                  />
-                  {query && (
-                    <button
-                      type="button"
-                      onClick={() => onQueryChange('')}
-                      aria-label="Clear search"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-secondary"
-                    >
-                      <X className="size-3.5" />
-                    </button>
-                  )}
-                </div>
+                <>
+                  <div className="relative hidden w-44 md:block xl:w-60">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9da4ae]" />
+                    <input
+                      id="platform-search"
+                      value={query}
+                      onChange={(event) => onQueryChange(event.target.value)}
+                      placeholder={`Search…`}
+                      aria-label={`Search`}
+                      className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-8 text-[14px] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20 font-sans transition-all"
+                    />
+                    {query && (
+                      <button
+                        type="button"
+                        onClick={() => onQueryChange('')}
+                        aria-label="Clear search"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-[#8A939D] hover:bg-[#F5F6F7]"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  {/* Mobile Search Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+                    aria-label="Toggle mobile search"
+                    className="flex size-9 items-center justify-center rounded-[8px] border border-[#E2E5E8] bg-white text-[#68727D] hover:bg-[#F8F9FA] hover:text-[#202428] md:hidden cursor-pointer"
+                  >
+                    <Search className="size-4" />
+                  </button>
+                </>
               )}
 
               {/* Export Button */}
@@ -168,7 +184,7 @@ export function PlatformShell({
                 trigger={
                   <button
                     type="button"
-                    className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3 text-[14px] sm:text-[15px] font-medium text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn font-sans"
+                    className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#202428] px-3 text-[13px] sm:text-[14px] font-medium text-white shadow-xs hover:bg-[#2e3338] transition-colors cursor-pointer font-sans"
                   >
                     <svg className="size-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -186,12 +202,12 @@ export function PlatformShell({
               <button
                 type="button"
                 onClick={() => router.refresh()}
-                className="hidden sm:flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-2.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn font-sans"
+                className="hidden sm:flex h-[36px] items-center gap-2 rounded-[8px] border border-[#E2E5E8] bg-white px-2.5 text-[13px] font-medium text-[#202428] hover:bg-[#F8F9FA] transition-colors cursor-pointer font-sans"
               >
-                <svg className="size-4 text-[#1f2327]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="size-3.5 text-[#68727D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
                 </svg>
-                <span className="hidden md:inline">Updated just now</span>
+                <span className="hidden md:inline text-[#68727D]">Updated just now</span>
               </button>
 
               {actions}
@@ -213,7 +229,7 @@ export function PlatformShell({
                   else if (val === 'signout') router.push('/sign-in')
                 }}
                 trigger={
-                  <span className="flex size-[36px] cursor-pointer items-center justify-center rounded-[10px] border-2 border-[#e5e7eb] bg-gradient-to-br from-amber-500 to-rose-600 text-xs font-bold text-white shadow-2xs transition-transform hover:scale-105 font-sans">
+                  <span className="flex size-[36px] cursor-pointer items-center justify-center rounded-[8px] border border-[#E2E5E8] bg-[#06B6C9] text-xs font-bold text-white shadow-xs transition-transform hover:scale-105 font-sans">
                     AK
                   </span>
                 }
@@ -221,8 +237,40 @@ export function PlatformShell({
               />
             </div>
           </div>
+
+          {/* Mobile Expanded Search Bar */}
+          {mobileSearchOpen && onQueryChange && (
+            <div className="flex w-full items-center gap-2 border-t border-[#E2E5E8] bg-[#F8F9FA] px-3 py-2 md:hidden">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#8A939D]" />
+                <input
+                  value={query}
+                  onChange={(event) => onQueryChange(event.target.value)}
+                  placeholder="Search…"
+                  autoFocus
+                  className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-8 text-[14px] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20 transition-all"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => onQueryChange('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-[#8A939D]"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileSearchOpen(false)}
+                className="rounded px-2 text-xs font-semibold text-[#68727D] hover:text-[#202428]"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </header>
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1 w-full overflow-x-clip">{children}</main>
       </div>
 
       <ScheduleExportModal

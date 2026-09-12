@@ -5,7 +5,7 @@ export interface DealPayment {
   title: string
   amount: string
   amountNumber: number
-  status: 'Paid' | 'Escrow Funded' | 'Pending' | 'Refunded'
+  status: 'Paid' | 'Escrow Funded' | 'Released' | 'Pending' | 'Refunded'
   date: string
   method: string
   reference: string
@@ -172,12 +172,12 @@ export const initialPlatformDeals: PlatformDeal[] = [
     propertyImage: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&auto=format&fit=crop&q=80',
     bedrooms: '6 Bedrooms',
     sizeSqFt: '9,800 sq ft',
-    investorId: 'IN-2047',
+    investorId: 'IN-2045',
     investorName: 'Omar Nasser',
-    investorEmail: 'omar.nasser@example.com',
-    investorPhone: '+971 55 819 0041',
+    investorEmail: 'omar.nasser@alrajhi-invest.sa',
+    investorPhone: '+966 54 667 1300',
     investorCountry: 'Saudi Arabia',
-    investorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+    investorAvatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&auto=format&fit=crop&q=80',
     agentId: 'AG-1046',
     agentName: 'Youssef Ali',
     agentEmail: 'youssef@palmdubai.ae',
@@ -191,7 +191,7 @@ export const initialPlatformDeals: PlatformDeal[] = [
     commissionAmount: 'AED 760,000',
     commissionSplit: 'AED 532,000 Agency (70%) / AED 228,000 Platform (30%)',
     escrowStatus: 'Released',
-    escrowAmount: 'AED 3,800,000',
+    escrowAmount: 'AED 3,800,000 (10% Security Deposit)',
     status: 'Completed',
     assignedManager: 'Ahmad Khaled',
     managerEmail: 'ahmad@duseat.ae',
@@ -199,22 +199,32 @@ export const initialPlatformDeals: PlatformDeal[] = [
     expectedCloseDate: '20 May 2026',
     completedDate: '20 May 2026',
     timeline: [
-      { id: 't1', title: 'Reservation Agreement', date: '18 Apr 2026', done: true, desc: 'Signed by Omar Nasser & seller.' },
-      { id: 't2', title: 'Escrow Funded', date: '20 Apr 2026', done: true, desc: 'AED 3.8M deposit verified.' },
-      { id: 't3', title: 'NOC & Clearance', date: '04 May 2026', done: true, desc: 'Nakheel clearance approved.' },
-      { id: 't4', title: 'Title Deed Handover', date: '20 May 2026', done: true, desc: 'Conveyance executed at Dubai Land Department.' },
-      { id: 't5', title: 'Commission Disbursed', date: '20 May 2026', done: true, desc: 'Platform and broker commission transferred.' },
+      { id: 't1', title: 'Reservation Agreement & Form B', date: '18 Apr 2026', done: true, desc: 'Signed by Omar Nasser & seller via Duseat portal.' },
+      { id: 't2', title: 'Escrow Deposit Funded', date: '20 Apr 2026', done: true, desc: 'AED 3.8M security deposit funded to Duseat Trustee Account #9128.' },
+      { id: 't3', title: 'Developer NOC & Clearance', date: '04 May 2026', done: true, desc: 'Nakheel clearance certificate approved and issued.' },
+      { id: 't4', title: 'Title Deed Handover at DLD', date: '20 May 2026', done: true, desc: 'Conveyance executed at Dubai Land Department trustee office.' },
+      { id: 't5', title: 'Commission Disbursed', date: '20 May 2026', done: true, desc: 'Broker commission (AED 532K) & platform fee (AED 228K) released.' },
     ],
     documents: [
       { id: 'doc-1', name: 'Title_Deed_Transfer_Certificate.pdf', type: 'Title Deed', size: '5.2 MB', status: 'Signed', uploadedAt: '20 May 2026', url: '#' },
       { id: 'doc-2', name: 'Nakheel_NOC_Clearance.pdf', type: 'NOC', size: '2.1 MB', status: 'Verified', uploadedAt: '04 May 2026', url: '#' },
+      { id: 'doc-3', name: 'Form_F_Contract_of_Sale.pdf', type: 'Form F', size: '3.4 MB', status: 'Signed', uploadedAt: '18 Apr 2026', url: '#' },
+      { id: 'doc-4', name: 'Central_Escrow_Receipt_3.8M.pdf', type: 'Receipt', size: '1.1 MB', status: 'Verified', uploadedAt: '20 Apr 2026', url: '#' },
     ],
     payments: [
-      { id: 'pay-1', title: 'Full Purchase Price', amount: 'AED 38,000,000', amountNumber: 38000000, status: 'Paid', date: '20 May 2026', method: 'Manager Cheques', reference: 'DLD-492100' },
+      { id: 'pay-1', title: '10% Reservation Escrow Deposit', amount: 'AED 3,800,000', amountNumber: 3800000, status: 'Released', date: '20 Apr 2026', method: 'Central Bank Wire / Escrow', reference: 'ESC-DXB-9128' },
+      { id: 'pay-2', title: 'Platform Conveyance & Advisory Fee', amount: 'AED 38,000', amountNumber: 38000, status: 'Paid', date: '18 Apr 2026', method: 'Corporate Wire', reference: 'TX-482001' },
+      { id: 'pay-3', title: 'Remaining Purchase Price at DLD Conveyance', amount: 'AED 34,200,000', amountNumber: 34200000, status: 'Paid', date: '20 May 2026', method: 'Manager Cheques', reference: 'DLD-492100' },
     ],
-    conversation: [],
+    conversation: [
+      { id: 'm1', sender: 'Youssef Ali', senderRole: 'Agent', text: 'Good morning Mr. Omar Nasser. Developer NOC from Nakheel has been approved and uploaded to your deal room.', time: '04 May, 10:15' },
+      { id: 'm2', sender: 'Omar Nasser', senderRole: 'Investor', text: 'Thank you Youssef. I have confirmed with Al Rajhi Bank that the manager cheques are issued for the DLD appointment.', time: '04 May, 10:45' },
+      { id: 'm3', sender: 'Ahmad Khaled', senderRole: 'Manager', text: 'Duseat trustee officer will accompany both parties at the DLD Al Barsha branch on 20 May at 11 AM.', time: '05 May, 09:30' },
+      { id: 'm4', sender: 'Youssef Ali', senderRole: 'Agent', text: 'Conveyance executed successfully. Congratulations Mr. Omar on acquiring this landmark signature villa!', time: '20 May, 01:45' },
+    ],
     notes: [
-      { id: 'n1', author: 'Ahmad Khaled', role: 'Super Admin', date: '20 May 2026', text: 'Deal completed smoothly. Commission disbursed.' },
+      { id: 'n1', author: 'Ahmad Khaled', role: 'Deal Manager', date: '20 May 2026', text: 'Deal completed seamlessly. Title deed issued in name of Omar Nasser. Escrow funds released to seller.' },
+      { id: 'n2', author: 'Compliance Desk', role: 'Trustee', date: '20 Apr 2026', text: 'Full KYC & solvency documents cleared under UAE Central Bank standards.' },
     ],
   },
   {

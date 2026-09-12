@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import {
   LayoutDashboard,
   Users,
@@ -26,9 +27,25 @@ import { Tooltip } from './primitives'
 type NavChild = { label: string; id: string }
 type NavItem = { label: string; icon: LucideIcon; id: string; children?: NavChild[] }
 
+const getNavHref = (id: string) => {
+  if (id === 'dashboard') return '/'
+  if (id === 'tools') return '/all-tools'
+  return `/${id}`
+}
+
 const mainNav: NavItem[] = [
   { label: 'Dashboard', icon: LayoutDashboard, id: 'dashboard' },
-  { label: 'Users', icon: Users, id: 'users', children: [{ label: 'Investors', id: 'investors' }, { label: 'Agents', id: 'agents' }] },
+  {
+    label: 'Users',
+    icon: Users,
+    id: 'users',
+    children: [
+      { label: 'Investors', id: 'investors' },
+      { label: 'Agents', id: 'agents' },
+      { label: 'Suspended Users', id: 'users/suspended' },
+      { label: 'Deleted Archive', id: 'users/deleted' },
+    ],
+  },
   { label: 'Verification center', icon: BadgeCheck, id: 'verification' },
   { label: 'Requests', icon: FileText, id: 'requests' },
   { label: 'Offers', icon: ScrollText, id: 'offers' },
@@ -74,28 +91,8 @@ export function Sidebar({ collapsed: collapsedProp, active, onNavigate, mobileOp
     const isActive = active === item.id || childActive
     const isOpen = openGroups.includes(item.id)
 
-    const button = (
-      <button
-        type="button"
-        onClick={() => {
-          if (item.children) {
-            setOpenGroups((items) =>
-              items.includes(item.id) ? items.filter((id) => id !== item.id) : [...items, item.id]
-            )
-          } else {
-            onNavigate(item.id, item.label)
-          }
-        }}
-        aria-current={active === item.id ? 'page' : undefined}
-        aria-expanded={item.children ? isOpen : undefined}
-        className={cn(
-          'group flex w-full items-center gap-3 rounded-[8px] px-3 py-2 text-[14px] font-medium transition-all font-sans cursor-pointer',
-          collapsed && 'justify-center px-0 size-10 mx-auto',
-          isActive
-            ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
-            : 'text-[#1f2327] hover:bg-[#eff1f3]'
-        )}
-      >
+    const itemContent = (
+      <>
         <Icon className={cn('size-5 shrink-0 transition-colors', isActive ? 'text-white' : 'text-[#1f2327]')} />
         {!collapsed && <span className="flex-1 truncate text-left">{item.label}</span>}
         {!collapsed && item.children && (
@@ -104,19 +101,74 @@ export function Sidebar({ collapsed: collapsedProp, active, onNavigate, mobileOp
         {!collapsed && !item.children && active === item.id && (
           <ChevronRight className="size-3.5 text-white/70" />
         )}
+      </>
+    )
+
+    const itemClassName = cn(
+      'group flex w-full items-center gap-3 rounded-[8px] px-3 py-2 text-[14px] font-medium transition-all font-sans cursor-pointer',
+      collapsed && 'justify-center px-0 size-10 mx-auto',
+      isActive
+        ? 'bg-[#1f2327] text-white shadow-2xs font-semibold antialiased'
+        : 'text-[#1f2327] hover:bg-[#eff1f3]'
+    )
+
+    // For items with sub-items (like "Users"), render as toggle button
+    const element = item.children ? (
+      <button
+        type="button"
+        onClick={(e) => {
+          if (e.ctrlKey || e.metaKey || e.button === 1) {
+            window.open('/investors', '_blank')
+            return
+          }
+          setOpenGroups((items) =>
+            items.includes(item.id) ? items.filter((id) => id !== item.id) : [...items, item.id]
+          )
+        }}
+        aria-current={active === item.id ? 'page' : undefined}
+        aria-expanded={isOpen}
+        className={itemClassName}
+      >
+        {itemContent}
       </button>
+    ) : (
+      <Link
+        href={getNavHref(item.id)}
+        onClick={(e) => {
+          if (e.ctrlKey || e.metaKey || e.button === 1) {
+            // Let the browser handle opening in a new tab natively!
+            return
+          }
+          if (item.id === 'tools') {
+            e.preventDefault()
+            onNavigate(item.id, item.label)
+            return
+          }
+          onNavigate(item.id, item.label)
+        }}
+        aria-current={active === item.id ? 'page' : undefined}
+        className={itemClassName}
+      >
+        {itemContent}
+      </Link>
     )
 
     return (
       <li key={item.id}>
-        {collapsed ? <Tooltip content={item.label} className="block">{button}</Tooltip> : button}
+        {collapsed ? <Tooltip content={item.label} className="block">{element}</Tooltip> : element}
         {!collapsed && item.children && isOpen && (
           <ul className="mt-1 flex flex-col gap-1 pl-8">
             {item.children.map((child) => (
               <li key={child.id}>
-                <button
-                  type="button"
-                  onClick={() => onNavigate(child.id, child.label)}
+                <Link
+                  href={getNavHref(child.id)}
+                  onClick={(e) => {
+                    if (e.ctrlKey || e.metaKey || e.button === 1) {
+                      // Native browser behavior: opens in a new tab!
+                      return
+                    }
+                    onNavigate(child.id, child.label)
+                  }}
                   className={cn(
                     'flex w-full rounded-[6px] px-2.5 py-1.5 text-left text-[13px] font-medium transition-colors font-sans cursor-pointer',
                     active === child.id
@@ -125,7 +177,7 @@ export function Sidebar({ collapsed: collapsedProp, active, onNavigate, mobileOp
                   )}
                 >
                   {child.label}
-                </button>
+                </Link>
               </li>
             ))}
           </ul>
@@ -154,8 +206,14 @@ export function Sidebar({ collapsed: collapsedProp, active, onNavigate, mobileOp
         )}
       >
         {/* Brand Logo (Figma Node 33:1395) */}
-        <div
-          onClick={() => onNavigate('dashboard', 'Dashboard')}
+        <Link
+          href="/"
+          onClick={(e) => {
+            if (e.ctrlKey || e.metaKey || e.button === 1) {
+              return
+            }
+            onNavigate('dashboard', 'Dashboard')
+          }}
           className={cn(
             'flex h-[64px] cursor-pointer items-center gap-2.5 px-4 transition-opacity hover:opacity-85',
             collapsed && 'justify-center px-0'
@@ -171,13 +229,18 @@ export function Sidebar({ collapsed: collapsedProp, active, onNavigate, mobileOp
               Duseat
             </span>
           )}
-        </div>
+        </Link>
 
         {/* User Card: Ahmad Khaled, Admin (Figma Node 33:1395) */}
         <div className={cn('px-3 pb-3', collapsed && 'px-2')}>
-          <button
-            type="button"
-            onClick={() => onNavigate('admin', 'Admin management')}
+          <Link
+            href="/admin"
+            onClick={(e) => {
+              if (e.ctrlKey || e.metaKey || e.button === 1) {
+                return
+              }
+              onNavigate('admin', 'Admin management')
+            }}
             className={cn(
               'flex w-full items-center gap-2.5 rounded-[10px] border border-[#d3d5d7] bg-white p-2 hover:bg-[#eff1f3] transition-colors font-sans cursor-pointer shadow-2xs',
               collapsed && 'justify-center p-1.5'
@@ -201,7 +264,7 @@ export function Sidebar({ collapsed: collapsedProp, active, onNavigate, mobileOp
                 <ChevronDown className="size-4 text-[#6f777f] shrink-0" />
               </>
             )}
-          </button>
+          </Link>
         </div>
 
         {/* Upper Navigation List */}

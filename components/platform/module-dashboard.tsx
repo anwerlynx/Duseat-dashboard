@@ -248,38 +248,38 @@ function ModuleDashboardInner({ module }: ModuleDashboardProps) {
           <button
             type="button"
             onClick={() => handleExportCsv(filtered)}
-            className="hidden h-9 items-center gap-2 rounded-lg border border-input bg-card px-3 text-sm font-medium hover:bg-secondary sm:flex"
+            className="hidden h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn sm:flex"
           >
-            <Download className="size-4" />
-            Export CSV
+            <Download className="size-4 text-[#6f777f]" />
+            <span>Export CSV</span>
           </button>
           <button
             type="button"
             onClick={() => setCreateModalOpen(true)}
-            className="hidden h-9 items-center gap-2 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5 sm:flex"
+            className="hidden h-[36px] items-center gap-1.5 rounded-[8px] bg-[#00c2cb] px-4 text-[14px] font-bold text-white shadow-2xs hover:bg-[#00a8b0] transition-colors cursor-pointer ant-wave-btn sm:flex"
           >
             <Plus className="size-4" />
-            {module.primaryAction}
+            <span>{module.primaryAction}</span>
           </button>
         </div>
       }
     >
-      <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5">
+      <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
         {/* Module Banner with dynamic animated visual bars */}
-        <section className="overflow-hidden rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)]">
-          <div className="flex flex-col justify-between gap-4 p-4 lg:flex-row lg:items-end">
+        <section className="overflow-hidden rounded-[12px] border border-[#d3d5d7] bg-white shadow-xs">
+          <div className="flex flex-col justify-between gap-4 p-4 sm:p-5 lg:flex-row lg:items-end">
             <div className="max-w-2xl">
               <h2 className="text-balance text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] tracking-tight text-[#1f2327]">
                 {module.title}
               </h2>
-              <p className="mt-1.5 max-w-xl text-pretty text-[14px] leading-[20px] text-[#6f777f]">{module.description}</p>
+              <p className="mt-1 max-w-xl text-pretty text-[14px] leading-[20px] text-[#6f777f]">{module.description}</p>
             </div>
             {/* Visual trend bars */}
-            <div className="flex items-end gap-1.5">
+            <div className="hidden sm:flex items-end gap-1.5">
               {[35, 48, 42, 60, 68, 64, 78, 72, 85, 90, 84, 96].map((h, i) => (
                 <div key={i} className="group relative flex flex-col items-center">
                   <span
-                    className="w-2.5 rounded-t bg-[#00c2cb]/30 transition-all duration-300 group-hover:scale-y-110 group-hover:bg-[#00c2cb]"
+                    className="w-2.5 rounded-t bg-[#00c2cb]/20 transition-all duration-300 group-hover:scale-y-110 group-hover:bg-[#00c2cb]"
                     style={{ height: `${h}px` }}
                   />
                 </div>
@@ -288,23 +288,23 @@ function ModuleDashboardInner({ module }: ModuleDashboardProps) {
           </div>
 
           {/* Metrics summary */}
-          <div className="grid border-t border-[#d3d5d7] sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid border-t border-[#d3d5d7] grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
             {module.metrics.map((metric, index) => (
               <article
                 key={metric.label}
                 className={cn(
-                  'p-3 sm:p-3.5 transition-colors hover:bg-[#f8f9fa]',
+                  'p-3 sm:p-3.5 transition-colors hover:bg-[#F8F9FA]',
                   index > 0 && 'border-t border-[#d3d5d7] sm:border-l sm:border-t-0',
                   index === 2 && 'sm:border-l-0 xl:border-l'
                 )}
               >
-                <p className="text-[12px] leading-[16px] font-medium uppercase tracking-wider text-[#6f777f]">{metric.label}</p>
-                <div className="mt-2 flex items-end justify-between gap-3">
-                  <p className="text-[24px] leading-[32px] font-bold tabular-nums text-[#1f2327]">{metric.value}</p>
+                <p className="text-[11px] leading-[16px] font-medium uppercase tracking-wider text-[#8A939D]">{metric.label}</p>
+                <div className="mt-1.5 flex items-end justify-between gap-3">
+                  <p className="text-[22px] leading-[28px] font-bold tabular-nums text-[#202428]">{metric.value}</p>
                   <span
                     className={cn(
-                      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] leading-[16px] font-semibold',
-                      metric.positive ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
+                      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] leading-[16px] font-semibold',
+                      metric.positive ? 'bg-[#E8F7F0] text-[#16A86B]' : 'bg-[#FDEBEC] text-[#E5484D]'
                     )}
                   >
                     {metric.positive ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />}
@@ -511,7 +511,7 @@ function ModuleDashboardInner({ module }: ModuleDashboardProps) {
                   <tr
                     key={record.id}
                     className={cn(
-                      "h-[60px] transition-colors font-sans hover:bg-[#f8f9fa] whitespace-nowrap",
+                      "h-[64px] transition-colors font-sans hover:bg-[#f8f9fa] whitespace-nowrap",
                       selected.includes(record.id) && "bg-[#e5f6f7]/40"
                     )}
                   >
@@ -528,7 +528,7 @@ function ModuleDashboardInner({ module }: ModuleDashboardProps) {
                     </td>
 
                     {visibleColumns.includes(module.columns[0]) && (
-                      <td className="whitespace-nowrap px-4 py-3.5 font-medium text-foreground">
+                      <td className="whitespace-nowrap px-4 font-medium text-foreground">
                         <button
                           type="button"
                           onClick={() => setDetailRecord(record)}
@@ -540,33 +540,33 @@ function ModuleDashboardInner({ module }: ModuleDashboardProps) {
                     )}
 
                     {visibleColumns.includes(module.columns[1]) && (
-                      <td className="px-4 py-3.5">
-                        <p className="font-medium text-foreground">{record.primary}</p>
-                        <p className="text-xs text-muted-foreground">{record.secondary}</p>
+                      <td className="px-4">
+                        <p className="font-semibold text-[14px] text-foreground">{record.primary}</p>
+                        <p className="text-[12px] text-muted-foreground">{record.secondary}</p>
                       </td>
                     )}
 
                     {visibleColumns.includes(module.columns[2]) && (
-                      <td className="px-4 py-3.5 text-muted-foreground">{record.secondary}</td>
+                      <td className="px-4 text-muted-foreground">{record.secondary}</td>
                     )}
 
                     {visibleColumns.includes(module.columns[3]) && (
-                      <td className="px-4 py-3.5">
+                      <td className="px-4">
                         <FigmaStatusBadge status={record.status} />
                       </td>
                     )}
 
                     {visibleColumns.includes(module.columns[4]) && (
-                      <td className="whitespace-nowrap px-4 py-3.5 font-semibold tabular-nums text-foreground">
+                      <td className="whitespace-nowrap px-4 font-semibold tabular-nums text-foreground">
                         {record.value}
                       </td>
                     )}
 
                     {visibleColumns.includes(module.columns[5]) && (
-                      <td className="whitespace-nowrap px-4 py-3.5 text-xs text-muted-foreground">{record.date}</td>
+                      <td className="whitespace-nowrap px-4 text-xs text-muted-foreground">{record.date}</td>
                     )}
 
-                    <td className="px-4 py-3.5 text-right">
+                    <td className="px-4 text-right">
                       <Dropdown
                         align="end"
                         floating

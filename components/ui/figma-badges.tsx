@@ -282,104 +282,124 @@ export function FigmaStatusBadge({
   className?: string
 }) {
   const norm = (status || '').toLowerCase().trim()
-  const isVerified =
+
+  // Section 9: Success (#16A86B, bg #E8F7F0)
+  const isSuccess =
     norm === 'verified' ||
-    norm === 'active' ||
     norm === 'approved' ||
+    norm === 'active' ||
     norm === 'completed' ||
+    norm === 'paid' ||
+    norm === 'published' ||
     norm === 'deal confirmed' ||
     norm === 'accepted' ||
     norm === 'resolved' ||
     norm === 'ready' ||
-    norm === 'delivered' ||
-    norm === 'published'
+    norm === 'delivered'
 
-  const isPending =
+  // Section 9: Warning (#E99A18, bg #FFF5DF)
+  const isWarning =
     norm === 'pending' ||
     norm === 'under review' ||
     norm === 'in review' ||
-    norm === 'scheduled' ||
+    norm === 'expiring' ||
+    norm === 'trial' ||
+    norm === 'waiting' ||
     norm === 'in progress' ||
     norm === 'in queue' ||
     norm === 'receiving offers' ||
-    norm === 'waiting' ||
     norm === 'open' ||
-    norm === 'trial' ||
     norm === 'grace period'
 
-  const isDraft = norm === 'draft' || norm === 'system maintenance' || norm === 'system info'
+  // Section 9: Info (#3288D8, bg #EAF4FD)
+  const isInfo =
+    norm === 'matched' ||
+    norm === 'resubmitted' ||
+    norm === 'escalated' ||
+    norm === 'scheduled' ||
+    norm === 'info'
 
-  const isArchived =
-    norm === 'archived' || norm === 'disabled' || norm === 'deleted' || norm === 'withdrawn'
+  // Section 9: Neutral (#68727D, bg #F5F6F7, border #E2E5E8)
+  const isNeutral =
+    norm === 'draft' ||
+    norm === 'archived' ||
+    norm === 'closed' ||
+    norm === 'expired' ||
+    norm === 'disabled' ||
+    norm === 'deleted' ||
+    norm === 'withdrawn'
 
-  if (isVerified) {
+  if (isSuccess) {
     return (
       <div
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-[12px] bg-[#dfefe8] px-3 py-1 font-sans text-[12px] leading-[16px] font-medium text-[#17b26a] select-none',
+          'inline-flex items-center gap-1.5 rounded-full bg-[#E8F7F0] px-2.5 py-0.5 font-sans text-[11.5px] leading-[16px] font-medium text-[#16A86B] border border-[#A6F4C5]/60 select-none',
           className
         )}
       >
+        <span className="size-1.5 rounded-full bg-[#16A86B]" />
         <span>{status}</span>
-        <VerifiedStatusIcon className="size-[12px]" />
       </div>
     )
   }
 
-  if (isPending) {
+  if (isWarning) {
     return (
       <div
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-[12px] bg-[#f6efe0] px-3 py-1 font-sans text-[12px] leading-[16px] font-medium text-[#fdb022] select-none',
+          'inline-flex items-center gap-1.5 rounded-full bg-[#FFF5DF] px-2.5 py-0.5 font-sans text-[11.5px] leading-[16px] font-medium text-[#E99A18] border border-[#FEDF89]/60 select-none',
           className
         )}
       >
+        <span className="size-1.5 rounded-full bg-[#E99A18]" />
         <span>{status}</span>
-        <PendingClockIcon className="size-[14px]" />
       </div>
     )
   }
 
-  if (isDraft) {
+  if (isInfo) {
     return (
       <div
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-[12px] bg-[#f2f4f7] px-3 py-1 font-sans text-[12px] leading-[16px] font-medium text-[#6f777f] select-none border border-[#d3d5d7]/60',
+          'inline-flex items-center gap-1.5 rounded-full bg-[#EAF4FD] px-2.5 py-0.5 font-sans text-[11.5px] leading-[16px] font-medium text-[#3288D8] border border-[#BADAFB]/60 select-none',
           className
         )}
       >
+        <span className="size-1.5 rounded-full bg-[#3288D8]" />
         <span>{status}</span>
-        <span className="size-1.5 rounded-full bg-[#9da4ae]" />
       </div>
     )
   }
 
-  if (isArchived) {
+  if (isNeutral) {
     return (
       <div
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-[12px] bg-[#eff1f3] px-3 py-1 font-sans text-[12px] leading-[16px] font-medium text-[#4b5563] select-none border border-[#d3d5d7]',
+          'inline-flex items-center gap-1.5 rounded-full bg-[#F5F6F7] px-2.5 py-0.5 font-sans text-[11.5px] leading-[16px] font-medium text-[#68727D] border border-[#E2E5E8] select-none',
           className
         )}
       >
+        <span className="size-1.5 rounded-full bg-[#8A939D]" />
         <span>{status}</span>
-        <span className="size-1.5 rounded-full bg-[#6f777f]" />
       </div>
     )
   }
 
+  // Section 9: Danger (#E5484D, bg #FDEBEC)
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-[12px] bg-[#f3e1e0] px-3 py-1 font-sans text-[12px] leading-[16px] font-medium text-[#d92d20] select-none',
+        'inline-flex items-center gap-1.5 rounded-full bg-[#FDEBEC] px-2.5 py-0.5 font-sans text-[11.5px] leading-[16px] font-medium text-[#E5484D] border border-[#FECDCA]/60 select-none',
         className
       )}
     >
+      <span className="size-1.5 rounded-full bg-[#E5484D]" />
       <span>{status}</span>
-      <RejectedXIcon className="size-[14px]" />
     </div>
   )
 }
+
+export const StatusBadge = FigmaStatusBadge
 
 // ==========================================
 // 4. Rating Badge (Figma Node 234:7283)

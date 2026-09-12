@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import {
   Sparkles,
   Send,
@@ -59,7 +60,17 @@ import { MainButton } from '@/components/ui/main-button'
 import { FigmaStatusBadge } from '@/components/ui/figma-badges'
 import { TableCheckbox } from '@/components/ui/table-checkbox'
 
-import { Pagination } from '@/components/ui'
+import { Pagination, ScrollableTabsBar } from '@/components/ui'
+import { MetricCard } from '@/components/ui/metric-card'
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from 'recharts'
 import { ToastProvider, useToast } from '@/components/dashboard/toast'
 import { cn, exportToCsv } from '@/lib/utils'
 
@@ -591,7 +602,47 @@ function MarketingManagementInner() {
   const { toast } = useToast()
 
   // Navigation State
-  const [activeTab, setActiveTab] = React.useState<MarketingTab>('overview')
+  const searchParams = useSearchParams()
+  const tabParam = searchParams?.get('tab') as MarketingTab | null
+
+  const [activeTab, setActiveTab] = React.useState<MarketingTab>(() => {
+    if (
+      tabParam &&
+      [
+        'overview',
+        'campaigns',
+        'referrals',
+        'promos',
+        'featured',
+        'landing-pages',
+        'analytics',
+        'calendar',
+        'history',
+      ].includes(tabParam)
+    ) {
+      return tabParam
+    }
+    return 'overview'
+  })
+
+  React.useEffect(() => {
+    if (
+      tabParam &&
+      [
+        'overview',
+        'campaigns',
+        'referrals',
+        'promos',
+        'featured',
+        'landing-pages',
+        'analytics',
+        'calendar',
+        'history',
+      ].includes(tabParam)
+    ) {
+      setActiveTab(tabParam)
+    }
+  }, [tabParam])
 
   // Data Collections
   const [campaigns, setCampaigns] = React.useState<CampaignItem[]>(INITIAL_CAMPAIGNS)
@@ -822,51 +873,25 @@ function MarketingManagementInner() {
   return (
     <PlatformShell
       title="Marketing Operations"
-      eyebrow="Growth Engine & Multi-Channel Acquisition"
-      actions={
-        <div className="flex items-center gap-2">
-          {!isBuildingCampaign ? (
-            <MainButton
-              variant="Primary"
-              size="sm"
-              iconLeft={<Plus className="size-3.5" />}
-              label="+ Create Campaign"
-              onClick={() => {
-                setIsBuildingCampaign(true)
-                setBuilderStep(1)
-              }}
-            />
-          ) : (
-            <MainButton
-              variant="Secondary"
-              size="sm"
-              iconLeft={<ChevronLeft className="size-3.5" />}
-              label="Exit Builder"
-              onClick={() => setIsBuildingCampaign(false)}
-            />
-          )}
-        </div>
-      }
+      eyebrow="Growth Engine"
     >
       <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
         {/* =========================================================================
             TOP HEADER CARD (Canonical Users Design Standard)
            ========================================================================= */}
-        {!isBuildingCampaign && (
-          <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
+        {!isBuildingCampaign ? (
+          <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05)] flex flex-col gap-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#6f777f] uppercase tracking-wider mb-1">
-                  <span>Platform</span>
-                  <span>/</span>
-                  <span>Growth</span>
-                  <span>/</span>
-                  <span className="text-[#00c2cb]">Marketing Operations</span>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h1 className="text-[24px] sm:text-[30px] font-bold leading-[32px] sm:leading-[38px] text-[#1f2327]">
+                    Marketing Operations & Campaigns
+                  </h1>
+                  <span className="rounded-[6px] bg-[#eff1f3] px-2.5 py-0.5 text-[11px] font-bold text-[#6f777f] border border-[#d3d5d7]">
+                    Growth Engine
+                  </span>
                 </div>
-                <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
-                  Marketing Operations & Campaigns
-                </h1>
-                <p className="mt-0.5 text-[14px] leading-[20px] text-[#6f777f]">
+                <p className="mt-1 text-[14px] leading-[20px] text-[#6f777f]">
                   Manage multi-channel growth campaigns, referral tiers, promo discount codes, and user acquisition funnels.
                 </p>
               </div>
@@ -881,7 +906,7 @@ function MarketingManagementInner() {
                       campaigns.map((c) => [c.id, c.name, c.channel, c.audience, c.status, c.reach, c.ctr, c.conversions, c.revenueAed])
                     )
                   }}
-                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn"
+                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer"
                 >
                   <Download className="size-4 text-[#6f777f]" />
                   <span>Export CSV</span>
@@ -892,13 +917,60 @@ function MarketingManagementInner() {
                     setIsBuildingCampaign(true)
                     setBuilderStep(1)
                   }}
-                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3.5 text-[14px] font-medium text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn"
+                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#00c2cb] px-3.5 text-[14px] font-bold text-white shadow-2xs hover:bg-[#00a8b0] transition-colors cursor-pointer ant-wave-btn"
                 >
                   <Plus className="size-4" />
                   <span>Create Campaign</span>
                 </button>
               </div>
             </div>
+
+            {/* 4 Stat Metric Cards */}
+            <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3">
+              <MetricCard
+                label="Active Campaigns"
+                value={campaigns.filter((c) => c.status === 'Running').length}
+                trend={{ value: 'Push & Email', isPositive: true }}
+                icon={Send}
+                tone="info"
+              />
+              <MetricCard
+                label="Total Reach"
+                value="42,840"
+                trend={{ value: '+18.4% this mo', isPositive: true }}
+                icon={Users}
+                tone="neutral"
+              />
+              <MetricCard
+                label="Total Conversions"
+                value="2,082"
+                trend={{ value: 'Qualified leads', isPositive: true }}
+                icon={CheckCircle2}
+                tone="success"
+              />
+              <MetricCard
+                label="Campaign Revenue"
+                value="AED 1.12M"
+                trend={{ value: '+24.2% pacing', isPositive: true }}
+                icon={DollarSign}
+                tone="brand"
+              />
+            </div>
+          </header>
+        ) : (
+          <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05)] flex items-center justify-between">
+            <div>
+              <h1 className="text-[22px] font-bold text-[#1f2327]">Create Multi-Channel Campaign</h1>
+              <p className="text-[13px] text-[#6f777f]">Step {builderStep} of 4 — Target audience & campaign setup</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsBuildingCampaign(false)}
+              className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="size-4 text-[#6f777f]" />
+              <span>Exit Builder</span>
+            </button>
           </header>
         )}
 
@@ -906,8 +978,8 @@ function MarketingManagementInner() {
             MARKETING SUB-NAVIGATION TABS
         ========================================== */}
         {!isBuildingCampaign && (
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#d3d5d7] pb-3">
-            <div className="flex items-center gap-2 overflow-x-auto">
+          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 border-b border-[#d3d5d7] pb-3">
+            <ScrollableTabsBar className="flex-1">
               {[
                 { id: 'overview', label: 'Overview', icon: BarChart3, count: undefined },
                 { id: 'campaigns', label: 'Campaigns', icon: Send, count: campaigns.length },
@@ -924,14 +996,28 @@ function MarketingManagementInner() {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => {
+                    type="button"
+                    onClick={(e) => {
                       setActiveTab(tab.id as MarketingTab)
                       setCurrentPage(1)
+                      if (typeof window !== 'undefined') {
+                        const newUrl = tab.id === 'overview' ? '/marketing' : `/marketing?tab=${tab.id}`
+                        window.history.replaceState(null, '', newUrl)
+                      }
+                      try {
+                        ;(e.currentTarget as HTMLElement).scrollIntoView({
+                          behavior: 'smooth',
+                          inline: 'nearest',
+                          block: 'nearest',
+                        })
+                      } catch {
+                        // ignore if unsupported
+                      }
                     }}
                     className={cn(
-                      'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn',
+                      'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[13px] sm:text-[14px] leading-[20px] font-medium transition-colors cursor-pointer shrink-0 whitespace-nowrap',
                       isActive
-                        ? 'bg-[#1f2327] text-white shadow-2xs'
+                        ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                         : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                     )}
                   >
@@ -940,7 +1026,7 @@ function MarketingManagementInner() {
                     {tab.count !== undefined && (
                       <span
                         className={cn(
-                          'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
+                          'rounded-full px-1.5 py-0.2 text-[11px] font-semibold',
                           isActive ? 'bg-white/20 text-white' : 'bg-[#eff1f3] text-[#1f2327]'
                         )}
                       >
@@ -950,12 +1036,11 @@ function MarketingManagementInner() {
                   </button>
                 )
               })}
-            </div>
+            </ScrollableTabsBar>
 
-            <div className="flex items-center gap-2 text-[12px] text-[#6f777f]">
-              <span className="flex items-center gap-1">
-                <Clock className="size-3.5 text-[#00c2cb]" /> Attribution window: <strong className="text-[#1f2327]">30 Days (Last-Touch)</strong>
-              </span>
+            <div className="flex items-center gap-2 text-[12px] text-[#6f777f] shrink-0 whitespace-nowrap self-start xl:self-auto bg-white px-2.5 py-1.5 rounded-[8px] border border-[#d3d5d7] shadow-2xs">
+              <Clock className="size-3.5 text-[#00c2cb]" />
+              <span>Attribution window: <strong className="text-[#1f2327]">30 Days (Last-Touch)</strong></span>
             </div>
           </div>
         )}
@@ -966,29 +1051,49 @@ function MarketingManagementInner() {
         {activeTab === 'overview' && !isBuildingCampaign && (
           <div className="space-y-6 ant-fade-in">
             {/* Top KPIs Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-              {[
-                { label: 'Active Campaigns', value: campaigns.filter((c) => c.status === 'Running').length, sub: 'Across Push & Email', icon: Send, color: '#00c2cb' },
-                { label: 'Total Audience Reach', value: '42,840', sub: '+18.4% this month', icon: Users, color: '#3b82f6' },
-                { label: 'Total Conversions', value: '2,082', sub: 'Qualified leads & deals', icon: Target, color: '#10b981' },
-                { label: 'Avg Conversion Rate', value: '4.86%', sub: '+0.8% vs industry avg', icon: TrendingUp, color: '#8b5cf6' },
-                { label: 'Referral Revenue', value: 'AED 960k', sub: 'From 112 peer invites', icon: Gift, color: '#ec4899' },
-                { label: 'Total Marketing Gross', value: 'AED 1.84M', sub: 'ROI: 18.2x blended', icon: DollarSign, color: '#00c2cb' },
-              ].map((kpi, idx) => {
-                const Icon = kpi.icon
-                return (
-                  <div key={idx} className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 shadow-2xs space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11.5px] font-semibold text-[#6f777f]">{kpi.label}</span>
-                      <div className="flex size-6 items-center justify-center rounded-[6px]" style={{ backgroundColor: `${kpi.color}15`, color: kpi.color }}>
-                        <Icon className="size-3.5" />
-                      </div>
-                    </div>
-                    <div className="text-[20px] font-bold text-[#1f2327]">{kpi.value}</div>
-                    <p className="text-[10.5px] text-[#6f777f]">{kpi.sub}</p>
-                  </div>
-                )
-              })}
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+              <MetricCard
+                label="Active Campaigns"
+                value={campaigns.filter((c) => c.status === 'Running').length}
+                trend={{ value: 'Push & Email', isPositive: true }}
+                icon={Send}
+                tone="brand"
+              />
+              <MetricCard
+                label="Total Reach"
+                value="42,840"
+                trend={{ value: '+18.4% this mo', isPositive: true }}
+                icon={Users}
+                tone="neutral"
+              />
+              <MetricCard
+                label="Total Conversions"
+                value="2,082"
+                trend={{ value: 'Qualified leads', isPositive: true }}
+                icon={Target}
+                tone="success"
+              />
+              <MetricCard
+                label="Avg Conversion"
+                value="4.86%"
+                trend={{ value: '+0.8% benchmark', isPositive: true }}
+                icon={TrendingUp}
+                tone="warning"
+              />
+              <MetricCard
+                label="Referral Revenue"
+                value="AED 960k"
+                trend={{ value: '112 invites', isPositive: true }}
+                icon={Gift}
+                tone="neutral"
+              />
+              <MetricCard
+                label="Marketing Gross"
+                value="AED 1.84M"
+                trend={{ value: '18.2x ROI', isPositive: true }}
+                icon={DollarSign}
+                tone="brand"
+              />
             </div>
 
             {/* Performance Chart & Active Campaigns */}
@@ -1005,8 +1110,41 @@ function MarketingManagementInner() {
                   </span>
                 </div>
 
-                {/* Performance Visual Bars */}
-                <div className="space-y-4 pt-2">
+                {/* Recharts Channel Revenue Bar Visualization */}
+                <div className="h-[175px] w-full pt-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={[
+                        { name: 'Mobile Push', rev: 482, conv: 384 },
+                        { name: 'Email VIP', rev: 184, conv: 184 },
+                        { name: 'In-App Prompts', rev: 394, conv: 1420 },
+                        { name: 'Broker Referrals', rev: 960, conv: 112 },
+                      ]}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f2f4" vertical={false} />
+                      <XAxis dataKey="name" stroke="#6f777f" fontSize={11} tickLine={false} axisLine={{ stroke: '#eef0f2' }} />
+                      <YAxis stroke="#6f777f" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}k`} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#1f2327',
+                          borderRadius: 8,
+                          border: 'none',
+                          color: '#fff',
+                          fontSize: 12,
+                        }}
+                        formatter={(value: any, name: any) => [
+                          name === 'rev' ? `AED ${value}k` : `${value} leads`,
+                          name === 'rev' ? 'Revenue' : 'Conversions',
+                        ]}
+                      />
+                      <Bar dataKey="rev" fill="#00c2cb" radius={[4, 4, 0, 0]} name="rev" maxBarSize={36} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Performance Channel Breakdown Bars */}
+                <div className="space-y-3 pt-2 border-t border-[#f0f2f4]">
                   {[
                     { channel: 'Mobile Push Notifications', reach: '14,820', ctr: '8.4%', conv: '384', rev: 'AED 482,000', pct: 85 },
                     { channel: 'Email VIP Newsletters', reach: '3,420', ctr: '14.6%', conv: '184', rev: 'AED 184,000', pct: 60 },
@@ -1215,7 +1353,7 @@ function MarketingManagementInner() {
                             <tr
                               key={cmp.id}
                               className={cn(
-                                'h-[60px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa]',
+                                'h-[64px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa]',
                                 isSelected && 'bg-[#e5f6f7]/40'
                               )}
                             >
@@ -1231,9 +1369,9 @@ function MarketingManagementInner() {
                                   }}
                                 />
                               </td>
-                              <td className="px-4 py-3.5">
+                              <td className="px-4">
                                 <div className="space-y-0.5">
-                                  <div className="flex items-center gap-1.5 font-bold text-[#1f2327]">
+                                  <div className="flex items-center gap-1.5 font-semibold text-[14px] text-[#1f2327]">
                                     {cmp.channel === 'Push' ? (
                                       <Smartphone className="size-3.5 text-[#00c2cb]" />
                                     ) : cmp.channel === 'Email' ? (
@@ -1243,26 +1381,26 @@ function MarketingManagementInner() {
                                     )}
                                     <span>{cmp.name}</span>
                                   </div>
-                                  <p className="text-[11px] text-[#6f777f] line-clamp-1 max-w-sm">{cmp.description}</p>
+                                  <p className="text-[12px] text-[#6f777f] line-clamp-1 max-w-sm">{cmp.description}</p>
                                 </div>
                               </td>
-                              <td className="px-4 py-3.5">
+                              <td className="px-4">
                                 <span className="rounded bg-[#f4f5f6] px-2 py-0.5 text-[11px] font-semibold text-[#1f2327]">
                                   {cmp.audience}
                                 </span>
                               </td>
-                              <td className="px-4 py-3.5 text-[#4b5563]">
-                                <div><strong>{cmp.reach.toLocaleString()}</strong> users</div>
-                                <div className="text-[10.5px] text-[#008f95] font-bold">CTR: {cmp.ctr}%</div>
+                              <td className="px-4 text-[#4b5563]">
+                                <div className="text-[13px]"><strong>{cmp.reach.toLocaleString()}</strong> users</div>
+                                <div className="text-[11px] text-[#008f95] font-bold">CTR: {cmp.ctr}%</div>
                               </td>
-                              <td className="px-4 py-3.5">
-                                <div className="font-bold text-[#1f2327]">{cmp.conversions} leads</div>
-                                <div className="text-[10.5px] text-[#6f777f]">{cmp.conversionRate}% rate</div>
+                              <td className="px-4">
+                                <div className="font-semibold text-[13px] text-[#1f2327]">{cmp.conversions} leads</div>
+                                <div className="text-[11px] text-[#6f777f]">{cmp.conversionRate}% rate</div>
                               </td>
-                              <td className="px-4 py-3.5 font-bold text-[#00c2cb]">
+                              <td className="px-4 font-semibold text-[#00c2cb] text-[13px]">
                                 {cmp.revenueAed > 0 ? `AED ${cmp.revenueAed.toLocaleString()}` : '—'}
                               </td>
-                              <td className="px-4 py-3.5">
+                              <td className="px-4">
                                 <FigmaStatusBadge
                                   status={
                                     cmp.status === 'Running'

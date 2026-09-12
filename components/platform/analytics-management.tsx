@@ -54,10 +54,21 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { PlatformShell } from './platform-shell'
+import { Dropdown } from '@/components/dashboard/menu'
 import { MainButton } from '@/components/ui/main-button'
 import { TableAvatar } from '@/components/ui/table-avatar'
 import { ToastProvider, useToast } from '@/components/dashboard/toast'
+import { MetricCard } from '@/components/ui/metric-card'
 import { cn, exportToCsv } from '@/lib/utils'
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+} from 'recharts'
 
 
 // ============================================================================
@@ -393,47 +404,102 @@ function AnalyticsManagementInner() {
   return (
     <PlatformShell
       title="Analytics & Business Intelligence"
-      eyebrow="Decision Support & Growth Intelligence"
-      actions={
-        <div className="flex items-center gap-2">
-          <MainButton
-            variant="Secondary"
-            size="sm"
-            iconLeft={<Download className="size-3.5" />}
-            label="Export Intelligence Report"
-            onClick={() => setExportModalOpen(true)}
-          />
-          <MainButton
-            variant="Primary"
-            size="sm"
-            iconLeft={<Sparkles className="size-3.5" />}
-            label="Generate AI Growth Briefing"
-            onClick={() => {
-              toast({
-                variant: 'success',
-                title: 'AI Growth Briefing ready',
-                description: 'Identified 3 high-yield demand pockets in Palm Jumeirah and Downtown Dubai.',
-              })
-            }}
-          />
-        </div>
-      }
+      eyebrow="Decision Support"
     >
-      <div className="flex w-full min-w-0 flex-col gap-5 px-4 sm:px-6 lg:px-8 py-5">
+      <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
+        {/* Top Header Card (Canonical Users Page Standard) */}
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05)] flex flex-col gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
+                Executive Analytics & Intelligence
+              </h1>
+              <p className="mt-0.5 text-[14px] leading-[20px] text-[#6f777f]">
+                Executive performance metrics, demand analytics, conversion funnels, and market insights.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setExportModalOpen(true)}
+                className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn"
+              >
+                <Download className="size-4 text-[#6f777f]" />
+                <span>Export Report</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  toast({
+                    variant: 'success',
+                    title: 'AI Growth Briefing ready',
+                    description: 'Identified 3 high-yield demand pockets in Palm Jumeirah and Downtown Dubai.',
+                  })
+                }}
+                className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3.5 text-[14px] font-medium text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn"
+              >
+                <Sparkles className="size-4 text-white" />
+                <span>Generate AI Briefing</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 4 Stat Metric Cards */}
+          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3">
+            <MetricCard
+              label="Monthly Active Users"
+              value="128,420"
+              trend="+18.2%"
+              trendDirection="up"
+              icon={Users}
+              tone="neutral"
+              subtitle="vs 108,600 prev month"
+            />
+            <MetricCard
+              label="Gross Deal Volume"
+              value="AED 184.2M"
+              trend="+24.5%"
+              trendDirection="up"
+              icon={DollarSign}
+              tone="info"
+              subtitle="YTD pacing on track"
+            />
+            <MetricCard
+              label="Broker Conversion Rate"
+              value="68.4%"
+              trend="3.2x vs norm"
+              trendDirection="up"
+              icon={TrendingUp}
+              tone="success"
+              subtitle="Power Agent top cohort"
+            />
+            <MetricCard
+              label="Avg Match Latency"
+              value="8.4 min"
+              trend="-3.2m speed"
+              trendDirection="up"
+              icon={Zap}
+              tone="brand"
+              subtitle="Automated broker routing"
+            />
+          </div>
+        </header>
+
         {/* =========================================================================
             GLOBAL CONTROL BAR (Spec 12.1 - Presets, Comparisons, Country, Freshness)
            ========================================================================= */}
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 shadow-2xs">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5">
             {/* Date Preset Selector */}
-            <div className="flex items-center rounded-[6px] border border-[#d3d5d7] bg-[#f4f5f6] p-0.5">
+            <div className="flex items-center rounded-[8px] border border-[#d3d5d7] bg-[#f4f5f6] p-0.5">
               {(['Today', '7D', '30D', '90D', '12M', 'YTD'] as const).map((preset) => (
                 <button
                   key={preset}
                   type="button"
                   onClick={() => setDateRangePreset(preset)}
                   className={cn(
-                    'h-[26px] rounded-[4px] px-2.5 text-[11.5px] font-bold transition-all cursor-pointer',
+                    'h-[28px] rounded-[6px] px-2.5 text-[12px] font-semibold transition-all cursor-pointer',
                     dateRangePreset === preset
                       ? 'bg-white text-[#1f2327] shadow-2xs'
                       : 'text-[#6f777f] hover:text-[#1f2327]'
@@ -445,33 +511,43 @@ function AnalyticsManagementInner() {
             </div>
 
             {/* Comparison Selector */}
-            <div className="flex items-center gap-1.5 text-[12px] text-[#6f777f] pl-2 border-l border-[#e5e7eb]">
-              <span className="hidden sm:inline font-medium">Compare:</span>
-              <select
-                value={comparisonPeriod}
-                onChange={(e) => setComparisonPeriod(e.target.value as any)}
-                className="h-[28px] rounded-[6px] border border-[#d3d5d7] bg-white px-2 text-[11.5px] font-bold text-[#1f2327] outline-none cursor-pointer"
-              >
-                <option value="Previous Period">vs Previous Period</option>
-                <option value="Previous Year">vs Previous Year</option>
-                <option value="No Comparison">No Comparison</option>
-              </select>
-            </div>
+            <Dropdown
+              align="start"
+              value={comparisonPeriod}
+              onSelect={(val) => setComparisonPeriod(val as any)}
+              options={[
+                { label: 'vs Previous Period', value: 'Previous Period' },
+                { label: 'vs Previous Year', value: 'Previous Year' },
+                { label: 'No Comparison', value: 'No Comparison' },
+              ]}
+              trigger={
+                <span className="inline-flex h-[32px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-2.5 text-[12px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
+                  <span className="text-[#6f777f]">Compare:</span>
+                  <span>{comparisonPeriod}</span>
+                  <ChevronDown className="size-3 text-[#9da4ae]" />
+                </span>
+              }
+            />
 
             {/* Country Filter */}
-            <div className="flex items-center gap-1.5 text-[12px] text-[#6f777f] pl-2 border-l border-[#e5e7eb]">
-              <span className="hidden sm:inline font-medium">Market:</span>
-              <select
-                value={selectedCountry}
-                onChange={(e) => setSelectedCountry(e.target.value)}
-                className="h-[28px] rounded-[6px] border border-[#d3d5d7] bg-white px-2 text-[11.5px] font-bold text-[#1f2327] outline-none cursor-pointer"
-              >
-                <option value="All">All Markets (Global)</option>
-                <option value="United Arab Emirates">United Arab Emirates (UAE)</option>
-                <option value="Saudi Arabia">Saudi Arabia (KSA)</option>
-                <option value="United Kingdom">United Kingdom (UK)</option>
-              </select>
-            </div>
+            <Dropdown
+              align="start"
+              value={selectedCountry}
+              onSelect={(val) => setSelectedCountry(val)}
+              options={[
+                { label: 'All Markets (Global)', value: 'All' },
+                { label: 'United Arab Emirates (UAE)', value: 'United Arab Emirates' },
+                { label: 'Saudi Arabia (KSA)', value: 'Saudi Arabia' },
+                { label: 'United Kingdom (UK)', value: 'United Kingdom' },
+              ]}
+              trigger={
+                <span className="inline-flex h-[32px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-2.5 text-[12px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
+                  <span className="text-[#6f777f]">Market:</span>
+                  <span>{selectedCountry}</span>
+                  <ChevronDown className="size-3 text-[#9da4ae]" />
+                </span>
+              }
+            />
           </div>
 
           {/* Data Freshness Indicator (Spec 12.1 & 12.19) */}
@@ -488,7 +564,7 @@ function AnalyticsManagementInner() {
         {/* =========================================================================
             NAVIGATION SUB-TABS (Spec 12.28)
            ========================================================================= */}
-        <div className="flex items-center justify-between border-b border-[#e5e7eb] pb-2">
+        <div className="flex items-center justify-between border-b border-[#d3d5d7] pb-3">
           <div className="flex flex-wrap items-center gap-1.5">
             {[
               { id: 'executive', label: 'Executive Dashboard', icon: <BarChart3 className="size-4" /> },
@@ -672,35 +748,92 @@ function AnalyticsManagementInner() {
                 </div>
               </div>
 
-              {/* Chart Bars */}
-              <div className="mt-5 grid grid-cols-6 sm:grid-cols-12 gap-2 items-end h-[180px] pt-4">
-                {[
-                  { m: 'Jan', val: 42 },
-                  { m: 'Feb', val: 55 },
-                  { m: 'Mar', val: 68 },
-                  { m: 'Apr', val: 82 },
-                  { m: 'May', val: 104 },
-                  { m: 'Jun', val: 125 },
-                  { m: 'Jul', val: 148 },
-                  { m: 'Aug', val: 172 },
-                  { m: 'Sep', val: 205 },
-                  { m: 'Oct', val: 242 },
-                  { m: 'Nov', val: 288 },
-                  { m: 'Dec', val: 340 },
-                ].map((col, idx) => (
-                  <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end group cursor-pointer">
-                    <div className="w-full flex flex-col items-center">
-                      <div
-                        className="w-full max-w-[28px] rounded-t-[3px] bg-[#00c2cb] transition-all group-hover:bg-[#00838f]"
-                        style={{ height: `${col.val * 0.45}px` }}
-                        title={`${selectedGrowthMetric} in ${col.m}: ${col.val} index units`}
-                      />
-                    </div>
-                    <span className="text-[10.5px] font-bold text-[#6f777f] group-hover:text-[#1f2327]">
-                      {col.m}
-                    </span>
-                  </div>
-                ))}
+              {/* Chart Visual with Recharts */}
+              <div className="h-[250px] w-full pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={[
+                      { m: 'Jan', val: 42 },
+                      { m: 'Feb', val: 55 },
+                      { m: 'Mar', val: 68 },
+                      { m: 'Apr', val: 82 },
+                      { m: 'May', val: 104 },
+                      { m: 'Jun', val: 125 },
+                      { m: 'Jul', val: 148 },
+                      { m: 'Aug', val: 172 },
+                      { m: 'Sep', val: 205 },
+                      { m: 'Oct', val: 242 },
+                      { m: 'Nov', val: 288 },
+                      { m: 'Dec', val: 340 },
+                    ].map((d) => {
+                      const multiplier =
+                        selectedGrowthMetric === 'Revenue'
+                          ? 2400
+                          : selectedGrowthMetric === 'Users'
+                          ? 38
+                          : selectedGrowthMetric === 'Investors'
+                          ? 6
+                          : selectedGrowthMetric === 'Agents'
+                          ? 4
+                          : selectedGrowthMetric === 'Requests'
+                          ? 12
+                          : 8
+                      return {
+                        ...d,
+                        val: d.val * multiplier,
+                      }
+                    })}
+                    margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                  >
+                    <defs>
+                      <linearGradient id="growthGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#00c2cb" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#00c2cb" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} stroke="#eff1f3" strokeDasharray="3 3" />
+                    <XAxis dataKey="m" axisLine={false} tickLine={false} tick={{ fill: '#6f777f', fontSize: 11 }} />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#6f777f', fontSize: 11 }}
+                      tickFormatter={(v) =>
+                        selectedGrowthMetric === 'Revenue'
+                          ? `AED ${(v / 1000).toFixed(0)}k`
+                          : v >= 1000
+                          ? `${(v / 1000).toFixed(1)}k`
+                          : v
+                      }
+                    />
+                    <RechartsTooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null
+                        const val = payload[0].value
+                        return (
+                          <div className="rounded-[8px] border border-[#d3d5d7] bg-white p-2.5 shadow-lg text-xs font-sans">
+                            <p className="font-bold text-[#1f2327] mb-1">{label} 2026</p>
+                            <p className="text-[#6f777f]">
+                              {selectedGrowthMetric}:{' '}
+                              <strong className="text-[#00a4ac]">
+                                {selectedGrowthMetric === 'Revenue'
+                                  ? `AED ${Number(val).toLocaleString()}`
+                                  : Number(val).toLocaleString()}
+                              </strong>
+                            </p>
+                          </div>
+                        )
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="val"
+                      stroke="#00c2cb"
+                      strokeWidth={2.5}
+                      fill="url(#growthGrad)"
+                      activeDot={{ r: 5, strokeWidth: 2, fill: '#00c2cb', stroke: '#fff' }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
@@ -713,21 +846,21 @@ function AnalyticsManagementInner() {
                 </p>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-[12.5px] border-collapse">
-                  <thead>
-                    <tr className="border-b border-[#e5e7eb] bg-[#f8f9fa] text-[11.5px] font-bold uppercase tracking-wider text-[#6f777f]">
-                      <th className="px-5 py-3">Registration Cohort</th>
-                      <th className="px-3 py-3">Total Acquired</th>
-                      <th className="px-3 py-3">Day 1</th>
-                      <th className="px-3 py-3">Day 7</th>
-                      <th className="px-3 py-3">Day 30</th>
-                      <th className="px-3 py-3">Day 60</th>
-                      <th className="px-5 py-3 text-right">Day 90</th>
+                <table className="w-full text-left text-[14px] border-collapse font-sans">
+                  <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
+                    <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
+                      <th className="px-5">Registration Cohort</th>
+                      <th className="px-3">Total Acquired</th>
+                      <th className="px-3">Day 1</th>
+                      <th className="px-3">Day 7</th>
+                      <th className="px-3">Day 30</th>
+                      <th className="px-3">Day 60</th>
+                      <th className="px-5 text-right">Day 90</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#e5e7eb]">
+                  <tbody className="divide-y divide-[#d3d5d7]">
                     {RETENTION_COHORT_DATA.map((c, idx) => (
-                      <tr key={idx} className="hover:bg-[#f8f9fa] transition-colors">
+                      <tr key={idx} className="h-[64px] hover:bg-[#f8f9fa] transition-colors font-sans whitespace-nowrap">
                         <td className="px-5 py-3.5 font-bold text-[#1f2327]">{c.cohort}</td>
                         <td className="px-3 py-3.5 font-medium text-[#6f777f]">{c.totalUsers.toLocaleString()} users</td>
                         <td className="px-3 py-3.5">
@@ -974,12 +1107,12 @@ function AnalyticsManagementInner() {
                 </thead>
                 <tbody className="divide-y divide-[#d3d5d7]">
                   {sortedAgents.map((a) => (
-                    <tr key={a.id} className="h-[60px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa]">
+                    <tr key={a.id} className="h-[64px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa]">
                       <td className="px-4">
                         <div className="flex items-center gap-3">
-                          <TableAvatar name={a.agentName} src={a.avatar} size="sm" />
+                          <TableAvatar name={a.agentName} src={a.avatar} size="md" />
                           <div>
-                            <div className="font-semibold text-[#1f2327]">{a.agentName}</div>
+                            <div className="font-semibold text-[14px] text-[#1f2327]">{a.agentName}</div>
                             <div className="text-[12px] text-[#6f777f]">{a.agency}</div>
                           </div>
                         </div>
@@ -1042,7 +1175,7 @@ function AnalyticsManagementInner() {
                 </thead>
                 <tbody className="divide-y divide-[#d3d5d7]">
                   {SUPPLY_DEMAND_DATA.map((sd) => (
-                    <tr key={sd.id} className="h-[60px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa]">
+                    <tr key={sd.id} className="h-[64px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa]">
                       <td className="px-4 text-[14px] leading-[20px] font-semibold text-[#1f2327]">
                         {sd.area} <span className="text-[12px] font-normal text-[#6f777f]">({sd.city})</span>
                       </td>

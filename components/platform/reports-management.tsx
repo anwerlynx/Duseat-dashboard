@@ -58,8 +58,10 @@ import { useToast } from '@/components/dashboard/toast'
 import { FigmaStatusBadge, AgentPlanBadge } from '@/components/ui/figma-badges'
 import { TableCheckbox } from '@/components/ui/table-checkbox'
 
+import { Dropdown } from '@/components/dashboard/menu'
 import { TableAvatar } from '@/components/ui/table-avatar'
 import { Pagination } from '@/components/ui'
+import { MetricCard } from '@/components/ui/metric-card'
 import { cn } from '@/lib/utils'
 import {
   type ReportItem,
@@ -618,16 +620,9 @@ function ReportsManagementInner() {
         {/* =========================================================================
             1. TOP HEADER (Canonical Users Design Standard)
            ========================================================================= */}
-        <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#6f777f] uppercase tracking-wider mb-1">
-                <span>Platform</span>
-                <span>/</span>
-                <span>Trust & Safety</span>
-                <span>/</span>
-                <span className="text-[#00c2cb]">Reports & Moderation</span>
-              </div>
               <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
                 Reports & Moderation
               </h1>
@@ -638,371 +633,308 @@ function ReportsManagementInner() {
 
             <div className="flex flex-wrap items-center gap-2 relative">
               {/* Export Dropdown */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowExportMenu((prev) => !prev)}
-                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer shadow-2xs ant-wave-btn"
-                >
-                  <Download className="size-4 text-[#6f777f]" />
-                  <span>Export</span>
-                  <ChevronDown className="size-3.5 text-[#6f777f]" />
-                </button>
-                {showExportMenu && (
-                  <div className="absolute right-0 top-full mt-1.5 w-48 rounded-[8px] border border-[#d3d5d7] bg-white p-1.5 shadow-lg z-30 ant-fade-in text-[13px]">
-                    <button
-                      type="button"
-                      onClick={handleExportCSV}
-                      className="w-full flex items-center gap-2 rounded-[6px] px-3 py-2 text-left font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors"
-                    >
-                      <FileSpreadsheet className="size-3.5 text-[#17b26a]" />
-                      <span>Export CSV Ledger</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowExportMenu(false)
-                        notify('Export Generated', 'Audit JSON schema ready.')
-                      }}
-                      className="w-full flex items-center gap-2 rounded-[4px] px-2.5 py-1.5 text-left font-medium text-[#1f2327] hover:bg-[#eff1f3]"
-                    >
-                      <FileText className="size-3.5 text-[#00c2cb]" />
-                      <span>Export JSON Audit</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+              <Dropdown
+                align="end"
+                options={[
+                  { label: 'Export CSV Ledger', value: 'csv', icon: <FileSpreadsheet className="size-4 text-[#17b26a]" /> },
+                  { label: 'Export JSON Audit', value: 'json', icon: <FileText className="size-4 text-[#00c2cb]" /> },
+                ]}
+                onSelect={(val) => {
+                  if (val === 'csv') handleExportCSV()
+                  else notify('Export Generated', 'Audit JSON schema ready.')
+                }}
+                trigger={
+                  <button
+                    type="button"
+                    className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer shadow-2xs ant-wave-btn"
+                  >
+                    <Download className="size-4 text-[#6f777f]" />
+                    <span>Export</span>
+                    <ChevronDown className="size-3.5 text-[#6f777f]" />
+                  </button>
+                }
+                ariaLabel="Export options"
+              />
 
               {/* Refresh Queue */}
               <button
                 type="button"
                 onClick={handleRefreshQueue}
                 disabled={isRefreshing}
-                className="flex h-[34px] items-center gap-1.5 rounded-[6px] border border-[#d3d5d7] bg-white px-3 text-[12.5px] font-bold text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer shadow-2xs"
+                className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer shadow-2xs ant-wave-btn"
                 title="Synchronize queue"
               >
-                <RotateCcw className={cn('size-3.5', isRefreshing && 'animate-spin text-[#00c2cb]')} />
+                <RotateCcw className={cn('size-4 text-[#6f777f]', isRefreshing && 'animate-spin text-[#00c2cb]')} />
                 <span>Refresh</span>
               </button>
             </div>
           </div>
-        </div>
 
-        {/* =========================================================================
-            2. FULL-WIDTH HORIZONTAL KPI ROW (8 Cards with Click-to-Filter)
-           ========================================================================= */}
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8">
-          {/* Total Reports */}
-          <button
-            type="button"
-            onClick={() => setStatusFilter('All')}
-            className={cn(
-              'rounded-[8px] border p-3 text-left transition-all cursor-pointer bg-white shadow-2xs',
-              statusFilter === 'All' ? 'border-[#00c2cb] ring-1 ring-[#00c2cb] bg-[#e5f6f7]/20' : 'border-[#d3d5d7] hover:bg-[#fcfcfc]'
-            )}
-          >
-            <span className="text-[11px] font-bold text-[#6f777f] uppercase tracking-wider block truncate">Total Reports</span>
-            <span className="text-[20px] font-bold text-[#1f2327] mt-0.5 block">{totalCount}</span>
-            <span className="text-[10.5px] font-semibold text-[#6f777f]">All cases</span>
-          </button>
-
-          {/* Pending */}
-          <button
-            type="button"
-            onClick={() => setStatusFilter('pending')}
-            className={cn(
-              'rounded-[8px] border p-3 text-left transition-all cursor-pointer bg-white shadow-2xs',
-              statusFilter === 'pending' ? 'border-[#f79009] ring-1 ring-[#f79009] bg-[#fef7ee]' : 'border-[#d3d5d7] hover:bg-[#fcfcfc]'
-            )}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#b54708] uppercase tracking-wider block truncate">Pending</span>
-              <span className="size-2 rounded-full bg-[#f79009]" />
-            </div>
-            <span className="text-[20px] font-bold text-[#b54708] mt-0.5 block">{pendingCount}</span>
-            <span className="text-[10.5px] font-semibold text-[#f79009]">Needs action</span>
-          </button>
-
-          {/* Under Review */}
-          <button
-            type="button"
-            onClick={() => setStatusFilter('under_review')}
-            className={cn(
-              'rounded-[8px] border p-3 text-left transition-all cursor-pointer bg-white shadow-2xs',
-              statusFilter === 'under_review' ? 'border-[#00c2cb] ring-1 ring-[#00c2cb] bg-[#e5f6f7]' : 'border-[#d3d5d7] hover:bg-[#fcfcfc]'
-            )}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#00848b] uppercase tracking-wider block truncate">Under Review</span>
-              <span className="size-2 rounded-full bg-[#00c2cb]" />
-            </div>
-            <span className="text-[20px] font-bold text-[#00848b] mt-0.5 block">{underReviewCount}</span>
-            <span className="text-[10.5px] font-semibold text-[#00c2cb]">Investigating</span>
-          </button>
-
-          {/* Waiting for User */}
-          <button
-            type="button"
-            onClick={() => setStatusFilter('waiting_user')}
-            className={cn(
-              'rounded-[8px] border p-3 text-left transition-all cursor-pointer bg-white shadow-2xs',
-              statusFilter === 'waiting_user' ? 'border-[#7f56d9] ring-1 ring-[#7f56d9] bg-[#f9f5ff]' : 'border-[#d3d5d7] hover:bg-[#fcfcfc]'
-            )}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#6941c6] uppercase tracking-wider block truncate">Waiting User</span>
-              <span className="size-2 rounded-full bg-[#7f56d9]" />
-            </div>
-            <span className="text-[20px] font-bold text-[#6941c6] mt-0.5 block">{waitingCount}</span>
-            <span className="text-[10.5px] font-semibold text-[#7f56d9]">Awaiting info</span>
-          </button>
-
-          {/* Escalated */}
-          <button
-            type="button"
-            onClick={() => setStatusFilter('escalated')}
-            className={cn(
-              'rounded-[8px] border p-3 text-left transition-all cursor-pointer bg-white shadow-2xs',
-              statusFilter === 'escalated' ? 'border-[#d92d20] ring-1 ring-[#d92d20] bg-[#fef3f2]' : 'border-[#d3d5d7] hover:bg-[#fcfcfc]'
-            )}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#b42318] uppercase tracking-wider block truncate">Escalated</span>
-              <span className="size-2 rounded-full bg-[#d92d20]" />
-            </div>
-            <span className="text-[20px] font-bold text-[#b42318] mt-0.5 block">{escalatedCount}</span>
-            <span className="text-[10.5px] font-semibold text-[#d92d20]">High priority</span>
-          </button>
-
-          {/* Resolved */}
-          <button
-            type="button"
-            onClick={() => setStatusFilter('resolved')}
-            className={cn(
-              'rounded-[8px] border p-3 text-left transition-all cursor-pointer bg-white shadow-2xs',
-              statusFilter === 'resolved' ? 'border-[#17b26a] ring-1 ring-[#17b26a] bg-[#f6fef9]' : 'border-[#d3d5d7] hover:bg-[#fcfcfc]'
-            )}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#027a48] uppercase tracking-wider block truncate">Resolved</span>
-              <span className="size-2 rounded-full bg-[#17b26a]" />
-            </div>
-            <span className="text-[20px] font-bold text-[#027a48] mt-0.5 block">{resolvedCount}</span>
-            <span className="text-[10.5px] font-semibold text-[#17b26a]">Enforced</span>
-          </button>
-
-          {/* Rejected */}
-          <button
-            type="button"
-            onClick={() => setStatusFilter('rejected')}
-            className={cn(
-              'rounded-[8px] border p-3 text-left transition-all cursor-pointer bg-white shadow-2xs',
-              statusFilter === 'rejected' ? 'border-[#6f777f] ring-1 ring-[#6f777f] bg-[#eff1f3]' : 'border-[#d3d5d7] hover:bg-[#fcfcfc]'
-            )}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#475467] uppercase tracking-wider block truncate">Rejected</span>
-              <span className="size-2 rounded-full bg-[#6f777f]" />
-            </div>
-            <span className="text-[20px] font-bold text-[#475467] mt-0.5 block">{rejectedCount}</span>
-            <span className="text-[10.5px] font-semibold text-[#6f777f]">Dismissed</span>
-          </button>
-
-          {/* Avg Resolution Time */}
-          <div className="rounded-[8px] border border-[#d3d5d7] bg-white p-3 text-left shadow-2xs">
-            <span className="text-[11px] font-bold text-[#6f777f] uppercase tracking-wider block truncate">Avg Resolution</span>
-            <span className="text-[20px] font-bold text-[#1f2327] mt-0.5 block">4.8h</span>
-            <span className="text-[10.5px] font-semibold text-[#00c2cb]">18m first response</span>
+          {/* 8 Stat Metric Cards */}
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8 lg:gap-3">
+            <MetricCard
+              label="Total Reports"
+              value={totalCount}
+              tone="neutral"
+              active={statusFilter === 'All'}
+              onClick={() => setStatusFilter('All')}
+            />
+            <MetricCard
+              label="Pending"
+              value={pendingCount}
+              tone="warning"
+              active={statusFilter === 'pending'}
+              onClick={() => setStatusFilter('pending')}
+            />
+            <MetricCard
+              label="Under Review"
+              value={underReviewCount}
+              tone="info"
+              active={statusFilter === 'under_review'}
+              onClick={() => setStatusFilter('under_review')}
+            />
+            <MetricCard
+              label="Waiting User"
+              value={waitingCount}
+              tone="neutral"
+              active={statusFilter === 'waiting_user'}
+              onClick={() => setStatusFilter('waiting_user')}
+            />
+            <MetricCard
+              label="Escalated"
+              value={escalatedCount}
+              tone="destructive"
+              active={statusFilter === 'escalated'}
+              onClick={() => setStatusFilter('escalated')}
+            />
+            <MetricCard
+              label="Resolved"
+              value={resolvedCount}
+              tone="success"
+              active={statusFilter === 'resolved'}
+              onClick={() => setStatusFilter('resolved')}
+            />
+            <MetricCard
+              label="Rejected"
+              value={rejectedCount}
+              tone="destructive"
+              active={statusFilter === 'rejected'}
+              onClick={() => setStatusFilter('rejected')}
+            />
+            <MetricCard
+              label="Avg Resolution"
+              value="4.8h"
+              tone="brand"
+              subtitle="18m response"
+            />
           </div>
-        </div>
+        </header>
 
         {/* =========================================================================
             3. TABLE WORKSPACE (Original GitHub Design: Top Tabs + Horizontal Filter Toolbar + Table)
            ========================================================================= */}
         <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)]">
-          {/* Top Status Tabs & Actions Row */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eff1f3] p-4 sm:p-5">
-            <div className="flex flex-wrap items-center gap-2">
-              {(
-                [
-                  { id: 'All', label: 'All reports', count: totalCount },
-                  { id: 'pending', label: 'Pending', count: pendingCount },
-                  { id: 'under_review', label: 'Under review', count: underReviewCount },
-                  { id: 'waiting_user', label: 'Waiting user', count: waitingCount },
-                  { id: 'escalated', label: 'Escalated', count: escalatedCount },
-                  { id: 'resolved', label: 'Resolved', count: resolvedCount },
-                  { id: 'rejected', label: 'Rejected', count: rejectedCount },
-                ] as const
-              ).map((item) => {
-                const isActive = statusFilter === item.id
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setStatusFilter(item.id as ReportStatus | 'All')}
-                    className={cn(
-                      'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn',
-                      isActive
-                        ? 'bg-[#1f2327] text-white shadow-2xs'
-                        : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
-                    )}
-                  >
-                    <span>{item.label}</span>
-                    <span
+          {/* Top Status Tabs & Horizontal Filters Toolbar */}
+          <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+                {(
+                  [
+                    { id: 'All', label: 'All reports', count: totalCount },
+                    { id: 'pending', label: 'Pending', count: pendingCount },
+                    { id: 'under_review', label: 'Under review', count: underReviewCount },
+                    { id: 'waiting_user', label: 'Waiting user', count: waitingCount },
+                    { id: 'escalated', label: 'Escalated', count: escalatedCount },
+                    { id: 'resolved', label: 'Resolved', count: resolvedCount },
+                    { id: 'rejected', label: 'Rejected', count: rejectedCount },
+                  ] as const
+                ).map((item) => {
+                  const isActive = statusFilter === item.id
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setStatusFilter(item.id as ReportStatus | 'All')}
                       className={cn(
-                        'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
-                        item.id === 'escalated'
-                          ? 'bg-[#f04438] text-white'
-                          : isActive
-                          ? 'bg-white/20 text-white'
-                          : 'bg-[#eff1f3] text-[#1f2327]'
+                        'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn whitespace-nowrap shrink-0',
+                        isActive
+                          ? item.id === 'resolved'
+                            ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
+                            : item.id === 'escalated'
+                            ? 'bg-[#f04438] text-white shadow-2xs font-semibold'
+                            : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                          : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                       )}
                     >
-                      {item.count}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
+                      <span className="whitespace-nowrap">{item.label}</span>
+                      <span
+                        className={cn(
+                          'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
+                          item.id === 'escalated'
+                            ? 'bg-[#f04438] text-white'
+                            : isActive
+                            ? 'bg-white/20 text-white'
+                            : 'bg-[#eff1f3] text-[#1f2327]'
+                        )}
+                      >
+                        {item.count}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleExportCSV}
-                className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer"
-              >
-                <Download className="size-4 text-[#6f777f]" />
-                <span>Export CSV</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Horizontal Filters Toolbar */}
-          <div className="flex flex-wrap items-center gap-2.5 p-4 sm:p-5 pb-3">
-            {/* Search */}
-            <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9da4ae]" />
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search reports, users, IDs, keywords..."
-                className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-3 text-[14px] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20"
-              />
-              {searchQuery && (
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9da4ae] hover:text-[#1f2327]"
+                  onClick={handleExportCSV}
+                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer whitespace-nowrap"
                 >
-                  <X className="size-3.5" />
+                  <Download className="size-4 text-[#6f777f]" />
+                  <span>Export CSV</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Horizontal Filters Toolbar */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Search */}
+              <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9da4ae]" />
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search reports, users, IDs, keywords..."
+                  className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-3 text-[14px] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9da4ae] hover:text-[#1f2327]"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Violation Category Filter */}
+              <Dropdown
+                align="start"
+                value={selectedCategory}
+                onSelect={(val) => setSelectedCategory(val as any)}
+                ariaLabel="Filter by Category"
+                options={ALL_CATEGORIES.map((cat) => ({
+                  label: cat === 'All' ? 'All Categories' : cat,
+                  value: cat,
+                }))}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                    <AlertTriangle className="size-4 text-[#6f777f]" />
+                    <span>{selectedCategory === 'All' ? 'All Categories' : selectedCategory}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
+              />
+
+              {/* Assigned Moderator Filter */}
+              <Dropdown
+                align="start"
+                value={moderatorFilter}
+                onSelect={setModeratorFilter}
+                ariaLabel="Filter by Moderator"
+                options={[
+                  { label: 'All Moderators', value: 'All' },
+                  { label: 'Unassigned', value: 'Unassigned' },
+                  ...MODERATORS_LIST.map((m) => ({ label: m.name, value: m.name })),
+                ]}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                    <UserCheck className="size-4 text-[#6f777f]" />
+                    <span>{moderatorFilter === 'All' ? 'All Moderators' : moderatorFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
+              />
+
+              {/* Reporter Filter */}
+              <Dropdown
+                align="start"
+                value={reporterFilter}
+                onSelect={setReporterFilter}
+                ariaLabel="Filter by Reporter"
+                options={[{ label: 'All Reporters', value: 'All' }, ...uniqueReporters.map((rep) => ({ label: rep, value: rep }))]}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                    <User className="size-4 text-[#6f777f]" />
+                    <span>{reporterFilter === 'All' ? 'All Reporters' : reporterFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
+              />
+
+              {/* Reported User Filter */}
+              <Dropdown
+                align="start"
+                value={reportedUserFilter}
+                onSelect={setReportedUserFilter}
+                ariaLabel="Filter by Reported User"
+                options={[{ label: 'All Reported Users', value: 'All' }, ...uniqueReportedUsers.map((u) => ({ label: u, value: u }))]}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                    <UserX className="size-4 text-[#6f777f]" />
+                    <span>{reportedUserFilter === 'All' ? 'All Reported Users' : reportedUserFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
+              />
+
+              {/* Reset Filters Link */}
+              {(searchQuery ||
+                statusFilter !== 'All' ||
+                selectedCategory !== 'All' ||
+                moderatorFilter !== 'All' ||
+                reporterFilter !== 'All' ||
+                reportedUserFilter !== 'All') && (
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer ml-1"
+                >
+                  Reset filters
                 </button>
               )}
             </div>
-
-            {/* Violation Category Filter */}
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value as any)}
-              className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-            >
-              {ALL_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat === 'All' ? 'All Categories' : cat}
-                </option>
-              ))}
-            </select>
-
-            {/* Assigned Moderator Filter */}
-            <select
-              value={moderatorFilter}
-              onChange={(e) => setModeratorFilter(e.target.value)}
-              className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-            >
-              <option value="All">All Moderators</option>
-              <option value="Unassigned">Unassigned</option>
-              {MODERATORS_LIST.map((m) => (
-                <option key={m.id} value={m.name}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-
-            {/* Reporter Filter */}
-            <select
-              value={reporterFilter}
-              onChange={(e) => setReporterFilter(e.target.value)}
-              className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-            >
-              <option value="All">All Reporters</option>
-              {uniqueReporters.map((rep) => (
-                <option key={rep} value={rep}>
-                  {rep}
-                </option>
-              ))}
-            </select>
-
-            {/* Reported User Filter */}
-            <select
-              value={reportedUserFilter}
-              onChange={(e) => setReportedUserFilter(e.target.value)}
-              className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-            >
-              <option value="All">All Reported Users</option>
-              {uniqueReportedUsers.map((u) => (
-                <option key={u} value={u}>
-                  {u}
-                </option>
-              ))}
-            </select>
-
-            {/* Reset Filters Link */}
-            {(searchQuery ||
-              statusFilter !== 'All' ||
-              selectedCategory !== 'All' ||
-              moderatorFilter !== 'All' ||
-              reporterFilter !== 'All' ||
-              reportedUserFilter !== 'All') && (
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer ml-1"
-              >
-                Reset filters
-              </button>
-            )}
           </div>
 
-        {/* Batch Selection Action Bar if items are selected */}
-        {selectedIds.length > 0 && (
-          <div className="flex items-center justify-between rounded-[8px] bg-[#1f2327] px-4 py-2 text-white ant-fade-in text-[12.5px]">
-            <div className="flex items-center gap-2 font-bold">
-              <span>{selectedIds.length} reports selected</span>
+          {/* Batch Selection Action Bar if items are selected */}
+          {selectedIds.length > 0 && (
+            <div className="flex items-center justify-between border-b border-[#00c2cb]/30 bg-[#e5f6f7] px-6 py-2.5 animate-in fade-in duration-150">
+              <div className="flex items-center gap-2 font-semibold text-[14px] text-[#1f2327]">
+                <span>{selectedIds.length} reports selected</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => notify('Batch Action', `Bulk assigned ${selectedIds.length} tickets to Senior Desk.`)}
+                  className="h-[32px] px-3.5 rounded-[8px] bg-[#00c2cb] text-[#1f2327] text-[13px] font-semibold hover:bg-[#00a8b0] cursor-pointer"
+                >
+                  Assign Selected
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds([])}
+                  className="text-[13px] text-[#6f777f] hover:text-[#1f2327] cursor-pointer"
+                >
+                  Deselect
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => notify('Batch Action', `Bulk assigned ${selectedIds.length} tickets to Senior Desk.`)}
-                className="h-[28px] px-3 rounded-[5px] bg-[#00c2cb] text-[#1f2327] font-bold hover:bg-[#00a8b0] cursor-pointer"
-              >
-                Assign Selected
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedIds([])}
-                className="text-[12px] text-[#9da4ae] hover:text-white"
-              >
-                Deselect
-              </button>
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* =========================================================================
-            5. FULL-WIDTH REPORT LIST DATA TABLE (Canonical Users Standard Density: 48px Header / 60px Row)
-           ========================================================================= */}
-        <div className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)] flex flex-col justify-between flex-1 min-h-[580px]">
-          <div className="overflow-x-auto table-scrollbar">
-            <table className="w-full text-left text-[14px] border-collapse font-sans">
+          {/* Table Container */}
+          <div className="overflow-x-auto table-scrollbar flex-1">
+            <table className="w-full min-w-[1300px] text-left text-[14px] border-collapse font-sans">
               <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
                 <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
                   <th className="w-12 px-4 text-center">
@@ -1044,7 +976,7 @@ function ReportsManagementInner() {
                         key={report.id}
                         onClick={() => setSelectedReportId(report.id)}
                         className={cn(
-                          'h-[60px] whitespace-nowrap font-sans transition-colors cursor-pointer',
+                          'h-[64px] whitespace-nowrap font-sans transition-colors cursor-pointer',
                           isActiveInDrawer
                             ? 'bg-[#e5f6f7]/60'
                             : isSelected
@@ -1066,7 +998,7 @@ function ReportsManagementInner() {
                             <button
                               type="button"
                               onClick={(e) => handleCopyId(report.id, e)}
-                              className="font-mono text-[12px] font-bold text-[#00c2cb] hover:underline flex items-center gap-1"
+                              className="font-mono text-[13px] font-bold text-[#00c2cb] hover:underline flex items-center gap-1"
                               title="Click to copy Report ID"
                             >
                               <span>{report.id}</span>
@@ -1080,58 +1012,58 @@ function ReportsManagementInner() {
 
                         {/* Reporter */}
                         <td className="px-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-3">
                             <Link
                               href={report.reporter.userType === 'Agent' ? `/agents/${report.reporter.id || 'AG-1046'}` : `/investors/${report.reporter.id || 'IN-2048'}`}
                             >
                               <TableAvatar
                                 src={report.reporter.avatar}
                                 name={report.reporter.name}
-                                size="sm"
+                                size="md"
                                 variant="subtle"
                               />
                             </Link>
-                            <div>
+                            <div className="min-w-0">
                               <Link
                                 href={report.reporter.userType === 'Agent' ? `/agents/${report.reporter.id || 'AG-1046'}` : `/investors/${report.reporter.id || 'IN-2048'}`}
-                                className="font-bold text-[13px] text-[#1f2327] hover:text-[#00c2cb] hover:underline transition-colors block"
+                                className="font-semibold text-[14px] leading-[20px] text-[#1f2327] hover:text-[#00c2cb] hover:underline transition-colors block truncate"
                               >
                                 {report.reporter.name}
                               </Link>
-                              <span className="text-[11px] font-medium text-[#6f777f]">{report.reporter.userType}</span>
+                              <span className="text-[12px] leading-[16px] text-[#6f777f] block truncate">{report.reporter.userType}</span>
                             </div>
                           </div>
                         </td>
 
                         {/* Reported User */}
                         <td className="px-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-3">
                             <Link
                               href={report.reportedUser.userType === 'Agent' ? `/agents/${report.reportedUser.id || 'AG-1046'}` : `/investors/${report.reportedUser.id || 'IN-2048'}`}
                             >
                               <TableAvatar
                                 src={report.reportedUser.avatar}
                                 name={report.reportedUser.name}
-                                size="sm"
+                                size="md"
                                 variant="brand"
                               />
                             </Link>
-                            <div>
+                            <div className="min-w-0">
                               <div className="flex items-center gap-1.5">
                                 <Link
                                   href={report.reportedUser.userType === 'Agent' ? `/agents/${report.reportedUser.id || 'AG-1046'}` : `/investors/${report.reportedUser.id || 'IN-2048'}`}
-                                  className="font-bold text-[13px] text-[#1f2327] hover:text-[#00c2cb] hover:underline transition-colors"
+                                  className="font-semibold text-[14px] leading-[20px] text-[#1f2327] hover:text-[#00c2cb] hover:underline transition-colors truncate"
                                 >
                                   {report.reportedUser.name}
                                 </Link>
                                 {report.reportedUser.verified && (
-                                  <CheckCircle2 className="size-3.5 text-[#00c2cb]" />
+                                  <CheckCircle2 className="size-3.5 text-[#00c2cb] shrink-0" />
                                 )}
                               </div>
-                              <div className="flex items-center gap-1 text-[11px] text-[#6f777f]">
+                              <div className="flex items-center gap-1 text-[12px] leading-[16px] text-[#6f777f]">
                                 <span>{report.reportedUser.userType}</span>
                                 {report.reportedUser.previousStrikes > 0 && (
-                                  <span className="text-[#d92d20] font-bold">({report.reportedUser.previousStrikes} strikes)</span>
+                                  <span className="text-[#d92d20] font-semibold">({report.reportedUser.previousStrikes} strikes)</span>
                                 )}
                               </div>
                             </div>
@@ -1225,19 +1157,40 @@ function ReportsManagementInner() {
                             <button
                               type="button"
                               onClick={() => setSelectedReportId(report.id)}
-                              className="flex h-[32px] items-center gap-1 rounded-[8px] border border-[#d3d5d7] bg-white px-2.5 text-[13px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer shadow-2xs ant-wave-btn"
+                              className="flex size-8 items-center justify-center rounded-[6px] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+                              title="View details"
                             >
-                              <Eye className="size-3.5" />
-                              <span>View</span>
+                              <Eye className="size-4" />
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => setAssignModalReport(report)}
-                              className="flex size-[32px] items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer shadow-2xs ant-wave-btn"
-                              title="Assign Moderator"
-                            >
-                              <UserCheck className="size-4" />
-                            </button>
+
+                            <Dropdown
+                              align="end"
+                              floating
+                              ariaLabel={`Actions for report ${report.id}`}
+                              options={[
+                                { label: 'View Details', value: 'view', icon: <Eye className="size-4 text-[#00c2cb]" /> },
+                                { label: 'Assign Moderator', value: 'assign', icon: <UserCheck className="size-4 text-[#00c2cb]" /> },
+                                { label: 'Escalate to Senior Desk', value: 'escalate', icon: <AlertTriangle className="size-4 text-amber-600" /> },
+                                { label: 'Mark as Resolved', value: 'resolve', icon: <CheckCircle2 className="size-4 text-emerald-600" /> },
+                                { label: 'Reject Report', value: 'reject', destructive: true, icon: <X className="size-4 text-rose-600" /> },
+                              ]}
+                              onSelect={(val) => {
+                                if (val === 'view') setSelectedReportId(report.id)
+                                else if (val === 'assign') setAssignModalReport(report)
+                                else if (val === 'escalate') setEscalateModalReport(report)
+                                else if (val === 'resolve') setResolveModalReport(report)
+                                else if (val === 'reject') handleRejectReport(report.id)
+                              }}
+                              trigger={
+                                <button
+                                  type="button"
+                                  className="flex size-8 items-center justify-center rounded-[6px] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+                                  title="More actions"
+                                >
+                                  <MoreHorizontal className="size-4" />
+                                </button>
+                              }
+                            />
                           </div>
                         </td>
                       </tr>
@@ -1248,23 +1201,22 @@ function ReportsManagementInner() {
             </table>
           </div>
 
-              {/* Pagination - glued to bottom with mt-auto */}
-              <div className="p-3 border-t border-[#d3d5d7] bg-[#fcfcfc] mt-auto">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  rowsPerPage={rowsPerPage}
-                  rowsOptions={[10, 20, 30]}
-                  onRowsPerPageChange={(rows) => {
-                    setRowsPerPage(rows)
-                    setCurrentPage(1)
-                  }}
-                  totalItems={filteredReports.length}
-                />
-              </div>
-            </div>
-          </section>
+          {/* Pagination - glued to bottom with mt-auto */}
+          <div className="p-3 border-t border-[#d3d5d7] bg-[#fcfcfc] mt-auto">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              rowsPerPage={rowsPerPage}
+              rowsOptions={[10, 20, 30]}
+              onRowsPerPageChange={(rows) => {
+                setRowsPerPage(rows)
+                setCurrentPage(1)
+              }}
+              totalItems={filteredReports.length}
+            />
+          </div>
+        </section>
 
         {/* =========================================================================
             6. LARGE RIGHT-SIDE REPORT DETAILS DRAWER (580px - 640px)
@@ -1337,7 +1289,11 @@ function ReportsManagementInner() {
                           className={cn(
                             'flex items-center gap-1.5 px-2.5 py-1 rounded-[5px] font-bold transition-all cursor-pointer shrink-0',
                             isCurrent
-                              ? 'bg-[#1f2327] text-white shadow-2xs'
+                              ? st === 'resolved'
+                                ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
+                                : st === 'escalated'
+                                ? 'bg-[#f04438] text-white shadow-2xs font-semibold'
+                                : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                               : 'bg-white border border-[#d3d5d7] text-[#6f777f] hover:bg-[#eff1f3]'
                           )}
                         >

@@ -367,7 +367,7 @@ export function OfferReviewModal({
                 <div className="rounded-[10px] border border-[#d3d5d7] bg-white p-4 space-y-2">
                   <span className="text-[12px] text-[#6f777f] font-medium">Target Investor Request</span>
                   <div className="flex items-center gap-2.5 pt-1">
-                    <Link href={`/investors/${offer.investorId || 'IN-2048'}`}>
+                    <Link href={`/investors/${offer.investorId || (offer.investorName === 'Omar Nasser' ? 'IN-2045' : 'IN-2048')}`}>
                       <img
                         src={offer.investorAvatar || 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80'}
                         alt={offer.investorName}
@@ -376,15 +376,15 @@ export function OfferReviewModal({
                     </Link>
                     <div>
                       <Link
-                        href={`/investors/${offer.investorId || 'IN-2048'}`}
+                        href={`/investors/${offer.investorId || (offer.investorName === 'Omar Nasser' ? 'IN-2045' : 'IN-2048')}`}
                         className="text-[13px] font-medium text-[#1f2327] hover:text-[#00c2cb] hover:underline block"
                       >
                         {offer.investorName}
                       </Link>
                       <Link
-                        href={`/requests?id=${offer.requestId}`}
+                        href={`/request-insights?id=${offer.requestId}`}
                         className="font-mono text-[11px] font-bold text-[#00c2cb] hover:underline block"
-                        title={`Open Request ${offer.requestId}`}
+                        title={`Open Insights for Request ${offer.requestId}`}
                       >
                         {offer.requestId}
                       </Link>

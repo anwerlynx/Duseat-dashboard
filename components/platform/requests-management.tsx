@@ -40,6 +40,10 @@ import {
   Calendar,
   RefreshCw,
   RotateCcw,
+  MoreHorizontal,
+  FileCheck,
+  Bookmark,
+  Settings2,
 } from 'lucide-react'
 import { PlatformShell } from './platform-shell'
 import { RequestCard } from './request-card'
@@ -48,6 +52,7 @@ import { EditRequestModal } from './edit-request-modal'
 import { AssignAdminModal } from './assign-admin-modal'
 import { ToastProvider, useToast } from '@/components/dashboard/toast'
 import { ConfirmDialog, type ConfirmRequest } from './confirm-dialog'
+import { CustomizeTableDialog, type TableViewPreset, type ColumnCategory } from './customize-table-dialog'
 import { Flag, getCountryCode, AvatarFlagOverlay } from '@/components/ui/flag'
 import { FigmaStatusBadge } from '@/components/ui/figma-badges'
 import { FigmaTag } from '@/components/ui/figma-tag'
@@ -56,9 +61,10 @@ import { StatusTag } from '@/components/ui/badge-tag'
 import { FilterTabs, MetricCard, SearchInput, Pagination, EmptyState, TableAvatar } from '@/components/ui'
 import { DateRangePicker, type DateRange } from './date-range-picker'
 import { TableCheckbox } from '@/components/ui/table-checkbox'
+import { Dropdown } from '@/components/dashboard/menu'
 import { cn } from '@/lib/utils'
 import type { PropertyRequest } from '@/lib/platform-users'
-import { allPlatformRequests } from '@/lib/platform-users'
+import { allPlatformRequests, investorById } from '@/lib/platform-users'
 
 type ViewMode = 'timeline' | 'table' | 'kanban'
 
@@ -111,6 +117,224 @@ const AREA_OPTIONS = [
   { label: 'Dubai Marina', value: 'Dubai Marina' },
 ]
 
+const REQUEST_DEFAULT_COLUMNS = [
+  'Request ID',
+  'Investor',
+  'Budget',
+  'Property Type',
+  'Bedrooms',
+  'Area',
+  'Country',
+  'City',
+  'Offers Count',
+  'Status',
+  'Created Date',
+]
+
+const defaultRequestPresets: TableViewPreset[] = [
+  {
+    id: 'default',
+    name: 'Default Overview',
+    columns: [
+      'Request ID',
+      'Investor',
+      'Budget',
+      'Property Type',
+      'Bedrooms',
+      'Area',
+      'Country',
+      'City',
+      'Offers Count',
+      'Status',
+      'Created Date',
+    ],
+    isBuiltIn: true,
+  },
+  {
+    id: 'financials',
+    name: 'Budget & Financials',
+    columns: [
+      'Request ID',
+      'Investor',
+      'Budget',
+      'Property Type',
+      'Offers Count',
+      'Status',
+      'Created Date',
+    ],
+    isBuiltIn: true,
+  },
+  {
+    id: 'specs-location',
+    name: 'Specs & Location',
+    columns: [
+      'Request ID',
+      'Investor',
+      'Property Type',
+      'Bedrooms',
+      'Area',
+      'Country',
+      'City',
+      'Status',
+    ],
+    isBuiltIn: true,
+  },
+]
+
+const requestColumnCategories: ColumnCategory[] = [
+  {
+    id: 'general',
+    name: 'General',
+    items: [
+      { id: 'Request ID', label: 'Request ID' },
+      { id: 'Investor', label: 'Investor Name & Avatar' },
+      { id: 'Status', label: 'Status' },
+      { id: 'Created Date', label: 'Created Date' },
+    ],
+  },
+  {
+    id: 'property',
+    name: 'Property Specs',
+    items: [
+      { id: 'Property Type', label: 'Property Type' },
+      { id: 'Bedrooms', label: 'Bedrooms' },
+      { id: 'Area', label: 'Area (sq ft)' },
+      { id: 'Budget', label: 'Budget Range' },
+      { id: 'Offers Count', label: 'Offers Count' },
+    ],
+  },
+  {
+    id: 'location',
+    name: 'Location',
+    items: [
+      { id: 'Country', label: 'Country' },
+      { id: 'City', label: 'City' },
+    ],
+  },
+]
+
+function renderRequestCell(
+  col: string,
+  req: PropertyRequest,
+  options: {
+    setSelectedRequest: (req: PropertyRequest) => void
+    investorObj: any
+    avatarSrc?: string
+    cCode: string
+    countryName: string
+  }
+) {
+  const { setSelectedRequest, investorObj, avatarSrc, cCode, countryName } = options
+  switch (col) {
+    case 'Request ID':
+      return (
+        <button
+          type="button"
+          onClick={() => setSelectedRequest(req)}
+          className="font-mono text-[14px] leading-[20px] font-semibold text-[#00c2cb] hover:underline cursor-pointer whitespace-nowrap"
+        >
+          {req.id}
+        </button>
+      )
+    case 'Investor':
+      return (
+        <Link
+          href={`/investors/${req.investorId || (req.investorName === 'Omar Nasser' ? 'IN-2045' : 'IN-2048')}`}
+          className="flex items-center gap-3 font-semibold text-[14px] leading-[20px] text-[#1f2327] hover:text-[#00c2cb] transition-colors whitespace-nowrap"
+        >
+          <TableAvatar
+            src={avatarSrc}
+            name={req.investorName}
+            countryCode={cCode}
+            size="md"
+            variant="brand"
+          />
+          <div className="min-w-0">
+            <p className="leading-[20px] whitespace-nowrap font-semibold text-[14px] text-[#1f2327]">
+              {req.investorName}
+            </p>
+            <p className="text-[12px] leading-[16px] font-normal text-[#6f777f] whitespace-nowrap">
+              {investorObj?.personalInfo?.occupation || 'Verified Buyer'}
+            </p>
+          </div>
+        </Link>
+      )
+    case 'Budget':
+      return (
+        <span className="font-semibold text-[14px] leading-[20px] text-[#1f2327]">
+          {req.budget}
+        </span>
+      )
+    case 'Property Type':
+      return (
+        <div>
+          <span className="font-semibold text-[14px] leading-[20px] text-[#1f2327] block whitespace-nowrap">
+            {req.propertyType}
+          </span>
+          <span className="text-[12px] leading-[16px] text-[#6f777f] block whitespace-nowrap">
+            {req.purpose}
+          </span>
+        </div>
+      )
+    case 'Bedrooms':
+      return (
+        <span className="font-medium text-[14px] leading-[20px] text-[#1f2327]">
+          {req.bedrooms}
+        </span>
+      )
+    case 'Area':
+      return (
+        <div className="flex items-center gap-1 whitespace-nowrap">
+          {req.preferredAreas.slice(0, 2).map((a) => (
+            <span
+              key={a}
+              className="rounded-[4px] bg-[#eff1f3] px-2 py-0.5 text-[12px] font-medium text-[#1f2327] whitespace-nowrap"
+            >
+              {a}
+            </span>
+          ))}
+          {req.preferredAreas.length > 2 && (
+            <span className="text-[12px] text-[#6f777f] font-medium whitespace-nowrap">
+              +{req.preferredAreas.length - 2}
+            </span>
+          )}
+        </div>
+      )
+    case 'Country':
+      return (
+        <div className="flex items-center gap-1.5 whitespace-nowrap text-[14px] leading-[20px] text-[#1f2327]">
+          <Flag code={cCode} size="s" />
+          <span className="whitespace-nowrap">{countryName}</span>
+        </div>
+      )
+    case 'City':
+      return (
+        <span className="text-[14px] leading-[20px] text-[#1f2327]">
+          {req.preferredAreas[0] || 'Dubai'}
+        </span>
+      )
+    case 'Offers Count':
+      return (
+        <FigmaTag
+          status="Active"
+          size="sm"
+          label={`${req.offersCount} offers`}
+          leftIcon={<MessageSquare className="size-[16px]" />}
+        />
+      )
+    case 'Status':
+      return <FigmaStatusBadge status={req.status} />
+    case 'Created Date':
+      return (
+        <span className="text-[13px] leading-[18px] text-[#6f777f]">
+          {req.created || '28 May 2026'}
+        </span>
+      )
+    default:
+      return null
+  }
+}
+
 export function RequestsManagementInner() {
   const { toast } = useToast()
   const searchParams = useSearchParams()
@@ -119,13 +343,20 @@ export function RequestsManagementInner() {
   const [requests, setRequests] = React.useState<PropertyRequest[]>(allPlatformRequests)
   const [viewMode, setViewMode] = React.useState<ViewMode>('table')
   const [query, setQuery] = React.useState('')
-  const [statusFilter, setStatusFilter] = React.useState<string>('All')
+  const initialStatus = searchParams?.get('status') || searchParams?.get('tab') || 'All'
+  const [statusFilter, setStatusFilter] = React.useState<string>(initialStatus)
   const [budgetFilter, setBudgetFilter] = React.useState<string>('All')
   const [countryFilter, setCountryFilter] = React.useState<string>('All')
   const [areaFilter, setAreaFilter] = React.useState<string>('All')
   const [propertyTypeFilter, setPropertyTypeFilter] = React.useState<string>('All')
   const [investorFilter, setInvestorFilter] = React.useState<string>('All')
   const [dateRange, setDateRange] = React.useState<string>('All Time')
+
+  // Table customization state
+  const [columnsOpen, setColumnsOpen] = React.useState(false)
+  const [visibleColumns, setVisibleColumns] = React.useState<string[]>(REQUEST_DEFAULT_COLUMNS)
+  const [activePresetId, setActivePresetId] = React.useState<string>('default')
+  const [presets, setPresets] = React.useState<TableViewPreset[]>(defaultRequestPresets)
 
   const [selectedIds, setSelectedIds] = React.useState<string[]>([])
   const [sortField, setSortField] = React.useState<'time' | 'budget' | 'offers'>('time')
@@ -468,7 +699,7 @@ export function RequestsManagementInner() {
         {/* =========================================================================
             1. TOP HEADER CARD
            ========================================================================= */}
-        <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)]">
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
@@ -479,206 +710,354 @@ export function RequestsManagementInner() {
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
-              {/* View Switchers */}
-              <div className="flex items-center rounded-[8px] border border-[#d3d5d7] bg-[#fcfcfc] p-1 shadow-2xs">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('table')}
-                  className={cn(
-                    'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-semibold transition-all cursor-pointer',
-                    viewMode === 'table'
-                      ? 'bg-[#1f2327] text-white shadow-2xs'
-                      : 'text-[#6f777f] hover:text-[#1f2327]'
-                  )}
-                  title="Data Table View"
-                >
-                  <List className="size-3.5" />
-                  <span>Table</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('timeline')}
-                  className={cn(
-                    'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-semibold transition-all cursor-pointer',
-                    viewMode === 'timeline'
-                      ? 'bg-[#1f2327] text-white shadow-2xs'
-                      : 'text-[#6f777f] hover:text-[#1f2327]'
-                  )}
-                  title="Timeline Feed Mode"
-                >
-                  <Layers className="size-3.5" />
-                  <span>Timeline</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('kanban')}
-                  className={cn(
-                    'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-semibold transition-all cursor-pointer',
-                    viewMode === 'kanban'
-                      ? 'bg-[#1f2327] text-white shadow-2xs'
-                      : 'text-[#6f777f] hover:text-[#1f2327]'
-                  )}
-                  title="Kanban Board Pipeline"
-                >
-                  <LayoutGrid className="size-3.5" />
-                  <span>Pipeline</span>
-                </button>
-              </div>
-
-              {/* Export Action */}
-              <MainButton
-                variant="Secondary"
-                size="sm"
-                iconLeft={<Download className="size-[18px]" />}
-                label="Export CSV"
-                onClick={handleExportCSV}
-              />
-
-              {/* Add Request Action */}
-              <MainButton
-                variant="Primary"
-                size="sm"
-                iconLeft={<Plus className="size-[18px]" />}
-                label="+ Add Request"
-                onClick={() => setIsCreateModalOpen(true)}
-              />
+            {/* Quick Links */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/deals"
+                className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] leading-[20px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors"
+              >
+                <FileCheck className="size-4 text-[#00c2cb]" />
+                <span>Live Deals</span>
+                <span className="rounded-full bg-[#dfefe8] px-1.5 py-0.2 text-[12px] leading-[16px] font-medium text-[#17b26a]">
+                  {stats.closedCount}
+                </span>
+              </Link>
+              <Link
+                href="/verification"
+                className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] leading-[20px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors"
+              >
+                <CheckCircle2 className="size-4 text-[#6f777f]" />
+                <span>Verification Queue</span>
+              </Link>
             </div>
           </div>
-        </div>
+
+          {/* 5 Stat Metric Cards */}
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 lg:gap-3">
+            <MetricCard
+              label="Total Requests"
+              value={stats.total}
+              icon={FileText}
+              tone="neutral"
+              active={statusFilter === 'All'}
+              onClick={() => {
+                setStatusFilter('All')
+                setCurrentPage(1)
+              }}
+            />
+            <MetricCard
+              label="Open & Pitching"
+              value={stats.openCount}
+              icon={Layers}
+              tone="info"
+              active={statusFilter === 'Open'}
+              onClick={() => {
+                setStatusFilter('Open')
+                setCurrentPage(1)
+              }}
+            />
+            <MetricCard
+              label="Matched & Negotiating"
+              value={stats.matchedCount}
+              icon={CheckCircle2}
+              tone="success"
+              active={statusFilter === 'Matched'}
+              onClick={() => {
+                setStatusFilter('Matched')
+                setCurrentPage(1)
+              }}
+            />
+            <MetricCard
+              label="Closed & Deals"
+              value={stats.closedCount}
+              icon={FileCheck}
+              tone="neutral"
+              active={statusFilter === 'Closed'}
+              onClick={() => {
+                setStatusFilter('Closed')
+                setCurrentPage(1)
+              }}
+            />
+            <MetricCard
+              label="Urgent & Priority"
+              value={stats.urgentCount}
+              icon={Flame}
+              tone="warning"
+              active={statusFilter === 'Urgent'}
+              onClick={() => {
+                setStatusFilter('Urgent')
+                setCurrentPage(1)
+              }}
+            />
+          </div>
+        </header>
 
         {/* =========================================================================
-            2. KPI STAT CARDS (5 Metrics)
+            2. MAIN TABLE CONTAINER (Top Tabs + Toolbar + Data Table)
            ========================================================================= */}
-        <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-5 lg:gap-3">
-          <MetricCard
-            label="Total Requests"
-            value={stats.total}
-            tone="neutral"
-            active={statusFilter === 'All'}
-            onClick={() => setStatusFilter('All')}
-          />
-          <MetricCard
-            label="Open & Pitching"
-            value={stats.openCount}
-            tone="brand"
-            active={statusFilter === 'Open'}
-            onClick={() => setStatusFilter('Open')}
-          />
-          <MetricCard
-            label="Matched & Negotiating"
-            value={stats.matchedCount}
-            tone="success"
-            active={statusFilter === 'Matched'}
-            onClick={() => setStatusFilter('Matched')}
-          />
-          <MetricCard
-            label="Closed & Deals"
-            value={stats.closedCount}
-            tone="neutral"
-            active={statusFilter === 'Closed'}
-            onClick={() => setStatusFilter('Closed')}
-          />
-          <MetricCard
-            label="Urgent & Priority"
-            value={stats.urgentCount}
-            tone="warning"
-            active={statusFilter === 'Urgent'}
-            onClick={() => setStatusFilter('Urgent')}
-          />
-        </div>
+        <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
+          {/* Top Tabs & Actions Header Bar */}
+          <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              {/* Filter Tabs List */}
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+                {(
+                  [
+                    { id: 'All', label: 'All Requests', count: stats.total },
+                    { id: 'Open', label: 'Open', count: stats.openCount },
+                    { id: 'Matched', label: 'Matched', count: stats.matchedCount },
+                    { id: 'Closed', label: 'Closed', count: stats.closedCount },
+                    { id: 'Urgent', label: 'Urgent', count: stats.urgentCount },
+                    { id: 'Archived', label: 'Archived', count: requests.filter((r) => r.status === 'Archived').length },
+                  ] as const
+                ).map((item) => {
+                  const isActive = statusFilter === item.id
+                  return (
+                    <a
+                      key={item.id}
+                      href={`/requests?status=${encodeURIComponent(item.id)}`}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey || e.button === 1) {
+                          return
+                        }
+                        e.preventDefault()
+                        setStatusFilter(item.id)
+                        setCurrentPage(1)
+                      }}
+                      className={cn(
+                        'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap no-underline',
+                        isActive
+                          ? item.id === 'Matched'
+                            ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
+                            : item.id === 'Urgent'
+                            ? 'bg-[#f79009] text-white shadow-2xs font-semibold'
+                            : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                          : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
+                      )}
+                    >
+                      <span className="whitespace-nowrap">{item.label}</span>
+                      <span
+                        className={cn(
+                          'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
+                          item.id === 'Urgent'
+                            ? 'bg-[#f79009] text-white'
+                            : isActive
+                            ? 'bg-white/20 text-white'
+                            : 'bg-[#eff1f3] text-[#1f2327]'
+                        )}
+                      >
+                        {item.count}
+                      </span>
+                    </a>
+                  )
+                })}
+              </div>
 
-        {/* =========================================================================
-            3. MAIN CONTENT CONTAINER (Top Tabs + Filter Row + Views + Pagination)
-           ========================================================================= */}
-        <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)]">
-          {/* Top Tabs */}
-          <FilterTabs
-            tabs={[
-              { id: 'All', label: 'All Requests', count: stats.total },
-              { id: 'Open', label: 'Open', count: stats.openCount },
-              { id: 'Matched', label: 'Matched', count: stats.matchedCount },
-              { id: 'Closed', label: 'Closed', count: stats.closedCount },
-              { id: 'Urgent', label: 'Urgent', count: stats.urgentCount },
-              { id: 'Archived', label: 'Archived', count: requests.filter((r) => r.status === 'Archived').length },
-            ]}
-            activeTab={statusFilter}
-            onChange={(tabId) => {
-              setStatusFilter(tabId as any)
-              setCurrentPage(1)
-            }}
-          />
+              {/* View Mode Switcher, Export, and Add Action */}
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center rounded-[8px] border border-[#d3d5d7] bg-[#fcfcfc] p-0.5 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('table')}
+                    className={cn(
+                      'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-medium transition-all cursor-pointer whitespace-nowrap',
+                      viewMode === 'table'
+                        ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                        : 'text-[#6f777f] hover:text-[#1f2327]'
+                    )}
+                    title="Data Table View"
+                  >
+                    <List className="size-3.5" />
+                    <span>Table</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('timeline')}
+                    className={cn(
+                      'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-medium transition-all cursor-pointer whitespace-nowrap',
+                      viewMode === 'timeline'
+                        ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                        : 'text-[#6f777f] hover:text-[#1f2327]'
+                    )}
+                    title="Timeline Feed Mode"
+                  >
+                    <Layers className="size-3.5" />
+                    <span>Timeline</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('kanban')}
+                    className={cn(
+                      'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-semibold transition-all cursor-pointer whitespace-nowrap',
+                      viewMode === 'kanban'
+                        ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                        : 'text-[#6f777f] hover:text-[#1f2327]'
+                    )}
+                    title="Kanban Board Pipeline"
+                  >
+                    <LayoutGrid className="size-3.5" />
+                    <span>Pipeline</span>
+                  </button>
+                </div>
 
-          {/* Horizontal Filter Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#d3d5d7] p-3 sm:p-4 bg-white">
-            <div className="flex flex-1 flex-wrap items-center gap-2.5">
-              <SearchInput
-                value={query}
-                onChange={(v: string) => {
-                  setQuery(v)
+                {/* View Presets Dropdown */}
+                <Dropdown
+                  align="end"
+                  floating
+                  options={presets.map((p) => ({
+                    label: p.name,
+                    value: p.id,
+                    icon: <Bookmark className="size-4 text-[#00c2cb]" />,
+                  }))}
+                  onSelect={(presetId) => {
+                    const found = presets.find((p) => p.id === presetId)
+                    if (found) {
+                      setActivePresetId(presetId)
+                      setVisibleColumns(found.columns)
+                      toast({
+                        variant: 'info',
+                        title: 'View Changed',
+                        description: `Switched to "${found.name}".`,
+                      })
+                    }
+                  }}
+                  trigger={
+                    <button
+                      type="button"
+                      className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                    >
+                      <Bookmark className="size-4 text-[#00c2cb]" />
+                      <span className="max-w-[140px] truncate">
+                        {presets.find((p) => p.id === activePresetId)?.name || 'Custom View'}
+                      </span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </button>
+                  }
+                  ariaLabel="Select table template view"
+                />
+
+                {/* Customize Columns Button */}
+                <button
+                  type="button"
+                  onClick={() => setColumnsOpen(true)}
+                  className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                >
+                  <Settings2 className="size-4 text-[#6f777f]" />
+                  <span className="whitespace-nowrap">Customize columns</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleExportCSV}
+                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                >
+                  <Download className="size-4 text-[#6f777f]" />
+                  <span className="whitespace-nowrap">Export CSV</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3.5 text-[14px] font-medium text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                >
+                  <Plus className="size-4 text-white" />
+                  <span className="whitespace-nowrap">Add Request</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Horizontal Filter Toolbar: Search, Property Type, Country, Budget, DateRangePicker */}
+            <div className="flex flex-wrap items-center gap-2.5 pt-1">
+              <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9da4ae]" />
+                <input
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value)
+                    setCurrentPage(1)
+                  }}
+                  placeholder="Search requests by title, investor, or ID…"
+                  className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-3 text-[14px] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery('')
+                      setCurrentPage(1)
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9da4ae] hover:text-[#1f2327]"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Property Type Filter */}
+              <Dropdown
+                align="start"
+                value={propertyTypeFilter === 'All' ? 'All Types' : propertyTypeFilter}
+                onSelect={(val) => {
+                  setPropertyTypeFilter(val === 'All Types' ? 'All' : val)
                   setCurrentPage(1)
                 }}
-                placeholder="Search requests by title, investor, or ID..."
-                className="w-full sm:w-[260px] lg:w-[300px]"
+                ariaLabel="Filter by Property Type"
+                options={['All Types', 'Residential', 'Commercial', 'Land', 'Hospitality', 'Industrial'].map((t) => ({
+                  label: t,
+                  value: t,
+                }))}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs whitespace-nowrap shrink-0">
+                    <Building2 className="size-4 text-[#6f777f]" />
+                    <span className="whitespace-nowrap">{propertyTypeFilter === 'All' ? 'All Types' : propertyTypeFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
               />
 
-              <div className="relative">
-                <select
-                  value={propertyTypeFilter}
-                  aria-label="Filter by Property Type"
-                  onChange={(e) => {
-                    setPropertyTypeFilter(e.target.value)
-                    setCurrentPage(1)
-                  }}
-                  className="h-[36px] appearance-none rounded-[6px] border border-[#d3d5d7] bg-white pl-3 pr-8 text-[13px] font-medium text-[#1f2327] outline-none transition-colors hover:border-[#00c2cb] focus:border-[#00c2cb] cursor-pointer"
-                >
-                  <option value="All">All Types</option>
-                  <option value="Residential">Residential</option>
-                  <option value="Commercial">Commercial</option>
-                  <option value="Land">Land</option>
-                  <option value="Hospitality">Hospitality</option>
-                  <option value="Industrial">Industrial</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#6f777f]" />
-              </div>
+              {/* Country Filter */}
+              <Dropdown
+                align="start"
+                value={countryFilter === 'All' ? 'All Countries' : countryFilter}
+                onSelect={(val) => {
+                  setCountryFilter(val === 'All Countries' ? 'All' : val)
+                  setCurrentPage(1)
+                }}
+                ariaLabel="Filter by Country"
+                options={['All Countries', 'Saudi Arabia', 'Egypt', 'United Arab Emirates', 'United Kingdom'].map((c) => ({
+                  label: c,
+                  value: c,
+                }))}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs whitespace-nowrap shrink-0">
+                    <span>🌍</span>
+                    <span className="whitespace-nowrap">{countryFilter === 'All' ? 'All Countries' : countryFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
+              />
 
-              <div className="relative">
-                <select
-                  value={countryFilter}
-                  aria-label="Filter by Country"
-                  onChange={(e) => {
-                    setCountryFilter(e.target.value)
-                    setCurrentPage(1)
-                  }}
-                  className="h-[36px] appearance-none rounded-[6px] border border-[#d3d5d7] bg-white pl-3 pr-8 text-[13px] font-medium text-[#1f2327] outline-none transition-colors hover:border-[#00c2cb] focus:border-[#00c2cb] cursor-pointer"
-                >
-                  <option value="All">All Countries</option>
-                  <option value="Saudi Arabia">Saudi Arabia</option>
-                  <option value="Egypt">Egypt</option>
-                  <option value="United Arab Emirates">UAE</option>
-                  <option value="United Kingdom">United Kingdom</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#6f777f]" />
-              </div>
-
-              <div className="relative">
-                <select
-                  value={budgetFilter}
-                  aria-label="Filter by Budget Range"
-                  onChange={(e) => {
-                    setBudgetFilter(e.target.value)
-                    setCurrentPage(1)
-                  }}
-                  className="h-[36px] appearance-none rounded-[6px] border border-[#d3d5d7] bg-white pl-3 pr-8 text-[13px] font-medium text-[#1f2327] outline-none transition-colors hover:border-[#00c2cb] focus:border-[#00c2cb] cursor-pointer"
-                >
-                  <option value="All">All Budgets</option>
-                  <option value="Under $500k">Under $500k</option>
-                  <option value="$500k - $1M">$500k - $1M</option>
-                  <option value="$1M - $2M">$1M - $2M</option>
-                  <option value="$2M+">$2M+</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#6f777f]" />
-              </div>
+              {/* Budget Filter */}
+              <Dropdown
+                align="start"
+                value={budgetFilter === 'All' ? 'All Budgets' : budgetFilter}
+                onSelect={(val) => {
+                  setBudgetFilter(val === 'All Budgets' ? 'All' : val)
+                  setCurrentPage(1)
+                }}
+                ariaLabel="Filter by Budget Range"
+                options={['All Budgets', 'Under $500k', '$500k - $1M', '$1M - $2M', '$2M+'].map((b) => ({
+                  label: b,
+                  value: b,
+                }))}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs whitespace-nowrap shrink-0">
+                    <DollarSign className="size-4 text-[#6f777f]" />
+                    <span className="whitespace-nowrap">{budgetFilter === 'All' ? 'All Budgets' : budgetFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
+              />
 
               <DateRangePicker
                 value={dateRange}
@@ -692,10 +1071,9 @@ export function RequestsManagementInner() {
                 <button
                   type="button"
                   onClick={resetAllFilters}
-                  className="flex items-center gap-1 text-[13px] font-semibold text-[#6f777f] hover:text-[#e02d3c] transition-colors cursor-pointer ml-1"
+                  className="text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer shrink-0 whitespace-nowrap"
                 >
-                  <RotateCcw className="size-3.5" />
-                  <span>Reset filters</span>
+                  Reset filters
                 </button>
               )}
             </div>
@@ -753,7 +1131,7 @@ export function RequestsManagementInner() {
           )}
 
           {/* =========================================================================
-              VIEW 1: TABLE MODE (All 11 Columns matching Specification)
+              VIEW 1: TABLE MODE (Standardized to Gold Standard Layout)
              ========================================================================= */}
           {viewMode === 'table' && (
             <div className="overflow-x-auto table-scrollbar flex-1">
@@ -769,25 +1147,19 @@ export function RequestsManagementInner() {
                         ariaLabel="Select all requests"
                       />
                     </th>
-                    <th className="px-4">Request ID</th>
-                    <th className="px-4">Investor</th>
-                    <th className="px-4">Budget</th>
-                    <th className="px-4">Property Type</th>
-                    <th className="px-4">Bedrooms</th>
-                    <th className="px-4">Area</th>
-                    <th className="px-4">Country</th>
-                    <th className="px-4">City</th>
-                    <th className="px-4">Offers Count</th>
-                    <th className="px-4">Status</th>
-                    <th className="px-4">Created Date</th>
-                    <th className="px-4 text-right">Actions</th>
+                    {visibleColumns.map((col) => (
+                      <th key={col} className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327]">
+                        {col}
+                      </th>
+                    ))}
+                    <th className="whitespace-nowrap px-4 text-right text-[14px] font-semibold text-[#1f2327]">Actions</th>
                   </tr>
                 </thead>
 
                 <tbody className="divide-y divide-[#d3d5d7]">
                   {paginatedRequests.length === 0 ? (
                     <tr>
-                      <td colSpan={13} className="py-8 text-center text-[#6f777f]">
+                      <td colSpan={visibleColumns.length + 2} className="py-8 text-center text-[#6f777f]">
                         <EmptyState
                           title="No property requests found"
                           description="Try adjusting your search query or reset your active filters."
@@ -808,16 +1180,18 @@ export function RequestsManagementInner() {
                           ? 'United Kingdom'
                           : 'United Arab Emirates'
                       const cCode = getCountryCode(countryName)
+                      const investorObj = investorById(req.investorId) || investorById(req.investorName)
+                      const avatarSrc = req.investorAvatar || investorObj?.avatar
 
                       return (
                         <tr
                           key={req.id}
                           className={cn(
-                            'h-[60px] transition-colors hover:bg-[#f8f9fa] whitespace-nowrap',
+                            'h-[64px] transition-colors font-sans hover:bg-[#f8f9fa] whitespace-nowrap',
                             isSelected && 'bg-[#e5f6f7]/40'
                           )}
                         >
-                          <td className="w-12 px-4 text-center">
+                          <td className="w-12 px-4 text-center whitespace-nowrap">
                             <TableCheckbox
                               checked={isSelected}
                               onChange={() => handleSelectRow(req.id, !isSelected)}
@@ -825,155 +1199,57 @@ export function RequestsManagementInner() {
                             />
                           </td>
 
-                          {/* 1. Request ID */}
-                          <td className="px-4">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedRequest(req)}
-                              className="font-mono text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer"
-                            >
-                              {req.id}
-                            </button>
-                          </td>
-
-                          {/* 2. Investor */}
-                          <td className="px-4">
-                            <div className="flex items-center gap-2.5">
-                              <Link href={`/investors/${req.investorId || 'IN-2048'}`} className="cursor-pointer">
-                                <TableAvatar
-                                  src={req.investorAvatar}
-                                  name={req.investorName}
-                                  countryCode={cCode}
-                                  size="md"
-                                  variant="brand"
-                                />
-                              </Link>
-                              <div className="min-w-0">
-                                <Link
-                                  href={`/investors/${req.investorId || 'IN-2048'}`}
-                                  className="font-medium text-[#1f2327] text-[14px] hover:text-[#00c2cb] hover:underline transition-colors whitespace-nowrap block"
-                                >
-                                  {req.investorName}
-                                </Link>
-                                <span className="text-[11px] text-[#17b26a] font-medium whitespace-nowrap">Verified Buyer</span>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* 3. Budget */}
-                          <td className="px-4 py-3.5 font-bold text-[#00c2cb] text-[14px] whitespace-nowrap">
-                            {req.budget}
-                          </td>
-
-                          {/* 4. Property Type */}
-                          <td className="px-4 py-3.5 whitespace-nowrap">
-                            <span className="font-medium text-[#1f2327] whitespace-nowrap">{req.propertyType}</span>
-                            <span className="block text-[12px] text-[#6f777f] whitespace-nowrap">{req.purpose}</span>
-                          </td>
-
-                          {/* 5. Bedrooms */}
-                          <td className="px-4 py-3.5 font-medium text-[#1f2327] whitespace-nowrap">
-                            {req.bedrooms}
-                          </td>
-
-                          {/* 6. Area */}
-                          <td className="px-4 py-3.5 whitespace-nowrap">
-                            <div className="flex items-center gap-1 whitespace-nowrap">
-                              {req.preferredAreas.slice(0, 2).map((a) => (
-                                <span
-                                  key={a}
-                                  className="rounded-[4px] bg-[#eff1f3] px-2 py-0.5 text-[11px] font-medium text-[#1f2327] whitespace-nowrap"
-                                >
-                                  {a}
-                                </span>
-                              ))}
-                              {req.preferredAreas.length > 2 && (
-                                <span className="text-[11px] text-[#6f777f] font-medium whitespace-nowrap">
-                                  +{req.preferredAreas.length - 2}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* 7. Country */}
-                          <td className="px-4 py-3.5 whitespace-nowrap">
-                            <div className="flex items-center gap-1.5 whitespace-nowrap">
-                              <Flag code={cCode} size="s" />
-                              <span className="text-[13px] text-[#1f2327] whitespace-nowrap">{countryName}</span>
-                            </div>
-                          </td>
-
-                          {/* 8. City */}
-                          <td className="px-4 py-3.5 text-[13px] text-[#1f2327] whitespace-nowrap">
-                            {req.preferredAreas[0] ? 'Dubai' : 'Dubai'}
-                          </td>
-
-                          {/* 9. Offers Count */}
-                          <td className="px-4 py-3.5 whitespace-nowrap">
-                            <FigmaTag
-                              status="Active"
-                              size="sm"
-                              label={`${req.offersCount} offers`}
-                              leftIcon={<MessageSquare className="size-[16px]" />}
-                            />
-                          </td>
-
-                          {/* 10. Status */}
-                          <td className="px-4 py-3.5 whitespace-nowrap">
-                            <FigmaStatusBadge status={req.status} />
-                          </td>
-
-                          {/* 11. Created Date */}
-                          <td className="px-4 py-3.5 text-[13px] text-[#6f777f] whitespace-nowrap">
-                            {req.created || '28 May 2026'}
-                          </td>
+                          {visibleColumns.map((col) => (
+                            <td key={col} className="px-4 whitespace-nowrap font-sans">
+                              {renderRequestCell(col, req, {
+                                setSelectedRequest,
+                                investorObj,
+                                avatarSrc,
+                                cCode,
+                                countryName,
+                              })}
+                            </td>
+                          ))}
 
                           {/* Actions */}
-                          <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                            <div className="flex items-center justify-end gap-1">
-                              <button
-                                type="button"
-                                onClick={() => setSelectedRequest(req)}
-                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] cursor-pointer"
-                                title="View Details"
+                          <td className="px-4 whitespace-nowrap text-right font-sans">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Link
+                                href={`/request-insights?id=${req.id}`}
+                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#00c2cb] hover:bg-[#e5f6f7] transition-colors cursor-pointer"
+                                title="Request AI Insights"
                               >
-                                <Eye className="size-4 text-[#00c2cb]" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setEditingRequest(req)}
-                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] cursor-pointer"
-                                title="Edit Request"
-                              >
-                                <Pencil className="size-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setAssignAdminTargetRequests([req])
-                                  setIsAssignAdminOpen(true)
+                                <Sparkles className="size-4" />
+                              </Link>
+                              <Dropdown
+                                align="end"
+                                floating
+                                ariaLabel={`Actions for request ${req.id}`}
+                                options={[
+                                  { label: 'View Details', value: 'view', icon: <Eye className="size-4 text-[#00c2cb]" /> },
+                                  { label: 'Edit Request', value: 'edit', icon: <Pencil className="size-4 text-[#00c2cb]" /> },
+                                  { label: 'Assign Admin', value: 'assign-admin', icon: <UserCheck className="size-4 text-emerald-600" /> },
+                                  { label: 'Archive Request', value: 'archive', icon: <Archive className="size-4 text-[#6f777f]" /> },
+                                  { label: 'Delete Request', value: 'delete', destructive: true, icon: <Trash2 className="size-4 text-rose-600" /> },
+                                ]}
+                                onSelect={(val) => {
+                                  if (val === 'view') setSelectedRequest(req)
+                                  else if (val === 'edit') setEditingRequest(req)
+                                  else if (val === 'assign-admin') {
+                                    setAssignAdminTargetRequests([req])
+                                    setIsAssignAdminOpen(true)
+                                  } else if (val === 'archive') handleArchiveRequest(req.id)
+                                  else if (val === 'delete') handleDeleteRequest(req.id)
                                 }}
-                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] cursor-pointer"
-                                title="Assign Admin"
-                              >
-                                <UserCheck className="size-4 text-[#17b26a]" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleArchiveRequest(req.id)}
-                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] cursor-pointer"
-                                title="Archive"
-                              >
-                                <Archive className="size-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteRequest(req.id)}
-                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] text-[#6f777f] hover:bg-[#f3e1e0] hover:text-[#d92d20] cursor-pointer"
-                                title="Delete"
-                              >
-                                <Trash2 className="size-4" />
-                              </button>
+                                trigger={
+                                  <button
+                                    type="button"
+                                    className="flex size-8 items-center justify-center rounded-[6px] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+                                  >
+                                    <MoreHorizontal className="size-4" />
+                                  </button>
+                                }
+                              />
                             </div>
                           </td>
                         </tr>
@@ -1172,6 +1448,22 @@ export function RequestsManagementInner() {
           onClose={() => setConfirmDialog(null)}
         />
       )}
+
+      {/* 6. Customize Table Dialog */}
+      <CustomizeTableDialog
+        isOpen={columnsOpen}
+        onClose={() => setColumnsOpen(false)}
+        visibleColumns={visibleColumns}
+        onApply={(cols, presetId) => {
+          setVisibleColumns(cols)
+          if (presetId) setActivePresetId(presetId)
+        }}
+        categories={requestColumnCategories}
+        storageKeyPrefix="requests"
+        activePresetId={activePresetId}
+        presets={presets}
+        onPresetsChange={setPresets}
+      />
     </PlatformShell>
   )
 }

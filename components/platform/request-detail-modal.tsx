@@ -194,18 +194,18 @@ export function RequestDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-5 backdrop-blur-xs ant-fade-in font-sans"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-5 backdrop-blur-xs ant-fade-in font-sans"
       role="dialog"
       aria-modal="true"
     >
-      <div className="relative flex max-h-[92vh] w-full max-w-[1240px] flex-col overflow-hidden rounded-[16px] border border-[#d3d5d7] bg-white shadow-2xl ant-modal-zoom">
+      <div className="relative flex max-h-[94vh] sm:max-h-[92vh] w-full max-w-[calc(100vw-16px)] sm:max-w-[1240px] flex-col overflow-hidden rounded-[12px] sm:rounded-[16px] border border-[#E2E5E8] bg-white shadow-2xl ant-modal-zoom">
         {/* Top Header Bar */}
-        <div className="flex flex-wrap items-center justify-between border-b border-[#d3d5d7] bg-white px-6 py-4 gap-4">
+        <div className="flex flex-wrap items-center justify-between border-b border-[#E2E5E8] bg-white px-4 sm:px-6 py-3 sm:py-4 gap-3">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex size-9 items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+              className="flex size-9 items-center justify-center rounded-[8px] border border-[#E2E5E8] bg-white text-[#68727D] hover:bg-[#F8F9FA] hover:text-[#202428] transition-colors cursor-pointer shadow-xs shrink-0"
               aria-label="Back"
             >
               <ArrowLeft className="size-4" />
@@ -230,14 +230,22 @@ export function RequestDetailModal({
             </div>
           </div>
 
-          {/* Top Quick Actions (Edit, Close, Archive, Delete, Assign Admin, Export) */}
+          {/* Top Quick Actions (Insights, Edit, Close, Archive, Delete, Assign Admin, Export) */}
           <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={`/request-insights?id=${request.id}`}
+              className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#06B6C9] bg-[#E8F9FB] px-3 text-[13px] font-semibold text-[#0891A6] hover:bg-[#06B6C9] hover:text-white transition-all cursor-pointer shadow-xs"
+            >
+              <Sparkles className="size-3.5" />
+              <span>Request Insights</span>
+            </Link>
+
             <button
               type="button"
               onClick={() => setIsEditModalOpen(true)}
-              className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#00c2cb] bg-[#e5f6f7] px-3 text-[13px] font-semibold text-[#00848b] hover:bg-[#00c2cb] hover:text-white transition-all cursor-pointer ant-wave-btn shadow-2xs"
+              className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] font-medium text-[#202428] hover:bg-[#eff1f3] transition-all cursor-pointer shadow-xs"
             >
-              <Pencil className="size-3.5" />
+              <Pencil className="size-3.5 text-[#68727D]" />
               <span>Edit</span>
             </button>
 
@@ -287,7 +295,7 @@ export function RequestDetailModal({
         </div>
 
         {/* 9 Navigation Sub-Tabs matching exact user specification */}
-        <div className="flex items-center gap-1 border-b border-[#d3d5d7] bg-[#fcfcfc] px-6 py-2 overflow-x-auto">
+        <div className="flex items-center gap-1 border-b border-[#E2E5E8] bg-[#F8F9FA] px-3 sm:px-6 py-2 overflow-x-auto scrollbar-none">
           {[
             { id: 'investor', label: '1. Investor' },
             { id: 'requirements', label: '2. Requirements' },
@@ -306,8 +314,8 @@ export function RequestDetailModal({
               className={cn(
                 'flex h-[32px] items-center rounded-[6px] px-3 text-[13px] font-medium whitespace-nowrap transition-colors cursor-pointer',
                 activeTab === tab.id
-                  ? 'bg-[#1f2327] text-white font-semibold shadow-2xs'
-                  : 'text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
+                  ? 'bg-[#202428] text-white font-semibold shadow-xs'
+                  : 'text-[#68727D] hover:bg-[#E2E5E8]/60 hover:text-[#202428]'
               )}
             >
               {tab.label}
@@ -316,7 +324,7 @@ export function RequestDetailModal({
         </div>
 
         {/* Modal Main Scroll Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-[#f8f9fa] space-y-6 font-sans">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-[#F8F9FA] space-y-4 sm:space-y-6 font-sans">
           {/* TAB 1: INVESTOR & FULL OVERVIEW (Figma Node 2061:3833 / 3869) */}
           {activeTab === 'investor' && (
             <div className="grid gap-6 lg:grid-cols-12">
@@ -345,7 +353,7 @@ export function RequestDetailModal({
                       <div>
                         <div className="flex items-center gap-1.5">
                           <Link
-                            href={`/investors/${request.investorId || 'IN-2048'}`}
+                            href={`/investors/${request.investorId || (request.investorName === 'Omar Nasser' ? 'IN-2045' : 'IN-2048')}`}
                             className="font-bold text-[16px] text-[#1f2327] font-sans hover:text-[#00c2cb] hover:underline transition-colors flex items-center gap-1"
                           >
                             <span>{request.investorName}</span>

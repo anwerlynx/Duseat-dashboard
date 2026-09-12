@@ -28,9 +28,13 @@ import {
   RotateCcw,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Mail,
   Building2,
   Award,
+  Bookmark,
+  Users,
+  Clock,
 } from 'lucide-react'
 import { PlatformShell } from './platform-shell'
 import { Dropdown } from '@/components/dashboard/menu'
@@ -38,7 +42,7 @@ import { ToastProvider, useToast } from '@/components/dashboard/toast'
 import { ConfirmDialog, type ConfirmRequest } from './confirm-dialog'
 import { EditAgentBadgeModal } from './edit-agent-badge-modal'
 import { EditAgentProfileModal } from './edit-agent-profile-modal'
-import { CustomizeTableDialog } from './customize-table-dialog'
+import { CustomizeTableDialog, defaultTablePresets, type TableViewPreset } from './customize-table-dialog'
 import { ScheduleExportModal } from './schedule-export-modal'
 import { DateRangePicker } from './date-range-picker'
 import { agents as initialAgents, type PlatformAgent } from '@/lib/platform-users'
@@ -53,7 +57,6 @@ import Link from 'next/link'
 type Agent = PlatformAgent
 
 const columns = [
-  'Agent ID',
   'Name',
   'Agency',
   'RERA Number',
@@ -64,7 +67,6 @@ const columns = [
   'Accepted Offers',
   'Revenue',
   'Last Login',
-  'Actions',
 ]
 
 function AgentsInner() {
@@ -118,18 +120,18 @@ function AgentsInner() {
   ])
 
   const [query, setQuery] = React.useState('')
-  const [tab, setTab] = React.useState<'All agents' | 'Verified' | 'Pending verification' | 'Suspended' | 'Expired license' | 'Deleted users'>('All agents')
+  const [tab, setTab] = React.useState<'All agents' | 'Verified' | 'Pending verification' | 'Expired license'>('All agents')
   const [agencyFilter, setAgencyFilter] = React.useState('All agencies')
   const [subscriptionFilter, setSubscriptionFilter] = React.useState('All subscriptions')
   const [countryFilter, setCountryFilter] = React.useState('All countries')
-  const [verificationFilter, setVerificationFilter] = React.useState('All verifications')
-  const [statusFilter, setStatusFilter] = React.useState('All statuses')
   const [showFilters, setShowFilters] = React.useState(true)
   const [sortOption, setSortOption] = React.useState('newest')
 
   const [selected, setSelected] = React.useState<string[]>([])
   const [columnsOpen, setColumnsOpen] = React.useState(false)
-  const [visibleColumns, setVisibleColumns] = React.useState(columns.slice(0, -1))
+  const [visibleColumns, setVisibleColumns] = React.useState(columns)
+  const [activePresetId, setActivePresetId] = React.useState('default')
+  const [presets, setPresets] = React.useState<TableViewPreset[]>(defaultTablePresets)
   const [confirm, setConfirm] = React.useState<ConfirmRequest | null>(null)
 
   // Load from local storage
@@ -168,29 +170,20 @@ function AgentsInner() {
     }
   }
 
-  // Active dataset depending on Deleted users tab
-  const activeDataset = tab === 'Deleted users' ? deletedRows : rows
+  // Active dataset
+  const activeDataset = rows
 
   const filtered = activeDataset.filter((agent) => {
     const matchesQuery = Object.values(agent).join(' ').toLowerCase().includes(query.toLowerCase())
     const matchesAgency = agencyFilter === 'All agencies' || agent.agency === agencyFilter
     const matchesSubscription = subscriptionFilter === 'All subscriptions' || agent.subscription.toLowerCase().includes(subscriptionFilter.toLowerCase().replace(' agent', ''))
     const matchesCountry = countryFilter === 'All countries' || agent.country === countryFilter
-    const matchesVerification = verificationFilter === 'All verifications' || agent.verification === verificationFilter
-    const matchesStatus = statusFilter === 'All statuses' || agent.status === statusFilter
-
-    if (tab === 'Deleted users') {
-      return matchesQuery
-    }
-
     const matchesTab =
       tab === 'All agents' ||
       (tab === 'Verified' && agent.status === 'Verified') ||
       (tab === 'Pending verification' && ['Pending', 'Under review'].includes(agent.status)) ||
-      (tab === 'Suspended' && agent.status === 'Suspended') ||
       (tab === 'Expired license' && (agent.tradeLicense?.status === 'Expired' || agent.status === 'Rejected'))
-
-    return matchesQuery && matchesAgency && matchesSubscription && matchesCountry && matchesVerification && matchesStatus && matchesTab
+    return matchesQuery && matchesAgency && matchesSubscription && matchesCountry && matchesTab
   })
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage))
@@ -373,16 +366,6 @@ function AgentsInner() {
       eyebrow="Users"
       query={query}
       onQueryChange={setQuery}
-      actions={
-        <button
-          type="button"
-          onClick={() => handleExportCsv(filtered)}
-          className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3 text-[14px] font-medium text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn"
-        >
-          <FileDown className="size-4" />
-          <span>Export CSV</span>
-        </button>
-      }
     >
       <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
         {/* Top Header Card */}
@@ -415,11 +398,12 @@ function AgentsInner() {
             </div>
           </div>
 
-          {/* 4 Stat Cards */}
+          {/* 4 Stat Metric Cards */}
           <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3">
             <MetricCard
               label="Total Agents"
               value={rows.length}
+              icon={Users}
               tone="neutral"
               active={tab === 'All agents'}
               onClick={() => setTab('All agents')}
@@ -427,26 +411,28 @@ function AgentsInner() {
             <MetricCard
               label="Verified RERA"
               value={rows.filter((a) => a.status === 'Verified').length}
+              icon={ShieldCheck}
               tone="success"
-              active={false}
+              active={tab === 'Verified'}
               onClick={() => {
-                setTab('All agents')
-                setStatusFilter('Verified')
+                setTab('Verified')
               }}
             />
             <MetricCard
               label="Pending Review"
               value={rows.filter((a) => ['Pending', 'Under review'].includes(a.status)).length}
+              icon={Clock}
               tone="warning"
               active={tab === 'Pending verification'}
               onClick={() => setTab('Pending verification')}
             />
             <MetricCard
-              label="Suspended / Expired"
-              value={rows.filter((r) => ['Suspended', 'Rejected'].includes(r.status)).length}
+              label="Expired License"
+              value={rows.filter((r) => r.tradeLicense?.status === 'Expired' || r.status === 'Rejected').length}
+              icon={AlertTriangle}
               tone="destructive"
-              active={tab === 'Suspended' || tab === 'Expired license'}
-              onClick={() => setTab('Suspended')}
+              active={tab === 'Expired license'}
+              onClick={() => setTab('Expired license')}
             />
           </div>
         </header>
@@ -455,9 +441,9 @@ function AgentsInner() {
         <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
           {/* Top Tabs Bar */}
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2">
-                {(['All agents', 'Verified', 'Pending verification', 'Suspended', 'Expired license', 'Deleted users'] as const).map((item) => {
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+                {(['All agents', 'Verified', 'Pending verification', 'Expired license'] as const).map((item) => {
                   const count =
                     item === 'All agents'
                       ? rows.length
@@ -465,11 +451,7 @@ function AgentsInner() {
                       ? rows.filter((r) => r.status === 'Verified').length
                       : item === 'Pending verification'
                       ? rows.filter((r) => ['Pending', 'Under review'].includes(r.status)).length
-                      : item === 'Suspended'
-                      ? rows.filter((r) => r.status === 'Suspended').length
-                      : item === 'Expired license'
-                      ? rows.filter((r) => r.tradeLicense?.status === 'Expired' || r.status === 'Rejected').length
-                      : deletedRows.length
+                      : rows.filter((r) => r.tradeLicense?.status === 'Expired' || r.status === 'Rejected').length
 
                   return (
                     <button
@@ -477,9 +459,13 @@ function AgentsInner() {
                       key={item}
                       onClick={() => setTab(item)}
                       className={cn(
-                        'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn',
+                        'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap',
                         tab === item
-                          ? 'bg-[#1f2327] text-white shadow-2xs'
+                          ? item === 'Verified'
+                            ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
+                            : item === 'Expired license'
+                            ? 'bg-[#f79009] text-white shadow-2xs font-semibold'
+                            : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                           : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                       )}
                     >
@@ -487,10 +473,10 @@ function AgentsInner() {
                       <span
                         className={cn(
                           'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
-                          item === 'Suspended' || item === 'Expired license'
-                            ? 'bg-[#f79009] text-white'
+                          item === 'Expired license' && tab !== item
+                            ? 'bg-[#fff5e5] text-[#f79009]'
                             : tab === item
-                            ? 'bg-white/20 text-white'
+                            ? 'bg-white/25 text-white'
                             : 'bg-[#eff1f3] text-[#1f2327]'
                         )}
                       >
@@ -501,14 +487,47 @@ function AgentsInner() {
                 })}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Saved View / Preset Selector */}
+                <Dropdown
+                  align="end"
+                  floating
+                  value={activePresetId}
+                  options={presets.map((p) => ({
+                    label: p.name,
+                    value: p.id,
+                    icon: <Bookmark className="size-4 text-[#00c2cb]" />,
+                  }))}
+                  onSelect={(presetId) => {
+                    const found = presets.find((p) => p.id === presetId)
+                    if (found) {
+                      setActivePresetId(presetId)
+                      setVisibleColumns(found.columns)
+                      notify('View Changed', `Switched to "${found.name}".`)
+                    }
+                  }}
+                  trigger={
+                    <button
+                      type="button"
+                      className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                    >
+                      <Bookmark className="size-4 text-[#00c2cb] shrink-0" />
+                      <span className="max-w-[140px] truncate whitespace-nowrap">
+                        {presets.find((p) => p.id === activePresetId)?.name || 'Custom View'}
+                      </span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae] shrink-0" />
+                    </button>
+                  }
+                  ariaLabel="Select table template view"
+                />
+
                 <button
                   type="button"
                   onClick={() => setColumnsOpen(true)}
-                  className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn"
+                  className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
                 >
-                  <Settings2 className="size-4 text-[#6f777f]" />
-                  <span>Customize columns</span>
+                  <Settings2 className="size-4 text-[#6f777f] shrink-0" />
+                  <span className="whitespace-nowrap">Customize columns</span>
                 </button>
 
                 <Dropdown
@@ -525,11 +544,11 @@ function AgentsInner() {
                   trigger={
                     <button
                       type="button"
-                      className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3 text-[14px] font-medium text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn font-sans"
+                      className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3.5 text-[14px] font-medium text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn font-sans shrink-0 whitespace-nowrap"
                     >
-                      <Download className="size-4 text-white" />
-                      <span>Export</span>
-                      <ChevronDown className="size-3.5 opacity-70" />
+                      <Download className="size-4 text-white shrink-0" />
+                      <span className="whitespace-nowrap">Export</span>
+                      <ChevronDown className="size-3.5 opacity-70 shrink-0" />
                     </button>
                   }
                   ariaLabel="Export options"
@@ -537,7 +556,7 @@ function AgentsInner() {
               </div>
             </div>
 
-            {/* 6 Filters Row */}
+            {/* Filters Row */}
             <div className="flex flex-wrap items-center gap-2.5 pt-1">
               {/* Search */}
               <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
@@ -559,25 +578,6 @@ function AgentsInner() {
                 )}
               </div>
 
-              {/* Status Filter */}
-              <Dropdown
-                align="start"
-                value={statusFilter}
-                onSelect={setStatusFilter}
-                ariaLabel="Filter by Status"
-                options={['All statuses', 'Verified', 'Pending', 'Suspended', 'Rejected'].map((item) => ({
-                  label: item,
-                  value: item,
-                }))}
-                trigger={
-                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
-                    <Filter className="size-4 text-[#6f777f]" />
-                    <span>{statusFilter}</span>
-                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
-                  </span>
-                }
-              />
-
               {/* Plan Filter */}
               <Dropdown
                 align="start"
@@ -589,7 +589,7 @@ function AgentsInner() {
                   value: item,
                 }))}
                 trigger={
-                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer whitespace-nowrap">
                     <Award className="size-4 text-[#6f777f]" />
                     <span>{subscriptionFilter}</span>
                     <ChevronDown className="size-3.5 text-[#9da4ae]" />
@@ -616,7 +616,7 @@ function AgentsInner() {
                   value: item,
                 }))}
                 trigger={
-                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer whitespace-nowrap">
                     <Building2 className="size-4 text-[#6f777f]" />
                     <span>{agencyFilter}</span>
                     <ChevronDown className="size-3.5 text-[#9da4ae]" />
@@ -635,7 +635,7 @@ function AgentsInner() {
                   value: item,
                 }))}
                 trigger={
-                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer">
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer whitespace-nowrap">
                     <span>🌍</span>
                     <span>{countryFilter}</span>
                     <ChevronDown className="size-3.5 text-[#9da4ae]" />
@@ -646,19 +646,19 @@ function AgentsInner() {
               {/* Date Range Picker */}
               <DateRangePicker value={dateRange} onChange={setDateRange} />
 
-              {(statusFilter !== 'All statuses' ||
-                subscriptionFilter !== 'All subscriptions' ||
+              {(subscriptionFilter !== 'All subscriptions' ||
                 agencyFilter !== 'All agencies' ||
-                countryFilter !== 'All countries') && (
+                countryFilter !== 'All countries' ||
+                dateRange !== 'All Time') && (
                 <button
                   type="button"
                   onClick={() => {
-                    setStatusFilter('All statuses')
                     setSubscriptionFilter('All subscriptions')
                     setAgencyFilter('All agencies')
                     setCountryFilter('All countries')
+                    setDateRange('All Time')
                   }}
-                  className="text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer"
+                  className="text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer whitespace-nowrap"
                 >
                   Reset filters
                 </button>
@@ -673,46 +673,34 @@ function AgentsInner() {
                 <span className="text-[14px] font-semibold text-[#1f2327]">
                   {selected.length} selected
                 </span>
-                {tab !== 'Deleted users' ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => runAction('verify', selected, `${selected.length} agents`)}
-                      className="h-[34px] rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[13px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
-                    >
-                      Verify
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => runAction('suspend', selected, `${selected.length} agents`)}
-                      className="h-[34px] rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[13px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
-                    >
-                      Suspend
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => runAction('send-notification', selected, `${selected.length} agents`)}
-                      className="h-[34px] rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[13px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
-                    >
-                      Send notification
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => runAction('delete', selected, `${selected.length} agents`)}
-                      className="h-[34px] rounded-[8px] px-3.5 text-[13px] font-semibold text-[#f04438] hover:bg-rose-50 transition-colors cursor-pointer"
-                    >
-                      Delete
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => runAction('restore', selected, `${selected.length} agents`)}
-                    className="h-[34px] rounded-[8px] bg-[#17b26a] px-3.5 text-[13px] font-semibold text-white hover:bg-[#159a5c] transition-colors cursor-pointer"
-                  >
-                    Restore Agents
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => runAction('verify', selected, `${selected.length} agents`)}
+                  className="h-[34px] rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[13px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                >
+                  Verify
+                </button>
+                <button
+                  type="button"
+                  onClick={() => runAction('suspend', selected, `${selected.length} agents`)}
+                  className="h-[34px] rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[13px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                >
+                  Suspend
+                </button>
+                <button
+                  type="button"
+                  onClick={() => runAction('send-notification', selected, `${selected.length} agents`)}
+                  className="h-[34px] rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[13px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                >
+                  Send notification
+                </button>
+                <button
+                  type="button"
+                  onClick={() => runAction('delete', selected, `${selected.length} agents`)}
+                  className="h-[34px] rounded-[8px] px-3.5 text-[13px] font-semibold text-[#f04438] hover:bg-rose-50 transition-colors cursor-pointer"
+                >
+                  Delete
+                </button>
               </div>
 
               <button
@@ -726,9 +714,27 @@ function AgentsInner() {
             </div>
           )}
 
-          {/* Table */}
-          <div className="overflow-x-auto table-scrollbar flex-1">
-            <table className="w-full min-w-[1500px] border-collapse text-left text-[14px] font-sans">
+          {/* Mobile View (< 768px): Compact Entity Cards (Section 10) */}
+          <div className="block md:hidden p-3 space-y-3">
+            {paginatedAgents.map((agent) => (
+              <AgentMobileCard
+                key={agent.id}
+                agent={agent}
+                isDeleted={tab === 'Deleted users'}
+                selected={selected.includes(agent.id)}
+                onSelect={() =>
+                  setSelected((items) =>
+                    items.includes(agent.id) ? items.filter((id) => id !== agent.id) : [...items, agent.id]
+                  )
+                }
+                onAction={handleAgentAction}
+              />
+            ))}
+          </div>
+
+          {/* Desktop & Tablet Table (>= 768px) */}
+          <div className="hidden md:block overflow-x-auto table-scrollbar flex-1">
+            <table className="w-full min-w-[1400px] border-collapse text-left text-[14px] font-sans">
               <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
                 <tr className="h-12">
                   <th className="w-12 px-4">
@@ -738,13 +744,14 @@ function AgentsInner() {
                       onChange={toggleAll}
                     />
                   </th>
-                  {columns.map((column) =>
-                    visibleColumns.includes(column) || column === 'Actions' ? (
-                      <th key={column} className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327] font-sans">
-                        {column}
-                      </th>
-                    ) : null
-                  )}
+                  {visibleColumns.map((column) => (
+                    <th key={column} className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327] font-sans">
+                      {column}
+                    </th>
+                  ))}
+                  <th className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327] font-sans text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#d3d5d7]">
@@ -765,6 +772,7 @@ function AgentsInner() {
                 ))}
               </tbody>
             </table>
+          </div>
 
             {filtered.length === 0 && (
               <EmptyState
@@ -774,14 +782,13 @@ function AgentsInner() {
                 onAction={() => {
                   setQuery('')
                   setAgencyFilter('All agencies')
-                  setSubscriptionFilter('All plans')
+                  setSubscriptionFilter('All subscriptions')
                   setCountryFilter('All countries')
-                  setVerificationFilter('All verification')
-                  setStatusFilter('All statuses')
+                  setDateRange('All Time')
+                  setTab('All agents')
                 }}
               />
             )}
-          </div>
 
           {/* Footer Pagination */}
           <div className="mt-auto border-t border-[#d3d5d7]">
@@ -805,8 +812,13 @@ function AgentsInner() {
       <CustomizeTableDialog
         isOpen={columnsOpen}
         visibleColumns={visibleColumns}
-        onApply={(cols) => {
+        activePresetId={activePresetId}
+        presets={presets}
+        storageKeyPrefix="agents"
+        onPresetsChange={(newPresets) => setPresets(newPresets)}
+        onApply={(cols, presetId) => {
           setVisibleColumns(cols)
+          if (presetId) setActivePresetId(presetId)
           notify('Table customized', `${cols.length} visible columns applied.`)
         }}
         onClose={() => setColumnsOpen(false)}
@@ -853,34 +865,11 @@ function AgentsInner() {
   )
 }
 
-function AgentRow({
-  agent,
-  isDeleted,
-  selected,
-  onSelect,
-  visibleColumns,
-  onAction,
-}: {
-  agent: Agent
-  isDeleted?: boolean
-  selected: boolean
-  onSelect: () => void
-  visibleColumns: string[]
-  onAction: (kind: string, agent: Agent) => void
-}) {
-  const router = useRouter()
-  const cell = (column: string, content: React.ReactNode) =>
-    visibleColumns.includes(column) ? <td className="whitespace-nowrap px-4 text-[14px] font-sans">{content}</td> : null
-
-  return (
-    <tr className="h-14 bg-white hover:bg-[#f8f9fa] transition-colors">
-      <td className="px-4">
-        <TableCheckbox ariaLabel={`Select ${agent.name}`} checked={selected} onChange={onSelect} />
-      </td>
-
-      {/* 0. Agent ID */}
-      {cell(
-        'Agent ID',
+function renderAgentCell(column: string, agent: Agent, router: ReturnType<typeof useRouter>) {
+  switch (column) {
+    case 'Agent ID':
+    case 'ID':
+      return (
         <button
           type="button"
           onClick={() => router.push(`/agents/${agent.id}`)}
@@ -888,11 +877,10 @@ function AgentRow({
         >
           {agent.id}
         </button>
-      )}
+      )
 
-      {/* 1. Name */}
-      {cell(
-        'Name',
+    case 'Name':
+      return (
         <div className="flex items-center gap-3">
           <TableAvatar
             src={agent.avatar}
@@ -913,78 +901,213 @@ function AgentRow({
             <span className="text-[12px] leading-[16px] text-[#6f777f] truncate">{agent.email}</span>
           </div>
         </div>
-      )}
+      )
 
-      {/* 2. Agency */}
-      {cell(
-        'Agency',
+    case 'Email':
+      return <span className="text-[14px] text-[#6f777f]">{agent.email}</span>
+
+    case 'Phone':
+      return <span className="font-mono text-[14px] text-[#1f2327]">{agent.phone}</span>
+
+    case 'Agency':
+      return (
         <div className="flex items-center gap-1.5 font-normal text-[14px] leading-[20px] text-[#1f2327]">
           <Building2 className="size-4 text-[#9da4ae]" />
           <span>{agent.agency}</span>
         </div>
-      )}
+      )
 
-      {/* 3. RERA Number */}
-      {cell(
-        'RERA Number',
+    case 'Country':
+      return (
+        <div className="flex items-center gap-1.5 text-[14px] text-[#1f2327]">
+          <Flag code={getCountryCode(agent.country || 'United Arab Emirates')} size="s" />
+          <span>{agent.country}</span>
+        </div>
+      )
+
+    case 'City':
+      return <span className="text-[14px] text-[#1f2327]">{agent.company?.emirate || 'Dubai'}</span>
+
+    case 'Role':
+      return (
+        <span className="rounded-[6px] bg-[#eff1f3] px-2 py-0.5 text-[12px] font-medium text-[#1f2327]">
+          {agent.reraVerification?.category || 'Licensed Broker'}
+        </span>
+      )
+
+    case 'Status':
+    case 'Account Status':
+      return <FigmaStatusBadge status={agent.status} />
+
+    case 'RERA Number':
+    case 'RERA ID':
+      return (
         <span className="font-mono text-xs font-semibold text-[#1f2327] bg-[#eff1f3] px-2 py-1 rounded-[6px]">
-          {agent.reraNumber || 'BRN-61284'}
+          {agent.reraNumber || agent.reraVerification?.number || 'BRN-61284'}
         </span>
-      )}
+      )
 
-      {/* 4. License */}
-      {cell(
-        'License',
+    case 'Verification Status':
+    case 'Verification':
+      return <FigmaStatusBadge status={agent.verification || agent.status || 'Verified'} />
+
+    case 'Verification Type':
+      return (
+        <span className="rounded-[6px] bg-[#dfefe8] border border-[#9cdabd] px-2 py-0.5 text-xs font-medium text-[#17b26a]">
+          {agent.verification || 'RERA + KYC'}
+        </span>
+      )
+
+    case 'License':
+    case 'License Status':
+      return (
         <span className="font-mono text-xs text-[#6f777f]">
-          {agent.license}
+          {agent.license || agent.tradeLicense?.number || 'TL 190-420'}
         </span>
-      )}
+      )
 
-      {/* 5. Subscription */}
-      {cell(
-        'Subscription',
-        <AgentPlanBadge plan={agent.subscription} />
-      )}
+    case 'License Expiry':
+      return (
+        <span className="text-xs text-[#6f777f]">
+          {agent.tradeLicense?.expiry || '12 Jan 2027'}
+        </span>
+      )
 
-      {/* 6. Rating */}
-      {cell(
-        'Rating',
-        <RateBadge rate={agent.rating.toFixed(1)} />
-      )}
+    case 'Verified Date':
+      return (
+        <span className="text-xs text-[#6f777f]">
+          {agent.joined || '12 Jan 2026'}
+        </span>
+      )
 
-      {/* 7. Offers */}
-      {cell(
-        'Offers',
-        <span className="font-semibold text-[#1f2327]">{agent.offers}</span>
-      )}
+    case 'Subscription':
+      return <AgentPlanBadge plan={agent.subscription} />
 
-      {/* 8. Accepted Offers */}
-      {cell(
-        'Accepted Offers',
-        <span className="font-semibold text-[#17b26a]">{agent.accepted}</span>
-      )}
+    case 'Rating':
+      return <RateBadge rate={agent.rating.toFixed(1)} />
 
-      {/* 9. Revenue */}
-      {cell(
-        'Revenue',
-        <span className="font-bold text-[#1f2327]">{agent.revenue}</span>
-      )}
+    case 'Offers':
+      return <span className="font-semibold text-[#1f2327]">{agent.offers}</span>
 
-      {/* 10. Last Login */}
-      {cell(
-        'Last Login',
-        <span className="text-[13px] text-[#6f777f]">{agent.lastLogin}</span>
-      )}
+    case 'Accepted Offers':
+      return <span className="font-semibold text-[#17b26a]">{agent.accepted}</span>
 
-      {/* 11. Actions */}
-      <td className="whitespace-nowrap px-4 text-[14px]">
-        <div className="flex items-center gap-2">
+    case 'Active Deals':
+      return (
+        <span className="font-semibold text-[#00c2cb]">
+          {agent.performance?.activeDeals ?? Math.max(1, agent.accepted)}
+        </span>
+      )
+
+    case 'Total Deals':
+      return (
+        <span className="font-semibold text-[#1f2327]">
+          {agent.dealList?.length ? agent.dealList.length : (agent.accepted + 3)}
+        </span>
+      )
+
+    case 'Success Rate':
+      return (
+        <span className="font-semibold text-[#17b26a]">
+          {agent.performance?.conversionRate || `${Math.min(100, Math.round((agent.accepted / Math.max(agent.offers, 1)) * 100))}%`}
+        </span>
+      )
+
+    case 'Revenue':
+      return <span className="font-bold text-[#1f2327]">{agent.revenue}</span>
+
+    case 'Join Date':
+      return (
+        <span className="text-[13px] text-[#6f777f] flex items-center gap-1.5">
+          <CalendarDays className="size-3.5 text-[#9da4ae]" />
+          {agent.joined}
+        </span>
+      )
+
+    case 'Last Login':
+      return <span className="text-[13px] text-[#6f777f]">{agent.lastLogin}</span>
+
+    case 'Last Active':
+      return <span className="text-[13px] text-[#6f777f]">{agent.lastLogin || '1 hour ago'}</span>
+
+    case 'Total Requests':
+      return (
+        <span className="font-semibold text-[#1f2327]">
+          {agent.requestsWon?.length ? agent.requestsWon.length * 3 : 18}
+        </span>
+      )
+
+    case 'Active Conversations':
+      return <span className="font-semibold text-[#1f2327]">{agent.chats?.length || 6}</span>
+
+    case 'Response Rate':
+      return (
+        <span className="font-semibold text-[#17b26a]">
+          {agent.performance?.responseRate || '96%'}
+        </span>
+      )
+
+    case 'Average Response Time':
+      return (
+        <span className="text-xs text-[#6f777f]">
+          {agent.performance?.avgResponse || '20 min'}
+        </span>
+      )
+
+    case 'Completed Deals':
+      return (
+        <span className="font-semibold text-[#1f2327]">
+          {agent.dealList?.filter((d) => d.status === 'Completed').length || agent.accepted}
+        </span>
+      )
+
+    default:
+      return (
+        <span className="text-xs text-[#6f777f]">
+          {(agent as any)[column.toLowerCase()] || (agent as any)[column] || '—'}
+        </span>
+      )
+  }
+}
+
+function AgentRow({
+  agent,
+  isDeleted,
+  selected,
+  onSelect,
+  visibleColumns,
+  onAction,
+}: {
+  agent: Agent
+  isDeleted?: boolean
+  selected: boolean
+  onSelect: () => void
+  visibleColumns: string[]
+  onAction: (kind: string, agent: Agent) => void
+}) {
+  const router = useRouter()
+
+  return (
+    <tr className={cn('h-[64px] transition-colors font-sans hover:bg-[#f8f9fa] whitespace-nowrap', selected && 'bg-[#e5f6f7]/40')}>
+      <td className="px-4">
+        <TableCheckbox ariaLabel={`Select ${agent.name}`} checked={selected} onChange={onSelect} />
+      </td>
+
+      {visibleColumns.map((column) => (
+        <td key={column} className="whitespace-nowrap px-4 text-[14px] font-sans">
+          {renderAgentCell(column, agent, router)}
+        </td>
+      ))}
+
+      {/* Actions */}
+      <td className="whitespace-nowrap px-4 text-[14px] text-right">
+        <div className="flex items-center justify-end gap-1.5">
           {!isDeleted ? (
             <>
               <button
                 type="button"
                 onClick={() => router.push(`/agents/${agent.id}`)}
-                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer"
+                className="flex size-8 items-center justify-center rounded-[6px] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
                 title="View Profile"
               >
                 <Eye className="size-4" />
@@ -1014,9 +1137,13 @@ function AgentRow({
                 ]}
                 onSelect={(val) => onAction(val, agent)}
                 trigger={
-                  <span className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer">
+                  <button
+                    type="button"
+                    className="flex size-8 items-center justify-center rounded-[6px] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+                    title="More actions"
+                  >
                     <MoreHorizontal className="size-4" />
-                  </span>
+                  </button>
                 }
               />
             </>
@@ -1033,6 +1160,126 @@ function AgentRow({
         </div>
       </td>
     </tr>
+  )
+}
+
+function AgentMobileCard({
+  agent,
+  isDeleted,
+  selected,
+  onSelect,
+  onAction,
+}: {
+  agent: Agent
+  isDeleted: boolean
+  selected: boolean
+  onSelect: () => void
+  onAction: (kind: string, agent: Agent) => void
+}) {
+  const router = useRouter()
+  const countryCode = getCountryCode(agent.country)
+
+  return (
+    <div
+      className={cn(
+        'flex flex-col gap-3 rounded-[12px] border border-[#E2E5E8] bg-white p-4 shadow-xs transition-colors',
+        selected && 'bg-[#E8F9FB]/40 border-[#06B6C9]/40'
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <TableCheckbox
+            ariaLabel={`Select ${agent.name}`}
+            checked={selected}
+            onChange={onSelect}
+          />
+          <Link href={`/agents/${agent.id}`} className="cursor-pointer">
+            <TableAvatar
+              src={agent.avatar}
+              name={agent.name}
+              countryCode={countryCode}
+              size="md"
+              variant="brand"
+            />
+          </Link>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Link
+                href={`/agents/${agent.id}`}
+                className="font-bold text-[#202428] text-[14px] hover:text-[#06B6C9] hover:underline truncate"
+              >
+                {agent.name}
+              </Link>
+              <AgentPlanBadge plan={agent.subscription} compact />
+            </div>
+            <div className="flex items-center gap-1.5 text-[11px] text-[#68727D]">
+              <span className="font-semibold text-[#202428] truncate">{agent.agency}</span>
+              <span>•</span>
+              <span className="font-mono">{agent.id}</span>
+            </div>
+          </div>
+        </div>
+
+        <FigmaStatusBadge status={agent.status} />
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 border-t border-b border-[#E2E5E8] py-2 text-[12px]">
+        <div>
+          <span className="text-[10px] uppercase font-semibold text-[#8A939D] block">RERA License</span>
+          <span className="font-mono text-[#202428] truncate block">{agent.reraNumber}</span>
+        </div>
+        <div>
+          <span className="text-[10px] uppercase font-semibold text-[#8A939D] block">Rating</span>
+          <span className="font-bold text-[#202428] flex items-center gap-1">
+            ⭐ {agent.rating}
+          </span>
+        </div>
+        <div>
+          <span className="text-[10px] uppercase font-semibold text-[#8A939D] block">Offers / Won</span>
+          <span className="font-bold text-[#202428] block">{agent.offers} / {agent.accepted}</span>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 pt-0.5">
+        <span className="text-[11px] text-[#8A939D]">
+          Revenue: <strong className="text-[#202428] font-semibold">{agent.revenue}</strong>
+        </span>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => router.push(`/agents/${agent.id}`)}
+            className="h-[30px] rounded-[6px] border border-[#E2E5E8] bg-white px-2.5 text-[12px] font-medium text-[#202428] hover:bg-[#F8F9FA]"
+          >
+            Profile
+          </button>
+          <Dropdown
+            align="end"
+            options={
+              !isDeleted
+                ? [
+                    { label: 'View Profile', value: 'view' },
+                    { label: 'Edit Profile', value: 'edit-profile' },
+                    { label: 'Edit Badge / Plan', value: 'edit-badge' },
+                    { label: 'Verify Agent', value: 'approve' },
+                    { label: 'Suspend Agent', value: 'suspend' },
+                    { label: 'Delete Record', value: 'delete', destructive: true },
+                  ]
+                : [{ label: 'Restore Account', value: 'restore' }]
+            }
+            onSelect={(kind) => onAction(kind, agent)}
+            trigger={
+              <button
+                type="button"
+                className="flex size-7.5 items-center justify-center rounded-[6px] border border-[#E2E5E8] text-[#68727D] hover:bg-[#F8F9FA]"
+                aria-label={`More actions for ${agent.name}`}
+              >
+                <MoreHorizontal className="size-3.5" />
+              </button>
+            }
+          />
+        </div>
+      </div>
+    </div>
   )
 }
 

@@ -407,63 +407,64 @@ function SettingsManagementInner() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-60px)] flex-col bg-[#fafbfc] text-[#0f172a]">
-      {/* Settings Top Header Bar */}
-      <div className="border-b border-[#d3d5d7] bg-white px-4 sm:px-6 py-4 sm:py-5 shadow-[0px_1px_3px_rgba(16,24,40,0.05)]">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
-                System Settings & Control Center
-              </h1>
-              <span className="rounded-[8px] bg-[#eff1f3] px-2.5 py-0.5 text-[12px] font-semibold text-[#6f777f] border border-[#d3d5d7]">
-                v2.6 Enterprise
-              </span>
-            </div>
-            <p className="mt-0.5 text-[14px] leading-[20px] text-[#6f777f]">
-              Configure platform architecture, taxonomy, integrations, security policies, maintenance mode, and backups safely.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {isDirty && (
-              <div className="flex items-center gap-2 rounded-[8px] border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800">
-                <AlertTriangle className="h-3.5 w-3.5 text-amber-600 animate-pulse" />
-                <span>You have unsaved changes</span>
+    <PlatformShell title="System Settings & Control Center" eyebrow="Administration">
+      <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
+        {/* Settings Top Header Card (Standardized to match Users page) */}
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05)] flex flex-col gap-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
+                  System Settings & Control Center
+                </h1>
+                <span className="rounded-[8px] bg-[#eff1f3] px-2.5 py-0.5 text-[12px] font-semibold text-[#6f777f] border border-[#d3d5d7]">
+                  v2.6 Enterprise
+                </span>
               </div>
-            )}
+              <p className="mt-0.5 text-[14px] leading-[20px] text-[#6f777f]">
+                Configure platform architecture, taxonomy, integrations, security policies, maintenance mode, and backups safely.
+              </p>
+            </div>
 
-            <button
-              type="button"
-              onClick={handleDiscardChanges}
-              disabled={!isDirty || saving}
-              className="inline-flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] transition hover:bg-[#eff1f3] disabled:opacity-40 cursor-pointer"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              Discard
-            </button>
+            <div className="flex items-center gap-3">
+              {isDirty && (
+                <div className="flex items-center gap-2 rounded-[8px] border border-[#fedf89] bg-[#fffaeb] px-3 py-1.5 text-xs font-medium text-[#b54708]">
+                  <AlertTriangle className="h-3.5 w-3.5 text-[#f79009] animate-pulse" />
+                  <span>You have unsaved changes</span>
+                </div>
+              )}
 
-            <button
-              type="button"
-              onClick={handleSaveChanges}
-              disabled={!isDirty || saving}
-              className="inline-flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#00c2cb] px-4 text-[14px] font-semibold text-white shadow-2xs transition hover:bg-[#00a8b0] disabled:opacity-40 cursor-pointer"
-            >
-              {saving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-              Save All Changes
-            </button>
+              <button
+                type="button"
+                onClick={handleDiscardChanges}
+                disabled={!isDirty || saving}
+                className="inline-flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] transition hover:bg-[#eff1f3] disabled:opacity-40 cursor-pointer ant-wave-btn"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Discard
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveChanges}
+                disabled={!isDirty || saving}
+                className="inline-flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-4 text-[14px] font-semibold text-white shadow-2xs transition hover:bg-[#2e3338] disabled:opacity-40 cursor-pointer ant-wave-btn"
+              >
+                {saving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                Save All Changes
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
+        </header>
 
-      {/* Main Settings 2-Column Desktop Grid / Responsive Mobile */}
-      <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col lg:flex-row">
-        {/* Left Settings Sidebar Navigation */}
-        <aside className="w-full border-b border-[#d3d5d7] bg-white p-3 lg:w-72 lg:border-b-0 lg:border-r lg:p-4 shrink-0">
+        {/* Main Settings 2-Column Desktop Grid / Responsive Mobile */}
+        <div className="flex w-full flex-1 flex-col lg:flex-row rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)] overflow-hidden">
+          {/* Left Settings Sidebar Navigation */}
+          <aside className="w-full border-b border-[#d3d5d7] bg-white p-3 lg:w-72 lg:border-b-0 lg:border-r lg:p-4 shrink-0">
           <div className="mb-2 px-2 text-[11px] font-bold uppercase tracking-wider text-[#6f777f]">
             Configuration Modules
           </div>
-          <nav className="space-y-1">
+          <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-none">
             {SETTINGS_NAV.map((item) => {
               const Icon = item.icon
               const isActive = activeSection === item.id
@@ -480,7 +481,7 @@ function SettingsManagementInner() {
                       setActiveSection(item.id)
                     }
                   }}
-                  className={`flex w-full items-center justify-between rounded-[8px] px-3 py-2.5 text-left text-[13px] font-medium transition cursor-pointer ${
+                  className={`flex w-auto lg:w-full items-center justify-between rounded-[8px] px-3 py-2 text-left text-[13px] font-medium transition cursor-pointer whitespace-nowrap shrink-0 lg:shrink ${
                     isActive
                       ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                       : 'text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
@@ -494,18 +495,18 @@ function SettingsManagementInner() {
                     </div>
                   </div>
                   {item.badge && (
-                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'}`}>
+                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ml-2 ${isActive ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'}`}>
                       {item.badge}
                     </span>
                   )}
-                  {isActive && <ChevronRight className="h-3.5 w-3.5 text-white/70 shrink-0" />}
+                  {isActive && <ChevronRight className="hidden lg:block h-3.5 w-3.5 text-white/70 shrink-0 ml-2" />}
                 </button>
               )
             })}
           </nav>
 
           {/* Environmental Health Status Indicator */}
-          <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <div className="hidden lg:block mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3">
             <div className="flex items-center justify-between text-[11px] font-bold text-slate-700">
               <span className="flex items-center gap-1.5">
                 <Server className="h-3.5 w-3.5 text-teal-600" />
@@ -533,8 +534,9 @@ function SettingsManagementInner() {
           </div>
         </aside>
 
-        {/* Right Settings Content Workspace */}
-        <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
+        {/* Right Settings Content Workspace with 1200px max-width rule */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto w-full">
+          <div className="max-w-[1200px] w-full mx-auto lg:mx-0 space-y-6">
           {/* SECTION 1: GENERAL */}
           {activeSection === 'general' && (
             <div className="space-y-6">
@@ -2195,6 +2197,7 @@ function SettingsManagementInner() {
               </div>
             </div>
           )}
+          </div>
         </main>
       </div>
 
@@ -2289,6 +2292,7 @@ function SettingsManagementInner() {
           </div>
         </div>
       )}
-    </div>
+        </div>
+    </PlatformShell>
   )
 }

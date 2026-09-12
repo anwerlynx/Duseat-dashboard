@@ -170,10 +170,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
           <div className="mt-6 border-t border-border pt-4">
             <p className="text-center text-xs text-muted-foreground">
-              {mode === 'sign-in' ? "Don't have an admin account? " : 'Already registered? '}
-              <a href={mode === 'sign-in' ? '/sign-up' : '/sign-in'} className="font-semibold text-brand hover:underline">
-                {mode === 'sign-in' ? 'Register now' : 'Sign in'}
-              </a>
+              Duseat Marketplace Operations Platform • Authorized Personnel Only
             </p>
           </div>
         </div>

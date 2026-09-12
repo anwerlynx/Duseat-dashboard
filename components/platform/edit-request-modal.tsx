@@ -38,6 +38,7 @@ import type { PropertyRequest } from '@/lib/platform-users'
 import { generateRequestTitle } from '@/lib/platform-users'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/components/dashboard/toast'
+import { Flag } from '@/components/ui/flag'
 
 interface EditRequestModalProps {
   request?: PropertyRequest | null
@@ -79,11 +80,11 @@ const TOP_DEVELOPERS = [
 ]
 
 const LANGUAGE_OPTIONS = [
-  { code: 'ar', label: 'Arabic', flag: '🇦🇪' },
-  { code: 'en', label: 'English', flag: '🇬🇧' },
-  { code: 'ru', label: 'Russian', flag: '🇷🇺' },
-  { code: 'fr', label: 'French', flag: '🇫🇷' },
-  { code: 'hi', label: 'Hindi', flag: '🇮🇳' },
+  { code: 'ar', label: 'Arabic', countryCode: 'AE' },
+  { code: 'en', label: 'English', countryCode: 'GB' },
+  { code: 'ru', label: 'Russian', countryCode: 'RU' },
+  { code: 'fr', label: 'French', countryCode: 'FR' },
+  { code: 'hi', label: 'Hindi', countryCode: 'IN' },
 ]
 
 export function EditRequestModal({
@@ -647,7 +648,7 @@ export function EditRequestModal({
               {/* Currency Selector (Figma Dropdown) */}
               <div className="flex items-center gap-3">
                 <div className="relative inline-flex items-center rounded-[12px] border border-[#d3d5d7] bg-white px-3 py-2 text-[14px] font-semibold text-[#1f2327]">
-                  <span className="mr-2">{currency === 'AED' ? '🇦🇪' : '🇺🇸'}</span>
+                  <Flag code={currency === 'AED' ? 'AE' : 'US'} size="s" className="mr-2" />
                   <select
                     value={currency}
                     onChange={(e) => {
@@ -1031,7 +1032,7 @@ export function EditRequestModal({
                               : 'border-[#d3d5d7] bg-white text-[#1f2327]'
                           )}
                         >
-                          <span>{lang.flag}</span>
+                          <Flag code={lang.countryCode} size="s" />
                           <span>{lang.label}</span>
                         </button>
                       )

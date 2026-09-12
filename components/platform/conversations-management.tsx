@@ -66,7 +66,8 @@ export function ConversationsManagementInner() {
   const [activeThreadForModal, setActiveThreadForModal] = React.useState<string | null>(null)
   const [query, setQuery] = React.useState('')
   const [searchMode, setSearchMode] = React.useState<'keyword' | 'user' | 'request' | 'id'>('keyword')
-  const [statusTab, setStatusTab] = React.useState<'All' | 'active' | 'closed' | 'flagged' | 'reported'>('All')
+  const initialStatusTab = (searchParams.get('status') as any) || (searchParams.get('tab') as any) || 'All'
+  const [statusTab, setStatusTab] = React.useState<'All' | 'active' | 'closed' | 'flagged' | 'reported'>(initialStatusTab)
   const [statusDropdown, setStatusDropdown] = React.useState('All')
   const [investorFilter, setInvestorFilter] = React.useState('All Investors')
   const [agentFilter, setAgentFilter] = React.useState('All Agents')
@@ -247,7 +248,7 @@ export function ConversationsManagementInner() {
         {/* =========================================================================
             1. TOP HEADER CARD (Clean, No Kicker)
            ========================================================================= */}
-        <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)]">
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
@@ -286,58 +287,56 @@ export function ConversationsManagementInner() {
               </button>
             </div>
           </div>
-        </div>
 
-        {/* =========================================================================
-            2. KPI DASHBOARD (7 METRIC CARDS STRIP)
-           ========================================================================= */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-          <MetricCard
-            label="Total Conversations"
-            value={totalCount}
-            tone="neutral"
-            active={statusTab === 'All'}
-            onClick={() => setStatusTab('All')}
-          />
-          <MetricCard
-            label="Active Chats"
-            value={activeCount}
-            tone="brand"
-            active={statusTab === 'active'}
-            onClick={() => setStatusTab('active')}
-          />
-          <MetricCard
-            label="Closed Chats"
-            value={closedCount}
-            tone="neutral"
-            active={statusTab === 'closed'}
-            onClick={() => setStatusTab('closed')}
-          />
-          <MetricCard
-            label="Reported Chats"
-            value={reportedCount}
-            tone="warning"
-            active={statusTab === 'reported'}
-            onClick={() => setStatusTab('reported')}
-          />
-          <MetricCard
-            label="AI Flagged"
-            value={flaggedCount}
-            tone="destructive"
-            active={statusTab === 'flagged'}
-            onClick={() => setStatusTab('flagged')}
-          />
-          <MetricCard
-            label="Avg Response Time"
-            value="12 min"
-            tone="brand"
-          />
-          <MetricCard
-            label="Avg Duration"
-            value="4.2 days"
-            tone="neutral"
-          />
-        </div>
+          {/* 7 Stat Metric Cards */}
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-7 lg:gap-3">
+            <MetricCard
+              label="Total Conversations"
+              value={totalCount}
+              tone="neutral"
+              active={statusTab === 'All'}
+              onClick={() => setStatusTab('All')}
+            />
+            <MetricCard
+              label="Active Chats"
+              value={activeCount}
+              tone="info"
+              active={statusTab === 'active'}
+              onClick={() => setStatusTab('active')}
+            />
+            <MetricCard
+              label="Closed Chats"
+              value={closedCount}
+              tone="success"
+              active={statusTab === 'closed'}
+              onClick={() => setStatusTab('closed')}
+            />
+            <MetricCard
+              label="Reported Chats"
+              value={reportedCount}
+              tone="warning"
+              active={statusTab === 'reported'}
+              onClick={() => setStatusTab('reported')}
+            />
+            <MetricCard
+              label="AI Flagged"
+              value={flaggedCount}
+              tone="destructive"
+              active={statusTab === 'flagged'}
+              onClick={() => setStatusTab('flagged')}
+            />
+            <MetricCard
+              label="Avg Response Time"
+              value="12 min"
+              tone="brand"
+            />
+            <MetricCard
+              label="Avg Duration"
+              value="4.2 days"
+              tone="neutral"
+            />
+          </div>
+        </header>
 
         {/* =========================================================================
             3. MAIN CONTENT CONTAINER (Table + Filters + Tabs)
@@ -435,7 +434,7 @@ export function ConversationsManagementInner() {
                 <button
                   type="button"
                   onClick={resetAllFilters}
-                  className="flex h-[36px] items-center gap-1 rounded-[8px] border border-[#d3d5d7] bg-[#eff1f3] px-3 text-[13px] font-medium text-[#1f2327] hover:bg-[#d3d5d7] transition-colors cursor-pointer"
+                  className="flex h-[38px] items-center gap-1.5 px-2 text-[13px] font-medium text-[#00c2cb] hover:underline cursor-pointer shrink-0"
                 >
                   <RotateCcw className="size-3.5" />
                   <span>Reset Filters</span>
@@ -446,10 +445,10 @@ export function ConversationsManagementInner() {
 
           {/* BULK ACTION BAR */}
           {selectedIds.length > 0 && (
-            <div className="flex items-center justify-between bg-[#1f2327] px-4 py-2.5 text-white">
+            <div className="flex items-center justify-between border-b border-[#00c2cb]/30 bg-[#e5f6f7] px-6 py-2.5 animate-in fade-in duration-150">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-[#00c2cb]" />
-                <span className="text-[13px] font-medium">
+                <CheckCircle2 className="size-4 text-[#00848b]" />
+                <span className="text-[13px] font-medium text-[#1f2327]">
                   {selectedIds.length} conversation{selectedIds.length > 1 ? 's' : ''} selected
                 </span>
               </div>
@@ -490,7 +489,7 @@ export function ConversationsManagementInner() {
           <div className="overflow-x-auto table-scrollbar flex-1">
             <table className="w-full min-w-[1300px] border-collapse text-left text-[14px] font-sans">
               <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
-                <tr className="h-12 whitespace-nowrap">
+                <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
                   <th className="w-12 px-4 whitespace-nowrap">
                     <TableCheckbox
                       checked={selectedIds.length === paginatedThreads.length && paginatedThreads.length > 0}
@@ -533,7 +532,7 @@ export function ConversationsManagementInner() {
                       <tr
                         key={thread.id}
                         className={cn(
-                          'h-[60px] transition-colors font-sans hover:bg-[#f8f9fa] whitespace-nowrap',
+                          'h-[64px] transition-colors font-sans hover:bg-[#f8f9fa] whitespace-nowrap',
                           isSelected && 'bg-[#e5f6f7]/40'
                         )}
                       >

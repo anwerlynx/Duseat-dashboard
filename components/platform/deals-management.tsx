@@ -32,6 +32,8 @@ import {
   X,
   FileText,
   User,
+  MoreHorizontal,
+  Settings2,
 } from 'lucide-react'
 import { PlatformShell } from './platform-shell'
 import { ToastProvider, useToast } from '@/components/dashboard/toast'
@@ -40,6 +42,7 @@ import { CompleteDealModal } from './complete-deal-modal'
 import { CancelDealModal } from './cancel-deal-modal'
 import { AssignDealManagerModal } from './assign-deal-manager-modal'
 import { ScheduleExportModal } from './schedule-export-modal'
+import { CustomizeTableDialog, type TableViewPreset, type ColumnCategory } from './customize-table-dialog'
 import { AgentPlanBadge, FigmaStatusBadge } from '@/components/ui/figma-badges'
 import { Flag, getCountryCode, AvatarFlagOverlay } from '@/components/ui/flag'
 import { TableCheckbox } from '@/components/ui/table-checkbox'
@@ -52,6 +55,192 @@ import {
   type DealStatus,
   initialPlatformDeals,
 } from '@/lib/deals-data'
+
+const DEAL_DEFAULT_COLUMNS = [
+  'Deal ID',
+  'Investor',
+  'Agent & Agency',
+  'Property',
+  'Deal Value',
+  'Commission',
+  'Status',
+  'Created Date',
+  'Last Updated',
+]
+
+const defaultDealPresets: TableViewPreset[] = [
+  {
+    id: 'default',
+    name: 'Default Overview',
+    columns: [
+      'Deal ID',
+      'Investor',
+      'Agent & Agency',
+      'Property',
+      'Deal Value',
+      'Commission',
+      'Status',
+      'Created Date',
+      'Last Updated',
+    ],
+    isBuiltIn: true,
+  },
+  {
+    id: 'financials',
+    name: 'Financials & Commission',
+    columns: [
+      'Deal ID',
+      'Investor',
+      'Agent & Agency',
+      'Deal Value',
+      'Commission',
+      'Status',
+    ],
+    isBuiltIn: true,
+  },
+  {
+    id: 'property-location',
+    name: 'Property & Timeline',
+    columns: [
+      'Deal ID',
+      'Property',
+      'Investor',
+      'Agent & Agency',
+      'Deal Value',
+      'Status',
+      'Created Date',
+      'Last Updated',
+    ],
+    isBuiltIn: true,
+  },
+]
+
+const dealColumnCategories: ColumnCategory[] = [
+  {
+    id: 'general',
+    name: 'General Information',
+    items: [
+      { id: 'Deal ID', label: 'Deal ID' },
+      { id: 'Status', label: 'Deal Status' },
+      { id: 'Created Date', label: 'Start Date' },
+      { id: 'Last Updated', label: 'Last Updated / Close' },
+    ],
+  },
+  {
+    id: 'parties',
+    name: 'Parties Involved',
+    items: [
+      { id: 'Investor', label: 'Investor Name & Country' },
+      { id: 'Agent & Agency', label: 'Agent, Plan & Agency' },
+    ],
+  },
+  {
+    id: 'property-finances',
+    name: 'Property & Financials',
+    items: [
+      { id: 'Property', label: 'Property Title & Type' },
+      { id: 'Deal Value', label: 'Total Deal Value' },
+      { id: 'Commission', label: 'Commission & Split' },
+    ],
+  },
+]
+
+function renderDealCell(
+  col: string,
+  deal: PlatformDeal,
+  options: {
+    setSelectedDeal: (deal: PlatformDeal) => void
+  }
+) {
+  const countryCode = getCountryCode(deal.investorCountry)
+  const agentCountryCode = getCountryCode(deal.agentCountry)
+
+  switch (col) {
+    case 'Deal ID':
+      return (
+        <button
+          type="button"
+          onClick={() => options.setSelectedDeal(deal)}
+          className="font-mono text-[14px] leading-[20px] font-semibold text-[#00c2cb] hover:underline cursor-pointer whitespace-nowrap"
+        >
+          {deal.id}
+        </button>
+      )
+    case 'Investor':
+      return (
+        <div className="flex items-center gap-2.5 whitespace-nowrap">
+          <Link href={`/investors/${deal.investorId}`} className="cursor-pointer">
+            <TableAvatar
+              src={deal.investorAvatar}
+              name={deal.investorName}
+              countryCode={countryCode}
+              size="md"
+              variant="brand"
+            />
+          </Link>
+          <div className="min-w-0">
+            <Link
+              href={`/investors/${deal.investorId}`}
+              className="font-semibold text-[#1f2327] text-[14px] leading-[20px] hover:text-[#00c2cb] hover:underline transition-colors whitespace-nowrap"
+            >
+              {deal.investorName}
+            </Link>
+            <span className="text-[12px] leading-[16px] text-[#6f777f] block whitespace-nowrap">{deal.investorCountry}</span>
+          </div>
+        </div>
+      )
+    case 'Agent & Agency':
+      return (
+        <div className="flex items-center gap-2.5 whitespace-nowrap">
+          <Link href={`/agents/${deal.agentId}`} className="cursor-pointer">
+            <TableAvatar
+              src={deal.agentAvatar}
+              name={deal.agentName}
+              countryCode={agentCountryCode}
+              size="md"
+              variant="brand"
+            />
+          </Link>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 whitespace-nowrap">
+              <Link
+                href={`/agents/${deal.agentId}`}
+                className="font-semibold text-[#1f2327] text-[14px] leading-[20px] hover:text-[#00c2cb] hover:underline transition-colors whitespace-nowrap"
+              >
+                {deal.agentName}
+              </Link>
+              <AgentPlanBadge plan={deal.agentPlan} compact />
+            </div>
+            <span className="text-[12px] leading-[16px] text-[#6f777f] block whitespace-nowrap">{deal.agentAgency}</span>
+          </div>
+        </div>
+      )
+    case 'Property':
+      return (
+        <div>
+          <span className="font-semibold text-[#1f2327] text-[14px] leading-[20px] block max-w-[240px] truncate">{deal.propertyTitle}</span>
+          <span className="text-[12px] leading-[16px] text-[#6f777f] block whitespace-nowrap">{deal.propertyType} • {deal.propertyLocation}</span>
+        </div>
+      )
+    case 'Deal Value':
+      return <span className="font-semibold text-[#1f2327] text-[14px] leading-[20px]">{deal.dealValue}</span>
+    case 'Commission':
+      return (
+        <div>
+          <span className="font-semibold text-[#17b26a] text-[14px] leading-[20px] block">{deal.commissionAmount}</span>
+          <span className="text-[11px] leading-[14px] text-[#6f777f] block whitespace-nowrap">{deal.commissionRate} Split</span>
+        </div>
+      )
+    case 'Status':
+      return <FigmaStatusBadge status={deal.status} />
+    case 'Created Date':
+      return <span className="text-[13px] leading-[18px] text-[#6f777f]">{deal.startDate}</span>
+    case 'Last Updated':
+      return <span className="text-[13px] leading-[18px] text-[#6f777f]">{deal.completedDate || deal.expectedCloseDate}</span>
+    default:
+      return null
+  }
+}
 
 const STATUS_TABS: { id: DealStatus | 'All'; label: string }[] = [
   { id: 'All', label: 'All Deals' },
@@ -85,7 +274,8 @@ export function DealsManagementInner() {
 
   const [deals, setDeals] = React.useState<PlatformDeal[]>(initialPlatformDeals)
   const [query, setQuery] = React.useState('')
-  const [statusTab, setStatusTab] = React.useState<DealStatus | 'All'>('All')
+  const initialStatus = (searchParams?.get('status') || searchParams?.get('tab') || 'All') as DealStatus | 'All'
+  const [statusTab, setStatusTab] = React.useState<DealStatus | 'All'>(initialStatus)
   const [statusDropdown, setStatusDropdown] = React.useState('All')
   const [propertyTypeFilter, setPropertyTypeFilter] = React.useState('All Types')
   const [agencyFilter, setAgencyFilter] = React.useState('All Agencies')
@@ -98,6 +288,22 @@ export function DealsManagementInner() {
   const [currentPage, setCurrentPage] = React.useState(1)
   const [showFilters, setShowFilters] = React.useState(true)
   const [sortOption, setSortOption] = React.useState('newest')
+
+  // Table Column Customization State
+  const [columnsOpen, setColumnsOpen] = React.useState(false)
+  const [visibleColumns, setVisibleColumns] = React.useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('duseat_deals_visible_columns')
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch {}
+      }
+    }
+    return DEAL_DEFAULT_COLUMNS
+  })
+  const [presets, setPresets] = React.useState<TableViewPreset[]>(defaultDealPresets)
+  const [activePresetId, setActivePresetId] = React.useState<string>('default')
 
   // Modals state
   const [selectedDeal, setSelectedDeal] = React.useState<PlatformDeal | null>(null)
@@ -372,7 +578,7 @@ export function DealsManagementInner() {
         {/* =========================================================================
             1. TOP HEADER CARD (Clean, No Kicker)
            ========================================================================= */}
-        <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)]">
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
@@ -391,7 +597,7 @@ export function DealsManagementInner() {
                   onClick={() => setViewMode('table')}
                   className={cn(
                     'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-medium transition-all cursor-pointer',
-                    viewMode === 'table' ? 'bg-[#1f2327] text-white shadow-2xs' : 'text-[#6f777f] hover:text-[#1f2327]'
+                    viewMode === 'table' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
                   )}
                 >
                   <List className="size-3.5" />
@@ -402,7 +608,7 @@ export function DealsManagementInner() {
                   onClick={() => setViewMode('grid')}
                   className={cn(
                     'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-medium transition-all cursor-pointer',
-                    viewMode === 'grid' ? 'bg-[#1f2327] text-white shadow-2xs' : 'text-[#6f777f] hover:text-[#1f2327]'
+                    viewMode === 'grid' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
                   )}
                 >
                   <LayoutGrid className="size-3.5" />
@@ -431,219 +637,294 @@ export function DealsManagementInner() {
               </button>
             </div>
           </div>
-        </div>
 
-        {/* =========================================================================
-            2. KPI SUMMARY SECTION (6 Summary Metric Cards)
-           ========================================================================= */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <MetricCard
-            label="Total Deals"
-            value={totalDealsCount}
-            tone="neutral"
-            active={statusTab === 'All'}
-            onClick={() => setStatusTab('All')}
-          />
-          <MetricCard
-            label="Active Deals"
-            value={activeCount}
-            tone="brand"
-            active={statusTab === 'Active'}
-            onClick={() => setStatusTab('Active')}
-          />
-          <MetricCard
-            label="Completed Deals"
-            value={completedCount}
-            tone="success"
-            active={statusTab === 'Completed'}
-            onClick={() => setStatusTab('Completed')}
-          />
-          <MetricCard
-            label="Cancelled / Failed"
-            value={cancelledFailedCount}
-            tone="destructive"
-            active={statusTab === 'Cancelled' || statusTab === 'Failed'}
-            onClick={() => setStatusTab('Cancelled')}
-          />
-          <MetricCard
-            label="Total Deal Value"
-            value={formattedTotalValue}
-            tone="brand"
-          />
-          <MetricCard
-            label="Total Commission"
-            value={formattedTotalCommission}
-            tone="warning"
-          />
-        </div>
+          {/* 6 Stat Metric Cards */}
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-3">
+            <MetricCard
+              label="Total Deals"
+              value={totalDealsCount}
+              tone="neutral"
+              icon={Layers}
+              active={statusTab === 'All'}
+              onClick={() => setStatusTab('All')}
+            />
+            <MetricCard
+              label="Active Deals"
+              value={activeCount}
+              tone="info"
+              icon={Clock}
+              active={statusTab === 'Active'}
+              onClick={() => setStatusTab('Active')}
+            />
+            <MetricCard
+              label="Completed Deals"
+              value={completedCount}
+              tone="success"
+              icon={CheckCircle2}
+              active={statusTab === 'Completed'}
+              onClick={() => setStatusTab('Completed')}
+            />
+            <MetricCard
+              label="Cancelled / Failed"
+              value={cancelledFailedCount}
+              tone="destructive"
+              icon={XCircle}
+              active={statusTab === 'Cancelled' || statusTab === 'Failed'}
+              onClick={() => setStatusTab('Cancelled')}
+            />
+            <MetricCard
+              label="Total Deal Value"
+              value={formattedTotalValue}
+              tone="brand"
+              icon={DollarSign}
+            />
+            <MetricCard
+              label="Total Commission"
+              value={formattedTotalCommission}
+              tone="warning"
+              icon={Building}
+            />
+          </div>
+        </header>
 
         {/* =========================================================================
             3. TABLE WORKSPACE (Original GitHub Design: Top Tabs + Horizontal Filter Toolbar + Table)
            ========================================================================= */}
-        <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)]">
-          {/* Top Status Tabs & Quick View Switcher Row */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eff1f3] p-4 sm:p-5">
-            <div className="flex flex-wrap items-center gap-2">
-              {(
-                [
-                  { id: 'All', label: 'All deals', count: statusCounts.All },
-                  { id: 'Active', label: 'Active pipeline', count: statusCounts.Active },
-                  { id: 'Completed', label: 'Completed', count: statusCounts.Completed },
-                  { id: 'Cancelled', label: 'Cancelled', count: statusCounts.Cancelled },
-                  { id: 'Failed', label: 'Failed', count: statusCounts.Failed },
-                ] as const
-              ).map((item) => {
-                const isActive = statusTab === item.id
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setStatusTab(item.id as DealStatus | 'All')}
-                    className={cn(
-                      'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn',
-                      isActive
-                        ? 'bg-[#1f2327] text-white shadow-2xs'
-                        : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
-                    )}
-                  >
-                    <span>{item.label}</span>
-                    <span
+        <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
+          {/* Top Tabs & Actions Header Bar */}
+          <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              {/* Left Status Tabs */}
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+                {(
+                  [
+                    { id: 'All', label: 'All deals', count: statusCounts.All },
+                    { id: 'Active', label: 'Active pipeline', count: statusCounts.Active },
+                    { id: 'Completed', label: 'Completed', count: statusCounts.Completed },
+                    { id: 'Cancelled', label: 'Cancelled', count: statusCounts.Cancelled },
+                    { id: 'Failed', label: 'Failed', count: statusCounts.Failed },
+                  ] as const
+                ).map((item) => {
+                  const isActive = statusTab === item.id
+                  return (
+                    <a
+                      key={item.id}
+                      href={`/deals?status=${encodeURIComponent(item.id)}`}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey || e.button === 1) {
+                          return
+                        }
+                        e.preventDefault()
+                        setStatusTab(item.id as DealStatus | 'All')
+                      }}
                       className={cn(
-                        'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
-                        isActive ? 'bg-white/20 text-white' : 'bg-[#eff1f3] text-[#1f2327]'
+                        'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap no-underline',
+                        isActive
+                          ? item.id === 'Completed' || item.id === 'Closed - Won'
+                            ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
+                            : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                          : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                       )}
                     >
-                      {item.count}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
+                      <span className="whitespace-nowrap">{item.label}</span>
+                      <span
+                        className={cn(
+                          'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
+                          isActive ? 'bg-white/20 text-white' : 'bg-[#eff1f3] text-[#1f2327]'
+                        )}
+                      >
+                        {item.count}
+                      </span>
+                    </a>
+                  )
+                })}
+              </div>
 
-            <div className="flex items-center gap-2">
-              {/* Sort Selector */}
-              <div className="flex items-center gap-1.5 text-[13px] text-[#6f777f]">
-                <span className="hidden sm:inline">Sort:</span>
-                <select
+              {/* Right Controls: Sort, Switcher, Export */}
+              <div className="flex items-center gap-2 shrink-0">
+                <Dropdown
+                  align="end"
                   value={sortOption}
-                  onChange={(e) => setSortOption(e.target.value)}
-                  className="h-[36px] rounded-[8px] border border-[#d3d5d7] bg-white px-2.5 text-[13px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="highest-value">Highest Value</option>
-                  <option value="highest-commission">Highest Commission</option>
-                </select>
-              </div>
+                  onSelect={setSortOption}
+                  ariaLabel="Sort by"
+                  options={[
+                    { label: 'Newest First', value: 'newest' },
+                    { label: 'Highest Value', value: 'highest-value' },
+                    { label: 'Highest Commission', value: 'highest-commission' },
+                  ]}
+                  trigger={
+                    <span className="inline-flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs whitespace-nowrap shrink-0">
+                      <ArrowUpDown className="size-3.5 text-[#6f777f]" />
+                      <span className="whitespace-nowrap">
+                        {sortOption === 'highest-value'
+                          ? 'Highest Value'
+                          : sortOption === 'highest-commission'
+                          ? 'Highest Commission'
+                          : 'Newest First'}
+                      </span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </span>
+                  }
+                />
 
-              {/* View Switchers */}
-              <div className="flex items-center rounded-[8px] border border-[#d3d5d7] bg-[#fcfcfc] p-0.5 shadow-2xs">
+                <div className="flex items-center rounded-[8px] border border-[#d3d5d7] bg-[#fcfcfc] p-0.5 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('table')}
+                    className={cn(
+                      'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 text-[12.5px] font-medium transition-all cursor-pointer whitespace-nowrap',
+                      viewMode === 'table' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
+                    )}
+                  >
+                    <List className="size-3.5" />
+                    <span className="hidden sm:inline whitespace-nowrap">Table</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('grid')}
+                    className={cn(
+                      'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 text-[12.5px] font-medium transition-all cursor-pointer whitespace-nowrap',
+                      viewMode === 'grid' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
+                    )}
+                  >
+                    <LayoutGrid className="size-3.5" />
+                    <span className="hidden sm:inline whitespace-nowrap">Cards</span>
+                  </button>
+                </div>
+
+                <div className="hidden sm:flex items-center gap-2">
+                  <Dropdown
+                    align="end"
+                    floating
+                    options={presets.map((p) => ({ label: p.name, value: p.id }))}
+                    onSelect={(val) => {
+                      const preset = presets.find((p) => p.id === val)
+                      if (preset) {
+                        setActivePresetId(preset.id)
+                        setVisibleColumns(preset.columns)
+                        notify('View Applied', `Switched view template to "${preset.name}".`)
+                      }
+                    }}
+                    trigger={
+                      <button
+                        type="button"
+                        className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                      >
+                        <SlidersHorizontal className="size-4 text-[#6f777f]" />
+                        <span className="max-w-[130px] truncate text-left">
+                          {presets.find((p) => p.id === activePresetId)?.name || 'Custom View'}
+                        </span>
+                        <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                      </button>
+                    }
+                    ariaLabel="Select table template view"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setColumnsOpen(true)}
+                    className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                  >
+                    <Settings2 className="size-4 text-[#6f777f]" />
+                    <span className="whitespace-nowrap">Customize columns</span>
+                  </button>
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => setViewMode('table')}
-                  className={cn(
-                    'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 text-[12.5px] font-medium transition-all cursor-pointer',
-                    viewMode === 'table' ? 'bg-[#1f2327] text-white shadow-2xs' : 'text-[#6f777f] hover:text-[#1f2327]'
-                  )}
+                  onClick={handleExportCSV}
+                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
                 >
-                  <List className="size-3.5" />
-                  <span className="hidden sm:inline">Table</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('grid')}
-                  className={cn(
-                    'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 text-[12.5px] font-medium transition-all cursor-pointer',
-                    viewMode === 'grid' ? 'bg-[#1f2327] text-white shadow-2xs' : 'text-[#6f777f] hover:text-[#1f2327]'
-                  )}
-                >
-                  <LayoutGrid className="size-3.5" />
-                  <span className="hidden sm:inline">Cards</span>
+                  <Download className="size-4 text-[#6f777f]" />
+                  <span className="whitespace-nowrap">Export CSV</span>
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* Horizontal Filters Toolbar */}
-          <div className="flex flex-wrap items-center gap-2.5 p-4 sm:p-5 pb-3">
-            {/* Search Input */}
-            <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9da4ae]" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search ID, investor, agent, property…"
-                className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-3 text-[14px] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20"
+            {/* Horizontal Filters Toolbar Row */}
+            <div className="flex flex-wrap items-center gap-2.5 pt-1">
+              <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9da4ae]" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search ID, investor, agent, property…"
+                  className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-8 text-[14px] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20 transition-all"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9da4ae] hover:text-[#1f2327]"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <Dropdown
+                align="start"
+                value={statusDropdown}
+                onSelect={setStatusDropdown}
+                ariaLabel="Filter by Status"
+                options={STATUS_OPTIONS}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs whitespace-nowrap shrink-0">
+                    <Filter className="size-4 text-[#6f777f]" />
+                    <span className="whitespace-nowrap">{STATUS_OPTIONS.find((o) => o.value === statusDropdown)?.label || statusDropdown}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
               />
-              {query && (
+
+              <Dropdown
+                align="start"
+                value={propertyTypeFilter}
+                onSelect={setPropertyTypeFilter}
+                ariaLabel="Filter by Property Type"
+                options={[{ label: 'All Property Types', value: 'All Types' }, ...PROPERTY_TYPES]}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs whitespace-nowrap shrink-0">
+                    <Building className="size-4 text-[#6f777f]" />
+                    <span className="whitespace-nowrap">{propertyTypeFilter === 'All Types' ? 'All Property Types' : propertyTypeFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
+              />
+
+              <Dropdown
+                align="start"
+                value={agencyFilter}
+                onSelect={setAgencyFilter}
+                ariaLabel="Filter by Agency"
+                options={agencyOptions}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs whitespace-nowrap shrink-0">
+                    <Building className="size-4 text-[#6f777f]" />
+                    <span className="whitespace-nowrap">{agencyFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
+              />
+
+              <DateRangePicker value={dateRange} onChange={setDateRange} />
+
+              {(query ||
+                statusTab !== 'All' ||
+                statusDropdown !== 'All' ||
+                propertyTypeFilter !== 'All Types' ||
+                agencyFilter !== 'All Agencies' ||
+                investorFilter !== 'All Investors' ||
+                dateRange !== 'All Time') && (
                 <button
                   type="button"
-                  onClick={() => setQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9da4ae] hover:text-[#1f2327]"
+                  onClick={resetAllFilters}
+                  className="text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer shrink-0 whitespace-nowrap"
                 >
-                  <X className="size-3.5" />
+                  Reset filters
                 </button>
               )}
             </div>
-
-            {/* Milestone Status Filter */}
-            <select
-              value={statusDropdown}
-              onChange={(e) => setStatusDropdown(e.target.value)}
-              className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Property Type Filter */}
-            <select
-              value={propertyTypeFilter}
-              onChange={(e) => setPropertyTypeFilter(e.target.value)}
-              className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-            >
-              <option value="All Types">All Property Types</option>
-              {PROPERTY_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Brokerage Agency Filter */}
-            <select
-              value={agencyFilter}
-              onChange={(e) => setAgencyFilter(e.target.value)}
-              className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-            >
-              {agencyOptions.map((a) => (
-                <option key={a.value} value={a.value}>
-                  {a.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Date Range Picker */}
-            <DateRangePicker value={dateRange} onChange={setDateRange} />
-
-            {/* Reset Filters Link */}
-            {(query ||
-              statusTab !== 'All' ||
-              statusDropdown !== 'All' ||
-              propertyTypeFilter !== 'All Types' ||
-              agencyFilter !== 'All Agencies' ||
-              investorFilter !== 'All Investors' ||
-              dateRange !== 'All Time') && (
-              <button
-                type="button"
-                onClick={resetAllFilters}
-                className="text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer ml-1"
-              >
-                Reset filters
-              </button>
-            )}
           </div>
 
           {/* BULK ACTIONS STRIP */}
@@ -699,15 +980,11 @@ export function DealsManagementInner() {
                         ariaLabel="Select all deals"
                       />
                     </th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Deal ID</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Investor</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Agent & Agency</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Property</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Deal Value</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Commission</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Status</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Created Date</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Last Updated</th>
+                    {visibleColumns.map((col) => (
+                      <th key={col} className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
+                        {col}
+                      </th>
+                    ))}
                     <th className="px-4 text-right text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
@@ -715,7 +992,7 @@ export function DealsManagementInner() {
                 <tbody className="divide-y divide-[#d3d5d7]">
                   {paginatedDeals.length === 0 ? (
                     <tr>
-                      <td colSpan={11} className="py-8 text-center text-[#6f777f]">
+                      <td colSpan={visibleColumns.length + 2} className="py-8 text-center text-[#6f777f]">
                         <EmptyState
                           title="No pipeline deals found"
                           description="Try adjusting your search query or reset your active filters."
@@ -734,7 +1011,7 @@ export function DealsManagementInner() {
                         <tr
                           key={deal.id}
                           className={cn(
-                            'h-[60px] transition-colors font-sans hover:bg-[#f8f9fa] whitespace-nowrap',
+                            'h-[64px] transition-colors font-sans hover:bg-[#f8f9fa] whitespace-nowrap',
                             isSelected && 'bg-[#e5f6f7]/40'
                           )}
                         >
@@ -746,149 +1023,59 @@ export function DealsManagementInner() {
                             />
                           </td>
 
-                          {/* 1. Deal ID */}
-                          <td className="px-4 whitespace-nowrap">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedDeal(deal)}
-                              className="font-mono text-[14px] leading-[20px] font-semibold text-[#00c2cb] hover:underline cursor-pointer whitespace-nowrap"
-                            >
-                              {deal.id}
-                            </button>
-                          </td>
+                          {visibleColumns.map((col) => (
+                            <td key={col} className="px-4 whitespace-nowrap font-sans">
+                              {renderDealCell(col, deal, { setSelectedDeal })}
+                            </td>
+                          ))}
 
-                          {/* 2. Investor */}
-                          <td className="px-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2.5 whitespace-nowrap">
-                              <Link href={`/investors/${deal.investorId}`} className="cursor-pointer">
-                                <TableAvatar
-                                  src={deal.investorAvatar}
-                                  name={deal.investorName}
-                                  countryCode={countryCode}
-                                  size="md"
-                                  variant="brand"
-                                />
-                              </Link>
-                              <div className="min-w-0">
-                                <Link
-                                  href={`/investors/${deal.investorId}`}
-                                  className="font-semibold text-[#1f2327] text-[14px] leading-[20px] hover:text-[#00c2cb] hover:underline transition-colors whitespace-nowrap"
-                                >
-                                  {deal.investorName}
-                                </Link>
-                                <span className="text-[12px] leading-[16px] text-[#6f777f] block whitespace-nowrap">{deal.investorCountry}</span>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* 3. Agent & Agency */}
-                          <td className="px-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2.5 whitespace-nowrap">
-                              <Link href={`/agents/${deal.agentId}`} className="cursor-pointer">
-                                <TableAvatar
-                                  src={deal.agentAvatar}
-                                  name={deal.agentName}
-                                  countryCode={agentCountryCode}
-                                  size="md"
-                                  variant="brand"
-                                />
-                              </Link>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-1.5 whitespace-nowrap">
-                                  <Link
-                                    href={`/agents/${deal.agentId}`}
-                                    className="font-semibold text-[#1f2327] text-[14px] leading-[20px] hover:text-[#00c2cb] hover:underline transition-colors whitespace-nowrap"
-                                  >
-                                    {deal.agentName}
-                                  </Link>
-                                  <AgentPlanBadge plan={deal.agentPlan} compact />
-                                </div>
-                                <span className="text-[12px] leading-[16px] text-[#6f777f] block whitespace-nowrap">{deal.agentAgency}</span>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* 4. Property */}
-                          <td className="px-4 whitespace-nowrap">
-                            <div>
-                              <span className="font-semibold text-[#1f2327] text-[14px] leading-[20px] block max-w-[240px] truncate">{deal.propertyTitle}</span>
-                              <span className="text-[12px] leading-[16px] text-[#6f777f] block whitespace-nowrap">{deal.propertyType} • {deal.propertyLocation}</span>
-                            </div>
-                          </td>
-
-                          {/* 5. Deal Value */}
-                          <td className="px-4 whitespace-nowrap">
-                            <span className="font-semibold text-[#1f2327] text-[14px] leading-[20px]">{deal.dealValue}</span>
-                          </td>
-
-                          {/* 6. Commission */}
-                          <td className="px-4 whitespace-nowrap">
-                            <div>
-                              <span className="font-semibold text-[#17b26a] text-[14px] leading-[20px] block">{deal.commissionAmount}</span>
-                              <span className="text-[11px] leading-[14px] text-[#6f777f] block whitespace-nowrap">{deal.commissionRate} Split</span>
-                            </div>
-                          </td>
-
-                          {/* 7. Status */}
-                          <td className="px-4 whitespace-nowrap">
-                            <FigmaStatusBadge status={deal.status} />
-                          </td>
-
-                          {/* 8. Created Date */}
-                          <td className="px-4 whitespace-nowrap text-[13px] leading-[18px] text-[#6f777f]">
-                            {deal.startDate}
-                          </td>
-
-                          {/* 9. Last Updated */}
-                          <td className="px-4 whitespace-nowrap text-[13px] leading-[18px] text-[#6f777f]">
-                            {deal.completedDate || deal.expectedCloseDate}
-                          </td>
-
-                          {/* 10. Actions */}
-                          <td className="px-4 whitespace-nowrap text-right">
-                            <div className="flex items-center justify-end gap-1">
+                          {/* Actions */}
+                          <td className="px-4 whitespace-nowrap text-right font-sans">
+                            <div className="flex items-center justify-end gap-1.5">
                               <button
                                 type="button"
                                 onClick={() => setSelectedDeal(deal)}
-                                className="flex size-[32px] items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+                                className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
                                 title="Open Deal Inspector"
                               >
-                                <Eye className="size-3.5" />
+                                <Eye className="size-4" />
                               </button>
-
-                              {/* Active Deal Actions */}
-                              {deal.status === 'Active' && (
-                                <>
+                              <Dropdown
+                                align="end"
+                                floating
+                                ariaLabel={`Actions for deal ${deal.id}`}
+                                options={[
+                                  { label: 'Open Deal Inspector', value: 'inspect', icon: <Eye className="size-4 text-[#00c2cb]" /> },
+                                  ...(deal.status === 'Active' ? [
+                                    { label: 'Complete Deal & Release', value: 'complete', icon: <CheckCircle2 className="size-4 text-emerald-600" /> },
+                                    { label: 'Cancel Deal & Refund', value: 'cancel', destructive: true, icon: <XCircle className="size-4 text-rose-600" /> },
+                                  ] : []),
+                                  ...(deal.status === 'Completed' ? [
+                                    { label: 'View Documents & Timeline', value: 'docs', icon: <FileCheck className="size-4 text-emerald-600" /> },
+                                  ] : []),
+                                  { label: 'Assign Deal Manager', value: 'assign-manager', icon: <UserCheck className="size-4 text-[#6f777f]" /> },
+                                  { label: 'Delete Deal Record', value: 'delete', destructive: true, icon: <Trash2 className="size-4 text-rose-600" /> },
+                                ]}
+                                onSelect={(val) => {
+                                  if (val === 'inspect' || val === 'docs') setSelectedDeal(deal)
+                                  else if (val === 'complete') setCompleteModalDeal(deal)
+                                  else if (val === 'cancel') setCancelModalDeal(deal)
+                                  else if (val === 'assign-manager') setAssignManagerDealId(deal.id)
+                                  else if (val === 'delete') {
+                                    const updated = deals.filter((d) => d.id !== deal.id)
+                                    saveDeals(updated)
+                                    notify('Deal Deleted', `Deal ${deal.id} was removed.`)
+                                  }
+                                }}
+                                trigger={
                                   <button
                                     type="button"
-                                    onClick={() => setCompleteModalDeal(deal)}
-                                    className="flex size-[32px] items-center justify-center rounded-[6px] bg-[#dfefe8] text-[#17b26a] hover:bg-[#17b26a] hover:text-white transition-colors cursor-pointer"
-                                    title="Complete Deal"
+                                    className="flex size-8 items-center justify-center rounded-[6px] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
                                   >
-                                    <CheckCircle2 className="size-3.5" />
+                                    <MoreHorizontal className="size-4" />
                                   </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setCancelModalDeal(deal)}
-                                    className="flex size-[32px] items-center justify-center rounded-[6px] bg-[#fee4e2] text-[#d92d20] hover:bg-[#d92d20] hover:text-white transition-colors cursor-pointer"
-                                    title="Cancel Deal"
-                                  >
-                                    <XCircle className="size-3.5" />
-                                  </button>
-                                </>
-                              )}
-
-                              {/* Completed Actions */}
-                              {deal.status === 'Completed' && (
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedDeal(deal)}
-                                  className="flex size-[32px] items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#17b26a] hover:bg-[#dfefe8] transition-colors cursor-pointer"
-                                  title="View Documents & Timeline"
-                                >
-                                  <FileCheck className="size-3.5" />
-                                </button>
-                              )}
+                                }
+                              />
                             </div>
                           </td>
                         </tr>
@@ -1038,6 +1225,23 @@ export function DealsManagementInner() {
           notify('Export Scheduled', `Scheduled ${data.frequency} deals export to ${data.recipients.join(', ')}.`)
         }}
         defaultName="Duseat Deals & Escrow Pipeline - Export"
+      />
+
+      {/* 6. Customize Table Dialog */}
+      <CustomizeTableDialog
+        isOpen={columnsOpen}
+        visibleColumns={visibleColumns}
+        activePresetId={activePresetId}
+        presets={presets}
+        categories={dealColumnCategories}
+        storageKeyPrefix="deals"
+        onPresetsChange={(newPresets: TableViewPreset[]) => setPresets(newPresets)}
+        onApply={(cols: string[], presetId?: string) => {
+          setVisibleColumns(cols)
+          if (presetId) setActivePresetId(presetId)
+          notify('Table customized', `${cols.length} visible columns applied.`)
+        }}
+        onClose={() => setColumnsOpen(false)}
       />
     </PlatformShell>
   )

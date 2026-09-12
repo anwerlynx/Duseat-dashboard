@@ -708,14 +708,14 @@ export function VerificationDetailInner({ id }: VerificationDetailPageProps) {
               <span className="font-bold text-[#17b26a]">{currentCase.accountStatus}</span>
             </div>
             <div>
-              <span className="text-[11px] uppercase font-semibold text-[#6f777f] block">Risk Rating</span>
+              <span className="text-[11px] uppercase font-semibold text-[#68727D] block">Trust & Risk Signal</span>
               <span
                 className={cn(
-                  'font-bold',
-                  currentCase.riskScore > 80 ? 'text-[#17b26a]' : currentCase.riskScore > 50 ? 'text-[#f79009]' : 'text-[#d92d20]'
+                  'font-semibold text-[13px]',
+                  currentCase.riskScore > 75 ? 'text-[#16A86B]' : currentCase.riskScore > 40 ? 'text-[#E99A18]' : 'text-[#E5484D]'
                 )}
               >
-                {currentCase.riskScore}% ({currentCase.riskLevel} Risk)
+                Trust Score: {currentCase.riskScore}/100 — {currentCase.riskScore > 75 ? 'High' : currentCase.riskScore > 40 ? 'Moderate' : 'Low'}
               </span>
             </div>
             <div>

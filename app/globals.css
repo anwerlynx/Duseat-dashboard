@@ -123,133 +123,85 @@
 :root {
   color-scheme: light;
 
-  --background: #f5f6f8;
-  --foreground: #14171a;
+  --background: #F5F6F7;
+  --foreground: #202428;
 
-  --card: #ffffff;
-  --card-foreground: #14171a;
+  --card: #FFFFFF;
+  --card-foreground: #202428;
 
-  --popover: #ffffff;
-  --popover-foreground: #14171a;
+  --popover: #FFFFFF;
+  --popover-foreground: #202428;
 
-  --primary: #14171a;
-  --primary-foreground: #ffffff;
+  --primary: #202428;
+  --primary-foreground: #FFFFFF;
 
-  --secondary: #eff1f3;
-  --secondary-foreground: #14171a;
+  --secondary: #F8F9FA;
+  --secondary-foreground: #202428;
 
-  --muted: #eff1f3;
-  --muted-foreground: #656d76;
+  --muted: #F8F9FA;
+  --muted-foreground: #68727D;
 
   /* ==========================================================================
-     Unified Semantic Color Tokens (10 Shades per family)
-     Primary, Neutral, Success, Warning, Information, Error
+     Master Specification Color Tokens (Section 5)
      ========================================================================== */
 
-  /* 1. Primary (Brand Teal / Cyan #00C2CB) */
-  --primary-50: #E5F6F7;
-  --primary-100: #C7ECEE;
-  --primary-200: #92DCDF;
-  --primary-300: #5DCCD1;
-  --primary-400: #28BBC2;
-  --primary-500: #00C2CB;
-  --primary-600: #00A4AC;
-  --primary-700: #00848B;
-  --primary-800: #00656A;
-  --primary-900: #00484B;
+  /* 1. Primary Brand (Primary Teal #06B6C9, Dark #0891A6, Soft #E8F9FB) */
+  --brand: #06B6C9;
+  --brand-dark: #0891A6;
+  --brand-soft: #E8F9FB;
+  --brand-foreground: #FFFFFF;
 
-  /* 2. Neutral (Slate / Charcoal / Gray) */
-  --neutral-50: #F8F9FA;
-  --neutral-100: #EFF1F3;
-  --neutral-200: #E4E7EB;
-  --neutral-300: #D3D5D7;
-  --neutral-400: #9DA4AE;
-  --neutral-500: #6F777F;
-  --neutral-600: #4B5563;
-  --neutral-700: #344054;
-  --neutral-800: #1F2327;
-  --neutral-900: #14171A;
+  /* 2. Neutrals */
+  --neutral-bg: #F5F6F7;
+  --neutral-surface: #FFFFFF;
+  --neutral-subtle: #F8F9FA;
+  --neutral-border: #E2E5E8;
+  --neutral-strong-border: #D4D8DD;
+  --neutral-text-primary: #202428;
+  --neutral-text-secondary: #68727D;
+  --neutral-text-muted: #8A939D;
+  --neutral-text-disabled: #B3BAC1;
 
-  /* 3. Success (Emerald / Green) */
-  --success-50: #ECFDF3;
-  --success-100: #DFEFE8;
-  --success-200: #A6F4C5;
-  --success-300: #6CE9A6;
-  --success-400: #32D583;
-  --success-500: #17B26A;
-  --success-600: #129255;
-  --success-700: #0E7242;
-  --success-800: #095230;
-  --success-900: #05331E;
+  /* 3. Semantic Tokens */
+  --success: #16A86B;
+  --success-soft: #E8F7F0;
+  --success-foreground: #FFFFFF;
 
-  /* 4. Warning (Amber / Gold / Orange) */
-  --warning-50: #FFFAEB;
-  --warning-100: #FEF0C7;
-  --warning-200: #FEDF89;
-  --warning-300: #FEC84B;
-  --warning-400: #FDB022;
-  --warning-500: #F79009;
-  --warning-600: #DC6803;
-  --warning-700: #B54708;
-  --warning-800: #93370D;
-  --warning-900: #7A2E0E;
+  --warning: #E99A18;
+  --warning-soft: #FFF5DF;
+  --warning-foreground: #FFFFFF;
 
-  /* 5. Information (Azure / Blue) */
-  --info-50: #F0F6FE;
-  --info-100: #E0EDFD;
-  --info-200: #BADAFB;
-  --info-300: #84BFF8;
-  --info-400: #489EF4;
-  --info-500: #1A7FF0;
-  --info-600: #0B62CC;
-  --info-700: #0A4EA7;
-  --info-800: #0B4389;
-  --info-900: #0D3A71;
+  --danger: #E5484D;
+  --danger-soft: #FDEBEC;
+  --destructive: #E5484D;
+  --destructive-foreground: #FFFFFF;
 
-  /* 6. Error (Rose / Crimson) */
-  --error-50: #FEF3F2;
-  --error-100: #FEE4E2;
-  --error-200: #FECDCA;
-  --error-300: #FDA29B;
-  --error-400: #F97066;
-  --error-500: #F04438;
-  --error-600: #D92D20;
-  --error-700: #B42318;
-  --error-800: #912018;
-  --error-900: #771D1D;
+  --info: #3288D8;
+  --info-soft: #EAF4FD;
 
-  --accent: #E5F6F7;
-  --accent-foreground: #00C2CB;
+  --accent: #E8F9FB;
+  --accent-foreground: #06B6C9;
 
-  --destructive: #F04438;
-  --destructive-foreground: #ffffff;
+  --border: #E2E5E8;
+  --input: #E2E5E8;
+  --ring: #06B6C9;
 
-  --success: #17B26A;
-  --success-foreground: #ffffff;
+  --chart-1: #06B6C9;
+  --chart-2: #16A86B;
+  --chart-3: #E5484D;
+  --chart-4: #68727D;
+  --chart-5: #202428;
 
-  --brand: #00C2CB;
-  --brand-foreground: #ffffff;
+  --radius: 0.5rem; /* 8px per Section 5 */
 
-  --border: #d3d5d7;
-  --input: #d3d5d7;
-  --ring: #00C2CB;
-
-  --chart-1: #00C2CB;
-  --chart-2: #17B26A;
-  --chart-3: #F04438;
-  --chart-4: #6F777F;
-  --chart-5: #1F2327;
-
-  --radius: 0.75rem;
-
-  --sidebar: #ffffff;
-  --sidebar-foreground: #14171a;
-  --sidebar-primary: #14171a;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eff1f3;
-  --sidebar-accent-foreground: #14171a;
-  --sidebar-border: #dbe0e5;
-  --sidebar-ring: #00C2CB;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #202428;
+  --sidebar-primary: #202428;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F8F9FA;
+  --sidebar-accent-foreground: #202428;
+  --sidebar-border: #E2E5E8;
+  --sidebar-ring: #06B6C9;
 }
 
 @layer base {
@@ -507,23 +459,68 @@
   background: #9da4ae;
 }
 
+.table-scrollbar,
+[data-table-scroll],
+div.overflow-x-auto {
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-x pan-y !important;
+  overscroll-behavior-x: contain;
+}
+
 .table-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #d3d5d7 transparent;
+  scrollbar-color: #c4c8cc #f8f9fa;
 }
 .table-scrollbar::-webkit-scrollbar {
-  height: 6px;
+  height: 8px;
+  width: 8px;
 }
 .table-scrollbar::-webkit-scrollbar-track {
   background: #f8f9fa;
   border-radius: 4px;
 }
 .table-scrollbar::-webkit-scrollbar-thumb {
-  background: #d3d5d7;
+  background: #c4c8cc;
   border-radius: 4px;
 }
 .table-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #9da4ae;
 }
+
+/* Grabbing states during active table drag */
+.table-is-dragging,
+.table-is-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+/* Cursor affordance for table headers when scrollable */
+.table-scrollbar table thead th,
+[data-table-scroll] table thead th,
+div.overflow-x-auto table thead th {
+  cursor: grab;
+}
+
+.modal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #c4c8cc transparent;
+}
+.modal-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background: #c4c8cc;
+  border-radius: 9999px;
+}
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9da4ae;
+}
+
 
 

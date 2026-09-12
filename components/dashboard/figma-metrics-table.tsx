@@ -269,7 +269,7 @@ export function FigmaMetricsTable() {
       {/* 2. Full-Width Clean Table View */}
       <div className="overflow-x-auto w-full table-scrollbar">
         <table className="w-full text-left text-xs text-[#344054] border-collapse min-w-[850px]">
-          <thead className="bg-[#fafbfc] border-b border-[#e2e8f0] text-slate-900 font-bold">
+          <thead className="bg-[#eff1f3] border-b border-[#d3d5d7] text-[#1f2327] font-bold">
             <tr>
               <th className="w-12 px-4 py-3 text-center">
                 <input

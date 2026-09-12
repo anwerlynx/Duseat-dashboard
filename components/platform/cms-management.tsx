@@ -57,8 +57,9 @@ import { PlatformShell } from './platform-shell'
 import { MainButton } from '@/components/ui/main-button'
 import { FigmaStatusBadge } from '@/components/ui/figma-badges'
 import { TableCheckbox } from '@/components/ui/table-checkbox'
+import { MetricCard } from '@/components/ui/metric-card'
 
-import { Pagination } from '@/components/ui'
+import { Pagination, ScrollableTabsBar } from '@/components/ui'
 import { ToastProvider, useToast } from '@/components/dashboard/toast'
 import { cn, exportToCsv } from '@/lib/utils'
 
@@ -914,68 +915,16 @@ function CmsManagementInner() {
   return (
     <PlatformShell
       title="Content Management System (CMS)"
-      eyebrow="Public Experience, Mobile, Marketing & SEO"
-      actions={
-        <div className="flex items-center gap-2">
-          {/* Language Switcher */}
-          <div className="flex items-center rounded-[6px] border border-[#d3d5d7] bg-[#f4f5f6] p-0.5">
-            <button
-              type="button"
-              onClick={() => setCurrentLang('EN')}
-              className={cn(
-                'px-2 py-0.5 text-[11.5px] font-bold rounded-[4px] transition-all',
-                currentLang === 'EN' ? 'bg-white text-[#1f2327] shadow-2xs' : 'text-[#6f777f]'
-              )}
-            >
-              EN
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentLang('AR')}
-              className={cn(
-                'px-2 py-0.5 text-[11.5px] font-bold rounded-[4px] transition-all',
-                currentLang === 'AR' ? 'bg-white text-[#1f2327] shadow-2xs' : 'text-[#6f777f]'
-              )}
-            >
-              العربية (AR)
-            </button>
-          </div>
-
-          {!isEditingPage ? (
-            <MainButton
-              variant="Primary"
-              size="sm"
-              iconLeft={<Plus className="size-3.5" />}
-              label="+ Create New Page"
-              onClick={() => handleOpenPageEditor()}
-            />
-          ) : (
-            <MainButton
-              variant="Secondary"
-              size="sm"
-              iconLeft={<ChevronLeft className="size-3.5" />}
-              label="Exit Editor"
-              onClick={() => setIsEditingPage(false)}
-            />
-          )}
-        </div>
-      }
+      eyebrow="Public Experience"
     >
       <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
         {/* =========================================================================
             TOP HEADER CARD (Canonical Users Design Standard)
            ========================================================================= */}
-        {!isEditingPage && (
-          <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
+        {!isEditingPage ? (
+          <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05)] flex flex-col gap-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#6f777f] uppercase tracking-wider mb-1">
-                  <span>Platform</span>
-                  <span>/</span>
-                  <span>Content</span>
-                  <span>/</span>
-                  <span className="text-[#00c2cb]">CMS Experience</span>
-                </div>
                 <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
                   Content Management System (CMS)
                 </h1>
@@ -984,17 +933,92 @@ function CmsManagementInner() {
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* Language Switcher */}
+                <div className="flex items-center rounded-[6px] border border-[#d3d5d7] bg-[#f4f5f6] p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentLang('EN')}
+                    className={cn(
+                      'px-2.5 py-1 text-[12px] font-bold rounded-[4px] transition-all cursor-pointer',
+                      currentLang === 'EN' ? 'bg-white text-[#1f2327] shadow-2xs' : 'text-[#6f777f] hover:text-[#1f2327]'
+                    )}
+                  >
+                    EN
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentLang('AR')}
+                    className={cn(
+                      'px-2.5 py-1 text-[12px] font-bold rounded-[4px] transition-all cursor-pointer',
+                      currentLang === 'AR' ? 'bg-white text-[#1f2327] shadow-2xs' : 'text-[#6f777f] hover:text-[#1f2327]'
+                    )}
+                  >
+                    العربية (AR)
+                  </button>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => handleOpenPageEditor()}
-                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3.5 text-[14px] font-medium text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn"
+                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#00c2cb] px-3.5 text-[14px] font-bold text-white shadow-2xs hover:bg-[#00a8b0] transition-colors cursor-pointer ant-wave-btn"
                 >
                   <Plus className="size-4" />
                   <span>Create New Page</span>
                 </button>
               </div>
             </div>
+
+            {/* 4 Stat Metric Cards */}
+            <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3">
+              <MetricCard
+                label="Published Pages"
+                value={pages.filter((p) => p.status === 'Published').length}
+                trend={{ value: 'Live', isPositive: true }}
+                icon={Globe}
+                tone="brand"
+                subtitle="Active on web & app"
+              />
+              <MetricCard
+                label="Drafts in Review"
+                value={pages.filter((p) => p.status === 'Draft').length}
+                trend={{ value: 'Pending', isPositive: false }}
+                icon={FileText}
+                tone="warning"
+                subtitle="Unpublished revisions"
+              />
+              <MetricCard
+                label="Marketing Banners"
+                value={banners.length}
+                trend={{ value: 'Active', isPositive: true }}
+                icon={Sparkles}
+                tone="brand"
+                subtitle="Hero & targeted promos"
+              />
+              <MetricCard
+                label="CDN Media Assets"
+                value={mediaAssets.length}
+                trend={{ value: 'Fastly UAE', isPositive: true }}
+                icon={ImageIcon}
+                tone="neutral"
+                subtitle="High-res storage pool"
+              />
+            </div>
+          </header>
+        ) : (
+          <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05)] flex items-center justify-between">
+            <div>
+              <h1 className="text-[22px] font-bold text-[#1f2327]">CMS Page Editor</h1>
+              <p className="text-[13px] text-[#6f777f]">Editing page layout, components, and SEO metadata</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsEditingPage(false)}
+              className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="size-4 text-[#6f777f]" />
+              <span>Exit Editor</span>
+            </button>
           </header>
         )}
 
@@ -1002,8 +1026,8 @@ function CmsManagementInner() {
             CMS SUB-NAVIGATION TABS
         ========================================== */}
         {!isEditingPage && (
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#d3d5d7] pb-3">
-            <div className="flex items-center gap-2 overflow-x-auto">
+          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 border-b border-[#d3d5d7] pb-3">
+            <ScrollableTabsBar className="flex-1">
               {[
                 { id: 'overview', label: 'Overview', icon: Layout, count: undefined },
                 { id: 'website', label: 'Website Pages', icon: Globe, count: pages.length },
@@ -1019,14 +1043,24 @@ function CmsManagementInner() {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => {
+                    type="button"
+                    onClick={(e) => {
                       setActiveTab(tab.id as CmsSectionTab)
                       setCurrentPage(1)
+                      try {
+                        ;(e.currentTarget as HTMLElement).scrollIntoView({
+                          behavior: 'smooth',
+                          inline: 'nearest',
+                          block: 'nearest',
+                        })
+                      } catch {
+                        // ignore if unsupported
+                      }
                     }}
                     className={cn(
-                      'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn',
+                      'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap',
                       isActive
-                        ? 'bg-[#1f2327] text-white shadow-2xs'
+                        ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                         : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                     )}
                   >
@@ -1045,9 +1079,9 @@ function CmsManagementInner() {
                   </button>
                 )
               })}
-            </div>
+            </ScrollableTabsBar>
 
-            <div className="flex items-center gap-2 text-[12px] text-[#6f777f]">
+            <div className="flex items-center gap-2 text-[12px] text-[#6f777f] shrink-0 whitespace-nowrap self-start xl:self-auto bg-white px-2.5 py-1.5 rounded-[8px] border border-[#d3d5d7] shadow-2xs">
               <span className="flex items-center gap-1">
                 <Clock className="size-3.5 text-[#00c2cb]" /> Production CDN: <strong className="text-[#1f2327]">Active (Fastly UAE)</strong>
               </span>
@@ -1351,7 +1385,7 @@ function CmsManagementInner() {
                         <tr
                           key={page.id}
                           className={cn(
-                            'h-[60px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa]',
+                            'h-[64px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa]',
                             isSelected && 'bg-[#e5f6f7]/40'
                           )}
                         >
@@ -1367,7 +1401,7 @@ function CmsManagementInner() {
                               }}
                             />
                           </td>
-                              <td className="px-4 py-3.5">
+                              <td className="px-4">
                                 <div className="space-y-0.5">
                                   <button
                                     onClick={() => handleOpenPageEditor(page)}
@@ -1382,19 +1416,19 @@ function CmsManagementInner() {
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-4 py-3.5">
+                              <td className="px-4">
                                 <span className="rounded bg-[#f4f5f6] px-2 py-0.5 text-[11px] font-bold text-[#1f2327]">
                                   {page.language === 'Both' ? 'EN + AR' : page.language}
                                 </span>
                               </td>
-                              <td className="px-4 py-3.5">
+                              <td className="px-4">
                                 <span className="font-bold text-[#00c2cb]">v{page.version}</span>
                               </td>
-                              <td className="px-4 py-3.5 text-[#4b5563]">
+                              <td className="px-4 text-[#4b5563]">
                                 <div>{page.lastUpdated}</div>
                                 <div className="text-[10px] text-[#9ca3af]">{page.updatedBy}</div>
                               </td>
-                              <td className="px-4 py-3.5">
+                              <td className="px-4">
                                 <FigmaStatusBadge
                                   status={
                                     page.status === 'Published'
@@ -1405,7 +1439,7 @@ function CmsManagementInner() {
                                   }
                                 />
                               </td>
-                              <td className="px-4 py-3.5 text-right">
+                              <td className="px-4 text-right">
                                 <div className="flex items-center justify-end gap-1">
                                   <button
                                     onClick={() => handleOpenPageEditor(page)}

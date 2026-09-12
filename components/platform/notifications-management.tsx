@@ -27,6 +27,7 @@ import {
   Smartphone,
   Mail,
   Layers,
+  Tag,
   ChevronDown,
   ChevronRight,
   X,
@@ -525,7 +526,7 @@ function NotificationsManagementInner() {
         {/* =========================================================================
             1. TOP HEADER CARD (Matches Duseat Global Header Standard)
            ========================================================================= */}
-        <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)]">
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
@@ -610,293 +611,306 @@ function NotificationsManagementInner() {
               </button>
             </div>
           </div>
-        </div>
 
-        {/* =========================================================================
-            2. HORIZONTAL KPI OVERVIEW ROW (8 Metric Cards with Direct Click Filter)
-           ========================================================================= */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
-          <MetricCard
-            label="Total Notifications"
-            value={totalCount}
-            tone="neutral"
-            active={statusFilter === 'All' && viewMode === 'notifications'}
-            onClick={() => {
-              setViewMode('notifications')
-              setStatusFilter('All')
-            }}
-          />
-          <MetricCard
-            label="Sent"
-            value={sentCount}
-            tone="success"
-            active={statusFilter === 'sent' && viewMode === 'notifications'}
-            onClick={() => {
-              setViewMode('notifications')
-              setStatusFilter('sent')
-            }}
-          />
-          <MetricCard
-            label="Scheduled"
-            value={scheduledCount}
-            tone="brand"
-            active={statusFilter === 'scheduled' && viewMode === 'notifications'}
-            onClick={() => {
-              setViewMode('notifications')
-              setStatusFilter('scheduled')
-            }}
-          />
-          <MetricCard
-            label="Drafts"
-            value={draftsCount}
-            tone="neutral"
-            active={statusFilter === 'draft' && viewMode === 'notifications'}
-            onClick={() => {
-              setViewMode('notifications')
-              setStatusFilter('draft')
-            }}
-          />
-          <MetricCard
-            label="Delivered"
-            value={deliveredTotal > 999 ? `${(deliveredTotal / 1000).toFixed(1)}k` : deliveredTotal}
-            tone="brand"
-          />
-          <MetricCard
-            label="Failed"
-            value={failedCount}
-            tone="destructive"
-            active={statusFilter === 'failed' && viewMode === 'notifications'}
-            onClick={() => {
-              setViewMode('notifications')
-              setStatusFilter('failed')
-            }}
-          />
-          <MetricCard
-            label="Delivery Rate"
-            value={avgDeliveryRate}
-            tone="success"
-          />
-          <MetricCard
-            label="Open Rate"
-            value={avgOpenRate}
-            tone="brand"
-          />
-        </div>
+          {/* 8 Stat Metric Cards */}
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8 lg:gap-3">
+            <MetricCard
+              label="Total Notifications"
+              value={totalCount}
+              tone="neutral"
+              active={statusFilter === 'All' && viewMode === 'notifications'}
+              onClick={() => {
+                setViewMode('notifications')
+                setStatusFilter('All')
+              }}
+            />
+            <MetricCard
+              label="Sent"
+              value={sentCount}
+              tone="success"
+              active={statusFilter === 'sent' && viewMode === 'notifications'}
+              onClick={() => {
+                setViewMode('notifications')
+                setStatusFilter('sent')
+              }}
+            />
+            <MetricCard
+              label="Scheduled"
+              value={scheduledCount}
+              tone="info"
+              active={statusFilter === 'scheduled' && viewMode === 'notifications'}
+              onClick={() => {
+                setViewMode('notifications')
+                setStatusFilter('scheduled')
+              }}
+            />
+            <MetricCard
+              label="Drafts"
+              value={draftsCount}
+              tone="warning"
+              active={statusFilter === 'draft' && viewMode === 'notifications'}
+              onClick={() => {
+                setViewMode('notifications')
+                setStatusFilter('draft')
+              }}
+            />
+            <MetricCard
+              label="Delivered"
+              value={deliveredTotal > 999 ? `${(deliveredTotal / 1000).toFixed(1)}k` : deliveredTotal}
+              tone="brand"
+            />
+            <MetricCard
+              label="Failed"
+              value={failedCount}
+              tone="destructive"
+              active={statusFilter === 'failed' && viewMode === 'notifications'}
+              onClick={() => {
+                setViewMode('notifications')
+                setStatusFilter('failed')
+              }}
+            />
+            <MetricCard
+              label="Delivery Rate"
+              value={avgDeliveryRate}
+              tone="success"
+            />
+            <MetricCard
+              label="Open Rate"
+              value={avgOpenRate}
+              tone="info"
+            />
+          </div>
+        </header>
 
         {/* =========================================================================
             3. MAIN CONTENT CONTAINER (Table / Templates / Analytics Views)
            ========================================================================= */}
         {viewMode === 'notifications' && (
           <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)]">
-            {/* Top Status Tabs & Actions Row */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eff1f3] p-4 sm:p-5">
-              <div className="flex flex-wrap items-center gap-2">
-                {(
-                  [
-                    { id: 'All', label: 'All notifications', count: totalCount },
-                    { id: 'sent', label: 'Delivered', count: statusCounts.sent },
-                    { id: 'scheduled', label: 'Scheduled', count: statusCounts.scheduled },
-                    { id: 'sending', label: 'In Queue', count: statusCounts.sending },
-                    { id: 'draft', label: 'Drafts', count: statusCounts.draft },
-                    { id: 'failed', label: 'Failed', count: statusCounts.failed },
-                    { id: 'cancelled', label: 'Cancelled', count: statusCounts.cancelled },
-                  ] as const
-                ).map((item) => {
-                  const isActive = statusFilter === item.id
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setStatusFilter(item.id as NotificationStatus | 'All')}
-                      className={cn(
-                        'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn',
-                        isActive
-                          ? 'bg-[#1f2327] text-white shadow-2xs'
-                          : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
-                      )}
-                    >
-                      <span>{item.label}</span>
-                      <span
+            {/* Top Status Tabs & Horizontal Filters Toolbar */}
+            <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+                  {(
+                    [
+                      { id: 'All', label: 'All notifications', count: totalCount },
+                      { id: 'sent', label: 'Delivered', count: statusCounts.sent },
+                      { id: 'scheduled', label: 'Scheduled', count: statusCounts.scheduled },
+                      { id: 'sending', label: 'In Queue', count: statusCounts.sending },
+                      { id: 'draft', label: 'Drafts', count: statusCounts.draft },
+                      { id: 'failed', label: 'Failed', count: statusCounts.failed },
+                      { id: 'cancelled', label: 'Cancelled', count: statusCounts.cancelled },
+                    ] as const
+                  ).map((item) => {
+                    const isActive = statusFilter === item.id
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setStatusFilter(item.id as NotificationStatus | 'All')}
                         className={cn(
-                          'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
-                          item.id === 'failed'
-                            ? 'bg-[#f04438] text-white'
-                            : isActive
-                            ? 'bg-white/20 text-white'
-                            : 'bg-[#eff1f3] text-[#1f2327]'
+                          'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn whitespace-nowrap shrink-0',
+                          isActive
+                            ? 'bg-[#1f2327] text-white shadow-2xs'
+                            : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                         )}
                       >
-                        {item.count}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
+                        <span className="whitespace-nowrap">{item.label}</span>
+                        <span
+                          className={cn(
+                            'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
+                            item.id === 'failed'
+                              ? 'bg-[#f04438] text-white'
+                              : isActive
+                              ? 'bg-white/20 text-white'
+                              : 'bg-[#eff1f3] text-[#1f2327]'
+                          )}
+                        >
+                          {item.count}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
 
-              <div className="flex items-center gap-2">
-                {/* Export CSV */}
-                <button
-                  type="button"
-                  onClick={handleExportCsv}
-                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer"
-                >
-                  <Download className="size-4 text-[#6f777f]" />
-                  <span>Export</span>
-                </button>
-
-                {/* Create Notification */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCreateInitialTemplate(null)
-                    setIsCreateModalOpen(true)
-                  }}
-                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3.5 text-[14px] font-bold text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn"
-                >
-                  <Plus className="size-4" />
-                  <span>New Campaign</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Horizontal Filters Toolbar */}
-            <div className="flex flex-wrap items-center gap-2.5 p-4 sm:p-5 pb-3">
-              {/* Search */}
-              <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
-                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9da4ae]" />
-                <input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search notifications, templates, campaigns, IDs..."
-                  className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-3 text-[14px] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20"
-                />
-                {searchQuery && (
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* Export CSV */}
                   <button
                     type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9da4ae] hover:text-[#1f2327]"
+                    onClick={handleExportCsv}
+                    className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer whitespace-nowrap"
                   >
-                    <X className="size-3.5" />
+                    <Download className="size-4 text-[#6f777f]" />
+                    <span>Export</span>
+                  </button>
+
+                  {/* Create Notification */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreateInitialTemplate(null)
+                      setIsCreateModalOpen(true)
+                    }}
+                    className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3.5 text-[14px] font-bold text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn whitespace-nowrap"
+                  >
+                    <Plus className="size-4" />
+                    <span>New Campaign</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Horizontal Filters Toolbar */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* Search */}
+                <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
+                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9da4ae]" />
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search notifications, templates, campaigns, IDs..."
+                    className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-8 text-[14px] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20 transition-all"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9da4ae] hover:text-[#1f2327]"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Channel Filter */}
+                <Dropdown
+                  align="start"
+                  value={channelFilter}
+                  onSelect={setChannelFilter}
+                  ariaLabel="Filter by Channel"
+                  options={[
+                    { label: 'All Channels', value: 'All Channels' },
+                    { label: 'Push', value: 'push' },
+                    { label: 'In-App', value: 'in-app' },
+                    { label: 'Email', value: 'email' },
+                  ]}
+                  trigger={
+                    <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                      <Smartphone className="size-4 text-[#6f777f]" />
+                      <span>{channelFilter === 'All Channels' ? 'All Channels' : channelFilter.toUpperCase()}</span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </span>
+                  }
+                />
+
+                {/* Audience Filter */}
+                <Dropdown
+                  align="start"
+                  value={audienceFilter}
+                  onSelect={setAudienceFilter}
+                  ariaLabel="Filter by Audience"
+                  options={audienceOptions}
+                  trigger={
+                    <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                      <Users className="size-4 text-[#6f777f]" />
+                      <span>{audienceOptions.find((a) => a.value === audienceFilter)?.label || audienceFilter}</span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </span>
+                  }
+                />
+
+                {/* Category Filter */}
+                <Dropdown
+                  align="start"
+                  value={categoryFilter}
+                  onSelect={setCategoryFilter}
+                  ariaLabel="Filter by Category"
+                  options={[{ label: 'All Categories', value: 'All' }, ...NOTIFICATION_CATEGORIES.map((c) => ({ label: c, value: c }))]}
+                  trigger={
+                    <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                      <Tag className="size-4 text-[#6f777f]" />
+                      <span>{categoryFilter === 'All' ? 'All Categories' : categoryFilter}</span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </span>
+                  }
+                />
+
+                {/* Date Range Picker */}
+                <DateRangePicker value={dateRange} onChange={setDateRange} />
+
+                {/* Reset Filters Link */}
+                {(searchQuery ||
+                  statusFilter !== 'All' ||
+                  channelFilter !== 'All Channels' ||
+                  audienceFilter !== 'All Audiences' ||
+                  categoryFilter !== 'All' ||
+                  dateRange !== 'All Time') && (
+                  <button
+                    type="button"
+                    onClick={resetAllFilters}
+                    className="text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer ml-1"
+                  >
+                    Reset filters
                   </button>
                 )}
               </div>
-
-              {/* Channel Filter */}
-              <select
-                value={channelFilter}
-                onChange={(e) => setChannelFilter(e.target.value)}
-                className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-              >
-                <option value="All Channels">All Channels</option>
-                <option value="push">Push</option>
-                <option value="in-app">In-App</option>
-                <option value="email">Email</option>
-              </select>
-
-              {/* Audience Filter */}
-              <select
-                value={audienceFilter}
-                onChange={(e) => setAudienceFilter(e.target.value)}
-                className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-              >
-                {audienceOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-
-              {/* Category Filter */}
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-              >
-                <option value="All">All Categories</option>
-                {NOTIFICATION_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-
-              {/* Date Range Picker */}
-              <DateRangePicker value={dateRange} onChange={setDateRange} />
-
-              {/* Reset Filters Link */}
-              {(searchQuery ||
-                statusFilter !== 'All' ||
-                channelFilter !== 'All Channels' ||
-                audienceFilter !== 'All Audiences' ||
-                categoryFilter !== 'All' ||
-                dateRange !== 'All Time') && (
-                <button
-                  type="button"
-                  onClick={resetAllFilters}
-                  className="text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer ml-1"
-                >
-                  Reset filters
-                </button>
-              )}
             </div>
 
-                {/* Bulk Actions Bar if items selected */}
-                {selectedIds.length > 0 && (
-                  <div className="flex items-center justify-between rounded-[8px] bg-[#1f2327] px-4 py-2 text-white ant-fade-in text-[12.5px]">
-                    <div className="flex items-center gap-2 font-bold">
-                      <span>{selectedIds.length} notifications selected</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = notifications.filter((n) => !selectedIds.includes(n.id))
-                          updateNotifications(next)
-                          setSelectedIds([])
-                          notify('Batch Deleted', `Deleted ${selectedIds.length} notification records.`, 'info')
-                        }}
-                        className="flex h-[28px] items-center gap-1 rounded-[5px] bg-[#d92d20] px-3 text-[11.5px] font-bold text-white hover:bg-[#b42318] transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="size-3 text-white" />
-                        <span>Delete Selected</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedIds([])}
-                        className="text-[12px] text-[#9da4ae] hover:text-white"
-                      >
-                        Deselect
-                      </button>
-                    </div>
-                  </div>
-                )}
+            {/* Bulk Actions Bar if items selected */}
+            {selectedIds.length > 0 && (
+              <div className="flex items-center justify-between border-b border-[#00c2cb]/30 bg-[#e5f6f7] px-6 py-2.5 animate-in fade-in duration-150">
+                <div className="flex items-center gap-2 font-semibold text-[14px] text-[#1f2327]">
+                  <span>{selectedIds.length} notifications selected</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = notifications.filter((n) => !selectedIds.includes(n.id))
+                      updateNotifications(next)
+                      setSelectedIds([])
+                      notify('Batch Deleted', `Deleted ${selectedIds.length} notification records.`, 'info')
+                    }}
+                    className="flex h-[32px] items-center gap-1.5 rounded-[8px] bg-[#d92d20] px-3.5 text-[13px] font-semibold text-white hover:bg-[#b42318] transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="size-3.5 text-white" />
+                    <span>Delete Selected</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIds([])}
+                    className="text-[13px] text-[#6f777f] hover:text-[#1f2327] cursor-pointer"
+                  >
+                    Deselect
+                  </button>
+                </div>
+              </div>
+            )}
 
-                {/* Main Data Table */}
-                <div className="overflow-hidden rounded-[10px] border border-[#d3d5d7] bg-white shadow-2xs flex flex-col justify-between flex-1 min-h-[580px]">
-                  <div className="overflow-x-auto table-scrollbar flex-1">
-                    <table className="w-full text-left text-[13px] border-collapse font-sans">
-                      <thead className="bg-[#f8f9fa] border-b border-[#d3d5d7] text-[11px] font-bold text-[#6f777f] uppercase tracking-wider">
-                        <tr className="h-10 whitespace-nowrap">
-                          <th className="w-10 px-3.5 py-2.5 text-center">
-                            <TableCheckbox
-                              checked={filteredNotifications.length > 0 && selectedIds.length === filteredNotifications.length}
-                              onChange={() => handleSelectAll(selectedIds.length !== filteredNotifications.length)}
-                              ariaLabel="Select all notifications"
-                            />
-                          </th>
-                          <th className="px-3.5 py-2.5">Notification</th>
-                          <th className="px-3.5 py-2.5">Notification ID</th>
-                          <th className="px-3.5 py-2.5">Channel</th>
-                          <th className="px-3.5 py-2.5">Audience</th>
-                          <th className="px-3.5 py-2.5">Template</th>
-                          <th className="px-3.5 py-2.5">Status</th>
-                          <th className="px-3.5 py-2.5">Scheduled / Sent</th>
-                          <th className="px-3.5 py-2.5">Delivery</th>
-                          <th className="px-3.5 py-2.5">Open Rate</th>
-                          <th className="px-3.5 py-2.5">Created By</th>
-                          <th className="px-3.5 py-2.5 text-right">Actions</th>
-                        </tr>
-                      </thead>
+            {/* Main Data Table */}
+            <div className="overflow-x-auto table-scrollbar flex-1">
+              <table className="w-full min-w-[1300px] text-left text-[14px] border-collapse font-sans">
+                <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
+                  <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
+                    <th className="w-12 px-4 text-center">
+                      <TableCheckbox
+                        checked={filteredNotifications.length > 0 && selectedIds.length === filteredNotifications.length}
+                        onChange={() => handleSelectAll(selectedIds.length !== filteredNotifications.length)}
+                        ariaLabel="Select all notifications"
+                      />
+                    </th>
+                    <th className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327]">Notification</th>
+                    <th className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327]">Notification ID</th>
+                    <th className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327]">Channel</th>
+                    <th className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327]">Audience</th>
+                    <th className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327]">Template</th>
+                    <th className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327]">Status</th>
+                    <th className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327]">Scheduled / Sent</th>
+                    <th className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327]">Delivery</th>
+                    <th className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327]">Open Rate</th>
+                    <th className="whitespace-nowrap px-4 text-[14px] font-semibold text-[#1f2327]">Created By</th>
+                    <th className="whitespace-nowrap px-4 text-right text-[14px] font-semibold text-[#1f2327]">Actions</th>
+                  </tr>
+                </thead>
 
                       <tbody className="divide-y divide-[#d3d5d7]">
                         {paginatedNotifications.length === 0 ? (
@@ -929,12 +943,12 @@ function NotificationsManagementInner() {
                               <tr
                                 key={item.id}
                                 className={cn(
-                                  'h-[60px] transition-colors font-sans hover:bg-[#f8f9fa] whitespace-nowrap',
+                                  'h-[64px] transition-colors font-sans hover:bg-[#f8f9fa] whitespace-nowrap',
                                   isSelected && 'bg-[#e5f6f7]/40'
                                 )}
                               >
                                 {/* Checkbox */}
-                                <td className="w-10 px-3.5 text-center whitespace-nowrap">
+                                <td className="w-12 px-4 text-center whitespace-nowrap">
                                   <TableCheckbox
                                     checked={isSelected}
                                     onChange={() => handleSelectRow(item.id, !isSelected)}
@@ -943,58 +957,58 @@ function NotificationsManagementInner() {
                                 </td>
 
                                 {/* 1. Notification (Title + Preview) */}
-                                <td className="px-3.5 whitespace-nowrap">
-                                  <div className="min-w-0 max-w-[300px]">
+                                <td className="px-4 whitespace-nowrap">
+                                  <div className="min-w-0 max-w-[320px]">
                                     <button
                                       type="button"
                                       onClick={() => setSelectedNotification(item)}
-                                      className="font-bold text-[#1f2327] text-[13px] hover:text-[#00c2cb] hover:underline transition-colors block truncate text-left cursor-pointer"
+                                      className="font-semibold text-[#1f2327] text-[14px] hover:text-[#00c2cb] hover:underline transition-colors block truncate text-left cursor-pointer"
                                     >
                                       {item.name}
                                     </button>
-                                    <span className="text-[11px] text-[#6f777f] block truncate">
+                                    <span className="text-[12px] text-[#6f777f] block truncate">
                                       {previewText}
                                     </span>
                                   </div>
                                 </td>
 
                                 {/* 2. Notification ID */}
-                                <td className="px-3.5 whitespace-nowrap">
+                                <td className="px-4 whitespace-nowrap">
                                   <div className="flex items-center gap-1.5">
                                     <button
                                       type="button"
                                       onClick={() => setSelectedNotification(item)}
-                                      className="font-mono text-[12px] font-bold text-[#00c2cb] hover:underline cursor-pointer"
+                                      className="font-mono text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer"
                                     >
                                       {item.id}
                                     </button>
                                     <button
                                       type="button"
                                       onClick={(e) => handleCopyId(item.id, e)}
-                                      className="text-[#9da4ae] hover:text-[#1f2327] p-0.5 rounded cursor-pointer"
+                                      className="text-[#9da4ae] hover:text-[#1f2327] p-1 rounded cursor-pointer transition-colors"
                                       title="Copy ID"
                                     >
-                                      {copiedId === item.id ? <Check className="size-2.5 text-[#17b26a]" /> : <Copy className="size-2.5" />}
+                                      {copiedId === item.id ? <Check className="size-3 text-[#17b26a]" /> : <Copy className="size-3" />}
                                     </button>
                                   </div>
                                 </td>
 
                                 {/* 3. Channels */}
-                                <td className="px-3.5 whitespace-nowrap">
+                                <td className="px-4 whitespace-nowrap">
                                   <div className="flex items-center gap-1">
                                     {item.channels.map((ch) => (
                                       <span
                                         key={ch}
                                         className={cn(
-                                          'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] text-[10.5px] font-bold uppercase tracking-wider',
+                                          'inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-semibold uppercase tracking-wider',
                                           ch === 'push' && 'bg-[#e0f2fe] text-[#0369a1]',
                                           ch === 'in-app' && 'bg-[#e5f6f7] text-[#00848b]',
                                           ch === 'email' && 'bg-[#fef3c7] text-[#b45309]'
                                         )}
                                       >
-                                        {ch === 'push' && <Smartphone className="size-2.5" />}
-                                        {ch === 'in-app' && <Bell className="size-2.5" />}
-                                        {ch === 'email' && <Mail className="size-2.5" />}
+                                        {ch === 'push' && <Smartphone className="size-3" />}
+                                        {ch === 'in-app' && <Bell className="size-3" />}
+                                        {ch === 'email' && <Mail className="size-3" />}
                                         <span>{ch}</span>
                                       </span>
                                     ))}
@@ -1002,17 +1016,17 @@ function NotificationsManagementInner() {
                                 </td>
 
                                 {/* 4. Audience */}
-                                <td className="px-3.5 whitespace-nowrap">
-                                  <span className="inline-flex items-center gap-1 rounded-[4px] border border-[#d3d5d7] bg-[#fcfcfc] px-2 py-0.5 text-[11.5px] font-medium text-[#1f2327]">
-                                    <Users className="size-2.5 text-[#6f777f]" />
+                                <td className="px-4 whitespace-nowrap">
+                                  <span className="inline-flex items-center gap-1.5 rounded-[4px] border border-[#d3d5d7] bg-[#fcfcfc] px-2.5 py-1 text-[12px] font-medium text-[#1f2327]">
+                                    <Users className="size-3.5 text-[#6f777f]" />
                                     <span>{item.audience.type}</span>
                                   </span>
                                 </td>
 
                                 {/* 5. Template */}
-                                <td className="px-3.5 whitespace-nowrap">
+                                <td className="px-4 whitespace-nowrap">
                                   {item.templateName ? (
-                                    <span className="text-[12px] text-[#1f2327] font-semibold">
+                                    <span className="text-[13px] text-[#1f2327] font-semibold">
                                       {item.templateName}
                                     </span>
                                   ) : (
@@ -1021,7 +1035,7 @@ function NotificationsManagementInner() {
                                 </td>
 
                                 {/* 6. Status */}
-                                <td className="px-3.5 whitespace-nowrap">
+                                <td className="px-4 whitespace-nowrap">
                                   <FigmaStatusBadge
                                     status={
                                       item.status === 'sent'
@@ -1040,22 +1054,22 @@ function NotificationsManagementInner() {
                                 </td>
 
                                 {/* 7. Scheduled / Sent Date */}
-                                <td className="px-3.5 whitespace-nowrap">
-                                  <div className="text-[12px] font-medium text-[#1f2327]">
+                                <td className="px-4 whitespace-nowrap">
+                                  <div className="text-[13px] font-medium text-[#1f2327]">
                                     {item.sentAt || item.scheduledAt || item.createdAt}
                                   </div>
-                                  <span className="text-[10.5px] text-[#6f777f] block">
+                                  <span className="text-[11px] text-[#6f777f] block">
                                     {item.status === 'sent' ? 'Delivered' : item.status === 'scheduled' ? 'Scheduled' : 'Created'}
                                   </span>
                                 </td>
 
                                 {/* 8. Delivery Metric */}
-                                <td className="px-3.5 whitespace-nowrap">
+                                <td className="px-4 whitespace-nowrap">
                                   {delPercent ? (
                                     <div className="space-y-1">
                                       <div className="flex items-center gap-1.5 text-[12px]">
-                                        <span className="font-bold text-[#1f2327]">{delPercent}%</span>
-                                        <span className="text-[10px] text-[#6f777f]">delivered</span>
+                                        <span className="font-semibold text-[#1f2327]">{delPercent}%</span>
+                                        <span className="text-[11px] text-[#6f777f]">delivered</span>
                                       </div>
                                       <div className="h-1.5 w-20 overflow-hidden rounded-full bg-[#eff1f3]">
                                         <div
@@ -1065,34 +1079,34 @@ function NotificationsManagementInner() {
                                       </div>
                                     </div>
                                   ) : (
-                                    <span className="text-[12px] text-[#9da4ae]">—</span>
+                                    <span className="text-[13px] text-[#9da4ae]">—</span>
                                   )}
                                 </td>
 
                                 {/* 9. Open Rate */}
-                                <td className="px-3.5 whitespace-nowrap">
+                                <td className="px-4 whitespace-nowrap">
                                   {openPercent ? (
-                                    <span className="text-[12px] font-bold text-[#1f2327]">
+                                    <span className="text-[13px] font-semibold text-[#1f2327]">
                                       {openPercent}%
                                     </span>
                                   ) : (
-                                    <span className="text-[12px] text-[#9da4ae]">—</span>
+                                    <span className="text-[13px] text-[#9da4ae]">—</span>
                                   )}
                                 </td>
 
                                 {/* 10. Created By */}
-                                <td className="px-3.5 whitespace-nowrap">
-                                  <div className="flex items-center gap-1.5">
+                                <td className="px-4 whitespace-nowrap">
+                                  <div className="flex items-center gap-2.5">
                                     <TableAvatar
                                       name={item.createdBy.name}
-                                      size="sm"
+                                      size="md"
                                       variant="subtle"
                                     />
                                     <div className="min-w-0">
-                                      <span className="font-bold text-[#1f2327] text-[12px] block">
+                                      <span className="font-semibold text-[#1f2327] text-[14px] block">
                                         {item.createdBy.name}
                                       </span>
-                                      <span className="text-[10.5px] text-[#6f777f] block">
+                                      <span className="text-[12px] text-[#6f777f] block">
                                         {item.createdBy.role}
                                       </span>
                                     </div>
@@ -1100,124 +1114,52 @@ function NotificationsManagementInner() {
                                 </td>
 
                                 {/* 11. Actions */}
-                                <td className="px-3.5 text-right whitespace-nowrap">
-                                  <div className="flex items-center justify-end gap-1">
-                                    {item.status === 'draft' && (
-                                      <button
-                                        type="button"
-                                        onClick={() => {
+                                <td className="px-4 text-right whitespace-nowrap">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedNotification(item)}
+                                      className="flex size-8 items-center justify-center rounded-[6px] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+                                      title="View details"
+                                    >
+                                      <Eye className="size-4" />
+                                    </button>
+
+                                    <Dropdown
+                                      align="end"
+                                      floating
+                                      ariaLabel={`Actions for notification ${item.id}`}
+                                      options={[
+                                        { label: 'View Details', value: 'view', icon: <Eye className="size-4 text-[#00c2cb]" /> },
+                                        ...(item.status === 'draft' ? [{ label: 'Edit Draft', value: 'edit', icon: <Edit className="size-4 text-[#1f2327]" /> }] : []),
+                                        ...(item.status === 'scheduled' ? [{ label: 'Cancel Schedule', value: 'cancel', icon: <Clock className="size-4 text-amber-600" /> }] : []),
+                                        ...(item.status === 'failed' ? [{ label: 'Retry Sending', value: 'retry', icon: <RefreshCw className="size-4 text-[#17b26a]" /> }] : []),
+                                        { label: 'Duplicate Campaign', value: 'duplicate', icon: <Copy className="size-4 text-[#6f777f]" /> },
+                                        ...(item.status === 'sent' ? [{ label: 'Export Telemetry', value: 'export', icon: <Download className="size-4 text-[#6f777f]" /> }] : []),
+                                        { label: 'Delete', value: 'delete', destructive: true, icon: <Trash2 className="size-4 text-rose-600" /> },
+                                      ]}
+                                      onSelect={(val) => {
+                                        if (val === 'view') setSelectedNotification(item)
+                                        else if (val === 'edit') {
                                           setCreateInitialTemplate(null)
                                           setIsCreateModalOpen(true)
-                                        }}
-                                        className="h-[28px] rounded-[5px] border border-[#d3d5d7] bg-white px-2 text-[11.5px] font-bold text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer"
-                                      >
-                                        Edit
-                                      </button>
-                                    )}
-
-                                    {item.status === 'scheduled' && (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleCancelSchedule(item)}
-                                        className="h-[28px] rounded-[5px] border border-[#d3d5d7] bg-white px-2 text-[11.5px] font-bold text-[#b54708] hover:bg-[#fffaf0] cursor-pointer"
-                                      >
-                                        Cancel
-                                      </button>
-                                    )}
-
-                                    {item.status === 'sent' && (
-                                      <button
-                                        type="button"
-                                        onClick={() => setSelectedNotification(item)}
-                                        className="h-[28px] rounded-[5px] border border-[#d3d5d7] bg-white px-2 text-[11.5px] font-bold text-[#00848b] hover:bg-[#e5f6f7] cursor-pointer"
-                                      >
-                                        Analytics
-                                      </button>
-                                    )}
-
-                                    {item.status === 'failed' && (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleRetrySending(item)}
-                                        className="h-[28px] rounded-[5px] bg-[#1f2327] px-2 text-[11.5px] font-bold text-white hover:bg-[#2e3338] cursor-pointer"
-                                      >
-                                        Retry
-                                      </button>
-                                    )}
-
-                                    {/* More Menu */}
-                                    <div className="relative">
-                                      <button
-                                        type="button"
-                                        onClick={() => setActiveMenuId(activeMenuId === item.id ? null : item.id)}
-                                        className="rounded-[5px] p-1 text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] cursor-pointer"
-                                        title="More options"
-                                      >
-                                        <MoreHorizontal className="size-3.5" />
-                                      </button>
-
-                                      {activeMenuId === item.id && (
-                                        <>
-                                          <div
-                                            className="fixed inset-0 z-20"
-                                            onClick={() => setActiveMenuId(null)}
-                                          />
-                                          <div className="absolute right-0 top-full mt-1 w-44 rounded-[8px] border border-[#d3d5d7] bg-white p-1 shadow-lg z-30 ant-fade-in text-[12px] font-medium text-[#1f2327]">
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                setSelectedNotification(item)
-                                                setActiveMenuId(null)
-                                              }}
-                                              className="w-full flex items-center gap-2 rounded-[4px] px-2.5 py-1.5 text-left hover:bg-[#eff1f3]"
-                                            >
-                                              <Eye className="size-3.5 text-[#6f777f]" />
-                                              <span>View Details</span>
-                                            </button>
-
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                handleDuplicate(item)
-                                                setActiveMenuId(null)
-                                              }}
-                                              className="w-full flex items-center gap-2 rounded-[4px] px-2.5 py-1.5 text-left hover:bg-[#eff1f3]"
-                                            >
-                                              <Copy className="size-3.5 text-[#6f777f]" />
-                                              <span>Duplicate</span>
-                                            </button>
-
-                                            {item.status === 'sent' && (
-                                              <button
-                                                type="button"
-                                                onClick={() => {
-                                                  handleExportCsv()
-                                                  setActiveMenuId(null)
-                                                }}
-                                                className="w-full flex items-center gap-2 rounded-[4px] px-2.5 py-1.5 text-left hover:bg-[#eff1f3]"
-                                              >
-                                                <Download className="size-3.5 text-[#6f777f]" />
-                                                <span>Export Telemetry</span>
-                                              </button>
-                                            )}
-
-                                            <div className="my-1 border-t border-[#d3d5d7]" />
-
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                handleDeleteNotification(item)
-                                                setActiveMenuId(null)
-                                              }}
-                                              className="w-full flex items-center gap-2 rounded-[4px] px-2.5 py-1.5 text-left text-[#d92d20] hover:bg-[#fee4e2]"
-                                            >
-                                              <Trash2 className="size-3.5" />
-                                              <span>Delete</span>
-                                            </button>
-                                          </div>
-                                        </>
-                                      )}
-                                    </div>
+                                        }
+                                        else if (val === 'cancel') handleCancelSchedule(item)
+                                        else if (val === 'retry') handleRetrySending(item)
+                                        else if (val === 'duplicate') handleDuplicate(item)
+                                        else if (val === 'export') handleExportCsv()
+                                        else if (val === 'delete') handleDeleteNotification(item)
+                                      }}
+                                      trigger={
+                                        <button
+                                          type="button"
+                                          className="flex size-8 items-center justify-center rounded-[6px] text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+                                          title="More actions"
+                                        >
+                                          <MoreHorizontal className="size-4" />
+                                        </button>
+                                      }
+                                    />
                                   </div>
                                 </td>
                               </tr>
@@ -1243,7 +1185,6 @@ function NotificationsManagementInner() {
                       }}
                     />
                   </div>
-                </div>
               </section>
             )}
 

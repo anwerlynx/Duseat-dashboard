@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import {
   FileText,
   Plus,
@@ -58,9 +59,25 @@ import { MainButton } from '@/components/ui/main-button'
 import { FigmaStatusBadge } from '@/components/ui/figma-badges'
 import { TableCheckbox } from '@/components/ui/table-checkbox'
 
-import { Pagination } from '@/components/ui'
+import { Pagination, MetricCard } from '@/components/ui'
 import { ToastProvider, useToast } from '@/components/dashboard/toast'
 import { cn, exportToCsv } from '@/lib/utils'
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+} from 'recharts'
 
 // ==========================================
 // TYPES & DATA STRUCTURES
@@ -697,14 +714,336 @@ function generatePreviewData(source: DataSourceType, metrics: string[], dimensio
 }
 
 // ==========================================
+// UNIFIED RECHARTS VISUALIZER COMPONENT
+// ==========================================
+function ReportVisualizer({
+  visualization,
+  data,
+  dimensionKey,
+  metricKeys,
+}: {
+  visualization: VisualizationType
+  data: any[]
+  dimensionKey: string
+  metricKeys: string[]
+}) {
+  const primaryMetric = metricKeys[0] || 'Value'
+  const chartColors = ['#00c2cb', '#17b26a', '#2f54eb', '#f79009', '#722ed1', '#eb2f96']
+
+  if (visualization === 'Bar Chart') {
+    return (
+      <div className="h-[280px] w-full pt-2">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
+            <CartesianGrid vertical={false} stroke="#eff1f3" strokeDasharray="3 3" />
+            <XAxis
+              dataKey={dimensionKey}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#6f777f', fontSize: 11 }}
+              interval={0}
+              angle={-15}
+              textAnchor="end"
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#6f777f', fontSize: 11 }}
+              tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
+            />
+            <RechartsTooltip
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null
+                return (
+                  <div className="rounded-[8px] border border-[#d3d5d7] bg-white p-2.5 shadow-lg text-xs font-sans">
+                    <p className="font-bold text-[#1f2327] mb-1">{label}</p>
+                    {payload.map((entry, i) => (
+                      <p key={i} className="text-[#6f777f] flex items-center justify-between gap-3">
+                        <span>{entry.name}:</span>
+                        <strong className="text-[#1f2327]">
+                          {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
+                        </strong>
+                      </p>
+                    ))}
+                  </div>
+                )
+              }}
+            />
+            {metricKeys.slice(0, 2).map((m, idx) => (
+              <Bar
+                key={m}
+                dataKey={m}
+                fill={chartColors[idx % chartColors.length]}
+                radius={[4, 4, 0, 0]}
+              />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    )
+  }
+
+  if (visualization === 'Area Chart') {
+    return (
+      <div className="h-[280px] w-full pt-2">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
+            <defs>
+              <linearGradient id="reportAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#00c2cb" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#00c2cb" stopOpacity={0.0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid vertical={false} stroke="#eff1f3" strokeDasharray="3 3" />
+            <XAxis
+              dataKey={dimensionKey}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#6f777f', fontSize: 11 }}
+              interval={0}
+              angle={-15}
+              textAnchor="end"
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#6f777f', fontSize: 11 }}
+              tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
+            />
+            <RechartsTooltip
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null
+                return (
+                  <div className="rounded-[8px] border border-[#d3d5d7] bg-white p-2.5 shadow-lg text-xs font-sans">
+                    <p className="font-bold text-[#1f2327] mb-1">{label}</p>
+                    {payload.map((entry, i) => (
+                      <p key={i} className="text-[#6f777f] flex items-center justify-between gap-3">
+                        <span>{entry.name}:</span>
+                        <strong className="text-[#00a4ac]">
+                          {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
+                        </strong>
+                      </p>
+                    ))}
+                  </div>
+                )
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey={primaryMetric}
+              stroke="#00c2cb"
+              strokeWidth={2.5}
+              fill="url(#reportAreaGrad)"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    )
+  }
+
+  if (visualization === 'Line Chart') {
+    return (
+      <div className="h-[280px] w-full pt-2">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
+            <CartesianGrid vertical={false} stroke="#eff1f3" strokeDasharray="3 3" />
+            <XAxis
+              dataKey={dimensionKey}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#6f777f', fontSize: 11 }}
+              interval={0}
+              angle={-15}
+              textAnchor="end"
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#6f777f', fontSize: 11 }}
+              tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
+            />
+            <RechartsTooltip
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null
+                return (
+                  <div className="rounded-[8px] border border-[#d3d5d7] bg-white p-2.5 shadow-lg text-xs font-sans">
+                    <p className="font-bold text-[#1f2327] mb-1">{label}</p>
+                    {payload.map((entry, i) => (
+                      <p key={i} className="text-[#6f777f] flex items-center justify-between gap-3">
+                        <span>{entry.name}:</span>
+                        <strong className="text-[#17b26a]">
+                          {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
+                        </strong>
+                      </p>
+                    ))}
+                  </div>
+                )
+              }}
+            />
+            {metricKeys.slice(0, 2).map((m, idx) => (
+              <Line
+                key={m}
+                type="monotone"
+                dataKey={m}
+                stroke={chartColors[idx % chartColors.length]}
+                strokeWidth={2.5}
+                dot={{ r: 4, strokeWidth: 2, fill: '#fff' }}
+                activeDot={{ r: 6 }}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    )
+  }
+
+  if (visualization === 'Donut Chart') {
+    const pieData = data.slice(0, 5).map((row, i) => ({
+      name: String(row[dimensionKey] || `Item ${i + 1}`),
+      value: Number(row[primaryMetric] || 100 * (5 - i)),
+    }))
+    const totalVal = pieData.reduce((acc, curr) => acc + curr.value, 0)
+
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 py-3">
+        <div className="relative h-[220px] w-[220px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <RechartsPieChart>
+              <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={55}
+                outerRadius={85}
+                paddingAngle={3}
+                cornerRadius={5}
+                stroke="none"
+              >
+                {pieData.map((_, i) => (
+                  <Cell key={i} fill={chartColors[i % chartColors.length]} />
+                ))}
+              </Pie>
+              <RechartsTooltip
+                formatter={(val: any) => [typeof val === 'number' ? val.toLocaleString() : val, primaryMetric]}
+              />
+            </RechartsPieChart>
+          </ResponsiveContainer>
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+            <span className="text-[18px] font-bold text-[#1f2327]">
+              {totalVal >= 1000000
+                ? `${(totalVal / 1000000).toFixed(1)}M`
+                : totalVal >= 1000
+                ? `${(totalVal / 1000).toFixed(0)}K`
+                : totalVal}
+            </span>
+            <span className="text-[10px] text-[#6f777f]">Total Share</span>
+          </div>
+        </div>
+        <div className="space-y-1.5 min-w-[160px] text-xs">
+          {pieData.map((item, idx) => (
+            <div key={idx} className="flex items-center justify-between gap-3">
+              <span className="flex items-center gap-1.5 truncate text-[#4b5563]">
+                <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: chartColors[idx % chartColors.length] }} />
+                <span className="truncate max-w-[120px]">{item.name}</span>
+              </span>
+              <strong className="text-[#1f2327] font-mono">
+                {totalVal > 0 ? `${((item.value / totalVal) * 100).toFixed(0)}%` : '0%'}
+              </strong>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Funnel
+  if (visualization === 'Funnel') {
+    return (
+      <div className="space-y-2 w-full max-w-lg mx-auto py-2">
+        {data.slice(0, 5).map((item, idx) => {
+          const label = String(item[dimensionKey])
+          const pct = Math.max(20, 100 - idx * 18)
+          return (
+            <div key={idx} className="space-y-0.5">
+              <div className="flex justify-between text-[11px] font-semibold text-[#1f2327]">
+                <span>{label}</span>
+                <span>{pct}% conversion</span>
+              </div>
+              <div
+                className="h-6 rounded-[6px] bg-gradient-to-r from-[#00c2cb] to-[#009da4] flex items-center justify-end px-2 text-[11px] font-bold text-white shadow-2xs transition-all"
+                style={{ width: `${pct}%` }}
+              >
+                {pct}%
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // KPI
+  if (visualization === 'KPI') {
+    const totalVal = data.reduce((acc, curr) => acc + (Number(curr[primaryMetric]) || 0), 0)
+    return (
+      <div className="text-center space-y-2 py-8">
+        <span className="text-[12px] font-bold uppercase tracking-wider text-[#6f777f]">
+          {primaryMetric}
+        </span>
+        <div className="text-[34px] sm:text-[38px] font-extrabold text-[#1f2327] tracking-tight">
+          {totalVal > 1000 ? `AED ${totalVal.toLocaleString()}` : totalVal.toLocaleString()}
+        </div>
+        <div className="inline-flex items-center gap-1 rounded-full bg-[#dfefe8] px-3 py-1 text-[12px] font-bold text-[#17b26a]">
+          <TrendingUp className="size-3.5" /> +18.4% vs previous period
+        </div>
+      </div>
+    )
+  }
+
+  // Table fallback
+  return (
+    <div className="overflow-x-auto w-full py-2">
+      <table className="w-full text-left text-[12px]">
+        <thead>
+          <tr className="border-b border-[#d3d5d7] text-[10px] font-bold uppercase text-[#6f777f]">
+            <th className="py-2 px-3">{dimensionKey}</th>
+            {metricKeys.map((m) => (
+              <th key={m} className="py-2 px-3 text-right">
+                {m}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-[#eef0f2]">
+          {data.map((row, idx) => (
+            <tr key={idx} className="hover:bg-slate-50/60">
+              <td className="py-2.5 px-3 font-semibold text-[#1f2327]">{String(row[dimensionKey])}</td>
+              {metricKeys.map((m) => (
+                <td key={m} className="py-2.5 px-3 text-right font-mono text-[#4b5563]">
+                  {typeof row[m] === 'number' ? (row[m] as number).toLocaleString() : row[m]}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// ==========================================
 // MAIN COMPONENT INNER
 // ==========================================
 
 function ReportsManagementInner() {
   const { toast } = useToast()
+  const searchParams = useSearchParams()
+  const initialTab = (searchParams.get('tab') as any) || 'all'
 
   // Main navigation / view modes
-  const [activeTab, setActiveTab] = React.useState<'all' | 'custom' | 'scheduled' | 'templates' | 'builder' | 'details'>('all')
+  const [activeTab, setActiveTab] = React.useState<'all' | 'custom' | 'scheduled' | 'templates' | 'builder' | 'details'>(initialTab)
   const [reports, setReports] = React.useState<ReportItem[]>(INITIAL_REPORTS)
   const [auditLogs, setAuditLogs] = React.useState<ReportAuditEntry[]>(INITIAL_AUDIT_LOGS)
   const [selectedReport, setSelectedReport] = React.useState<ReportItem | null>(null)
@@ -1189,52 +1528,15 @@ function ReportsManagementInner() {
   return (
     <PlatformShell
       title="Reports & Custom Data Composition"
-      eyebrow="Business Intelligence & Reporting Engine"
-      actions={
-        <div className="flex items-center gap-2">
-          {activeTab !== 'builder' && activeTab !== 'details' ? (
-            <>
-              <MainButton
-                variant="Secondary"
-                size="sm"
-                iconLeft={<Sparkles className="size-3.5 text-[#00c2cb]" />}
-                label="Predefined Templates"
-                onClick={() => setActiveTab('templates')}
-              />
-              <MainButton
-                variant="Primary"
-                size="sm"
-                iconLeft={<Plus className="size-3.5" />}
-                label="+ Create Report"
-                onClick={() => openNewReportBuilder()}
-              />
-            </>
-          ) : (
-            <MainButton
-              variant="Secondary"
-              size="sm"
-              iconLeft={<ChevronLeft className="size-3.5" />}
-              label="Back to Reports"
-              onClick={() => setActiveTab('all')}
-            />
-          )}
-        </div>
-      }
+      eyebrow="Business Intelligence"
     >
       <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
         {/* =========================================================================
             TOP HEADER CARD (Canonical Users Design Standard)
            ========================================================================= */}
-        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05)] flex flex-col gap-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#6f777f] uppercase tracking-wider mb-1">
-                <span>Platform</span>
-                <span>/</span>
-                <span>Analytics & BI</span>
-                <span>/</span>
-                <span className="text-[#00c2cb]">Custom Reports</span>
-              </div>
               <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
                 Custom Reports & Data Composition
               </h1>
@@ -1262,46 +1564,100 @@ function ReportsManagementInner() {
               </button>
             </div>
           </div>
+
+          {/* 5 Stat Metric Cards */}
+          {activeTab !== 'builder' && activeTab !== 'details' && (
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 lg:gap-3">
+              <MetricCard
+                label="Total Reports"
+                value={reports.length}
+                icon={FileText}
+                tone="neutral"
+                active={activeTab === 'all'}
+                onClick={() => setActiveTab('all')}
+              />
+              <MetricCard
+                label="Custom Ad-Hoc"
+                value={reports.filter((r) => !r.schedule).length}
+                icon={SlidersHorizontal}
+                tone="info"
+                active={activeTab === 'custom'}
+                onClick={() => setActiveTab('custom')}
+              />
+              <MetricCard
+                label="Scheduled Automated"
+                value={reports.filter((r) => r.schedule).length}
+                icon={Clock}
+                tone="success"
+                active={activeTab === 'scheduled'}
+                onClick={() => setActiveTab('scheduled')}
+              />
+              <MetricCard
+                label="Pre-built Templates"
+                value={REPORT_TEMPLATES.length}
+                icon={Sparkles}
+                tone="warning"
+                active={activeTab === 'templates'}
+                onClick={() => setActiveTab('templates')}
+              />
+              <MetricCard
+                label="Ready for Export"
+                value={reports.filter((r) => r.status === 'Ready').length}
+                icon={CheckCircle2}
+                tone="brand"
+              />
+            </div>
+          )}
         </header>
 
-        {/* Main Tab Switcher if not in builder or details */}
+        {/* Main Tab Switcher (Design System Underline Tabs) */}
         {activeTab !== 'builder' && activeTab !== 'details' && (
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#d3d5d7] pb-3">
-            <div className="flex items-center gap-2 overflow-x-auto">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#d3d5d7] pt-1 pb-0">
+            <div className="flex items-center gap-6 overflow-x-auto no-scrollbar">
               {[
-                { id: 'all', label: 'All Reports', count: reports.length },
-                { id: 'custom', label: 'Custom Reports', count: reports.filter((r) => !r.schedule).length },
-                { id: 'scheduled', label: 'Scheduled Reports', count: reports.filter((r) => r.schedule).length },
-                { id: 'templates', label: 'Templates', count: REPORT_TEMPLATES.length },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id as typeof activeTab)
-                    setCurrentPage(1)
-                  }}
-                  className={cn(
-                    'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn',
-                    activeTab === tab.id
-                      ? 'bg-[#1f2327] text-white shadow-2xs'
-                      : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
-                  )}
-                >
-                  <span>{tab.label}</span>
-                  <span
+                { id: 'all', label: 'All Reports', count: reports.length, icon: FileText },
+                { id: 'custom', label: 'Custom Reports', count: reports.filter((r) => !r.schedule).length, icon: SlidersHorizontal },
+                { id: 'scheduled', label: 'Scheduled Reports', count: reports.filter((r) => r.schedule).length, icon: Clock },
+                { id: 'templates', label: 'Templates', count: REPORT_TEMPLATES.length, icon: Sparkles },
+              ].map((tab) => {
+                const Icon = tab.icon
+                const isActive = activeTab === tab.id
+                return (
+                  <a
+                    key={tab.id}
+                    href={`/custom-reports?tab=${tab.id}`}
+                    onClick={(e) => {
+                      if (e.ctrlKey || e.metaKey || e.button === 1) {
+                        return
+                      }
+                      e.preventDefault()
+                      setActiveTab(tab.id as typeof activeTab)
+                      setCurrentPage(1)
+                    }}
                     className={cn(
-                      'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
-                      activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-[#eff1f3] text-[#1f2327]'
+                      'relative flex items-center gap-2 pb-3 pt-1 text-[14px] font-medium transition-colors cursor-pointer select-none no-underline shrink-0',
+                      isActive
+                        ? 'text-[#1f2327] font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2.5px] after:rounded-full after:bg-[#00c2cb]'
+                        : 'text-[#6f777f] hover:text-[#1f2327]'
                     )}
                   >
-                    {tab.count}
-                  </span>
-                </button>
-              ))}
+                    <Icon className={cn('size-4', isActive ? 'text-[#00c2cb]' : 'text-[#6f777f]')} />
+                    <span>{tab.label}</span>
+                    <span
+                      className={cn(
+                        'rounded-full px-2 py-0.5 text-[11px] font-bold transition-colors',
+                        isActive ? 'bg-[#e5f6f7] text-[#00a4ac]' : 'bg-[#eff1f3] text-[#6f777f]'
+                      )}
+                    >
+                      {tab.count}
+                    </span>
+                  </a>
+                )
+              })}
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-[12px] text-[#6f777f] flex items-center gap-1">
+            <div className="flex items-center gap-2 pb-2">
+              <span className="text-[12px] text-[#6f777f] flex items-center gap-1.5 bg-[#fcfcfc] px-2.5 py-1 rounded-[6px] border border-[#eff1f3]">
                 <Clock className="size-3.5 text-[#00c2cb]" /> Data freshness: <strong className="text-[#1f2327]">Real-time</strong>
               </span>
             </div>
@@ -1398,12 +1754,12 @@ function ReportsManagementInner() {
                 <div className="flex flex-wrap items-center gap-2">
                   {(
                     [
-                      { id: 'All', label: 'All reports' },
-                      { id: 'Ready', label: 'Ready' },
-                      { id: 'Scheduled', label: 'Scheduled' },
-                      { id: 'Completed', label: 'Completed' },
-                      { id: 'Draft', label: 'Draft' },
-                      { id: 'Archived', label: 'Archived' },
+                      { id: 'All', label: 'All Reports', count: reports.length },
+                      { id: 'Ready', label: 'Ready', count: reports.filter((r) => r.status === 'Ready').length },
+                      { id: 'Scheduled', label: 'Scheduled', count: reports.filter((r) => r.schedule).length },
+                      { id: 'Completed', label: 'Completed', count: reports.filter((r) => r.status === 'Completed').length },
+                      { id: 'Draft', label: 'Draft', count: reports.filter((r) => r.status === 'Draft').length },
+                      { id: 'Archived', label: 'Archived', count: reports.filter((r) => r.status === 'Archived').length },
                     ] as const
                   ).map((item) => {
                     const isActive = selectedStatusFilter === item.id
@@ -1413,13 +1769,21 @@ function ReportsManagementInner() {
                         type="button"
                         onClick={() => setSelectedStatusFilter(item.id)}
                         className={cn(
-                          'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn',
+                          'flex h-[34px] items-center gap-2 rounded-[8px] px-3 text-[13px] font-medium transition-all cursor-pointer select-none',
                           isActive
-                            ? 'bg-[#1f2327] text-white shadow-2xs'
+                            ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                             : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                         )}
                       >
                         <span>{item.label}</span>
+                        <span
+                          className={cn(
+                            'rounded-full px-1.5 py-0.2 text-[11px] font-semibold',
+                            isActive ? 'bg-white/20 text-white' : 'bg-[#eff1f3] text-[#1f2327]'
+                          )}
+                        >
+                          {item.count}
+                        </span>
                       </button>
                     )
                   })}
@@ -1571,7 +1935,7 @@ function ReportsManagementInner() {
                           <tr
                             key={report.id}
                             className={cn(
-                              'h-[60px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa]',
+                              'h-[64px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa]',
                               isSelected && 'bg-[#e5f6f7]/40'
                             )}
                           >
@@ -1587,63 +1951,63 @@ function ReportsManagementInner() {
                                 }}
                               />
                             </td>
-                                <td className="px-4 py-3.5">
-                                  <div className="space-y-0.5">
-                                    <button
-                                      onClick={() => openReportDetails(report)}
-                                      className="text-left font-bold text-[#1f2327] hover:text-[#00c2cb] transition-colors flex items-center gap-1.5"
-                                    >
-                                      {report.name}
-                                    </button>
-                                    <p className="text-[11px] text-[#6f777f] line-clamp-1 max-w-md">
-                                      {report.description}
-                                    </p>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3.5">
-                                  <div className="flex items-center gap-1.5">
-                                    <SourceIcon className="size-3.5 text-[#00c2cb]" />
-                                    <span className="font-semibold text-[#1f2327]">{report.dataSource}</span>
-                                    {report.secondarySource && (
-                                      <span className="text-[10px] text-[#6f777f]">+{report.secondarySource}</span>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3.5 text-[#4b5563]">
-                                  <div>{report.createdBy}</div>
-                                  <div className="text-[10px] text-[#9ca3af]">{report.lastUpdated}</div>
-                                </td>
-                                <td className="px-4 py-3.5">
-                                  {report.schedule ? (
-                                    <div className="space-y-0.5">
-                                      <span className="inline-flex items-center gap-1 rounded-[6px] bg-[#e6f9fa] px-2 py-0.5 text-[11px] font-bold text-[#008f95]">
-                                        <Clock className="size-3" /> {report.schedule.frequency}
-                                      </span>
-                                      <div className="text-[10px] text-[#6f777f]">{report.schedule.format} • {report.schedule.recipients.length} recp</div>
-                                    </div>
-                                  ) : (
-                                    <span className="text-[11px] text-[#9ca3af]">On demand</span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3.5 text-[#4b5563]">
-                                  <span className="text-[12px]">{report.lastGenerated}</span>
-                                </td>
-                                <td className="px-4 py-3.5">
-                                  <FigmaStatusBadge
-                                    status={
-                                      report.status === 'Ready' || report.status === 'Completed'
-                                        ? 'Completed'
-                                        : report.status === 'Scheduled'
-                                        ? 'In progress'
-                                        : report.status === 'Draft'
-                                        ? 'Pending'
-                                        : report.status === 'Failed'
-                                        ? 'Failed'
-                                        : 'Cancelled'
-                                    }
-                                  />
-                                </td>
-                                <td className="px-4 py-3.5 text-right">
+                            <td className="px-4">
+                              <div className="space-y-0.5">
+                                <button
+                                  onClick={() => openReportDetails(report)}
+                                  className="text-left font-semibold text-[14px] text-[#1f2327] hover:text-[#00c2cb] transition-colors flex items-center gap-1.5"
+                                >
+                                  {report.name}
+                                </button>
+                                <p className="text-[12px] text-[#6f777f] line-clamp-1 max-w-md">
+                                  {report.description}
+                                </p>
+                              </div>
+                            </td>
+                            <td className="px-4">
+                              <div className="flex items-center gap-1.5">
+                                <SourceIcon className="size-3.5 text-[#00c2cb]" />
+                                <span className="font-semibold text-[#1f2327] text-[13px]">{report.dataSource}</span>
+                                {report.secondarySource && (
+                                  <span className="text-[11px] text-[#6f777f]">+{report.secondarySource}</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 text-[#4b5563]">
+                              <div className="text-[13px] font-medium text-[#1f2327]">{report.createdBy}</div>
+                              <div className="text-[11px] text-[#9ca3af]">{report.lastUpdated}</div>
+                            </td>
+                            <td className="px-4">
+                              {report.schedule ? (
+                                <div className="space-y-0.5">
+                                  <span className="inline-flex items-center gap-1 rounded-[6px] bg-[#e6f9fa] px-2 py-0.5 text-[11px] font-bold text-[#008f95]">
+                                    <Clock className="size-3" /> {report.schedule.frequency}
+                                  </span>
+                                  <div className="text-[11px] text-[#6f777f]">{report.schedule.format} • {report.schedule.recipients.length} recp</div>
+                                </div>
+                              ) : (
+                                <span className="text-[12px] text-[#9ca3af]">On demand</span>
+                              )}
+                            </td>
+                            <td className="px-4 text-[#4b5563]">
+                              <span className="text-[13px]">{report.lastGenerated}</span>
+                            </td>
+                            <td className="px-4">
+                              <FigmaStatusBadge
+                                status={
+                                  report.status === 'Ready' || report.status === 'Completed'
+                                    ? 'Completed'
+                                    : report.status === 'Scheduled'
+                                    ? 'In progress'
+                                    : report.status === 'Draft'
+                                    ? 'Pending'
+                                    : report.status === 'Failed'
+                                    ? 'Failed'
+                                    : 'Cancelled'
+                                }
+                              />
+                            </td>
+                            <td className="px-4 text-right">
                                   <div className="flex items-center justify-end gap-1">
                                     <button
                                       onClick={() => openReportDetails(report)}
@@ -2075,133 +2439,12 @@ function ReportsManagementInner() {
 
                   {/* Visualization Rendering Area */}
                   <div className="rounded-[10px] border border-[#eef0f2] bg-[#fafbfc] p-4 min-h-[340px] flex flex-col justify-center">
-                    {builderVisualization === 'Bar Chart' && (
-                      <div className="space-y-4 w-full">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-[#6f777f]">
-                          <span>{builderDimensions[0] || 'Dimension'}</span>
-                          <span>{builderMetrics[0] || 'Metric'}</span>
-                        </div>
-                        {previewData.map((item, idx) => {
-                          const label = String(item[builderDimensions[0] || 'Category'] || `Item ${idx + 1}`)
-                          const val = Number(item[builderMetrics[0] as keyof typeof item] || 100 * (5 - idx))
-                          const maxVal = 2000000
-                          const pct = Math.min(100, Math.max(15, (val / maxVal) * 100))
-                          return (
-                            <div key={idx} className="space-y-1">
-                              <div className="flex justify-between text-[12px]">
-                                <span className="font-semibold text-[#1f2327]">{label}</span>
-                                <span className="font-bold text-[#00c2cb]">
-                                  {typeof val === 'number' && val > 1000
-                                    ? `AED ${val.toLocaleString()}`
-                                    : val.toLocaleString()}
-                                </span>
-                              </div>
-                              <div className="h-3 w-full rounded-full bg-[#eef0f2] overflow-hidden">
-                                <div
-                                  className="h-full rounded-full bg-gradient-to-r from-[#00c2cb] to-[#009da4] transition-all duration-500"
-                                  style={{ width: `${pct}%` }}
-                                />
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-
-                    {builderVisualization === 'Donut Chart' && (
-                      <div className="space-y-4 text-center">
-                        <div className="flex justify-center">
-                          <div className="size-36 rounded-full border-8 border-[#00c2cb] flex items-center justify-center bg-white shadow-2xs">
-                            <div className="text-center">
-                              <span className="text-[18px] font-bold text-[#1f2327]">100%</span>
-                              <span className="block text-[10px] text-[#6f777f]">Total Share</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-left text-[11px]">
-                          {previewData.slice(0, 4).map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-1.5">
-                              <span className="size-2 rounded-full bg-[#00c2cb]" />
-                              <span className="font-medium text-[#4b5563] truncate">
-                                {String(item[builderDimensions[0] || 'Category'])}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {builderVisualization === 'Funnel' && (
-                      <div className="space-y-2 w-full">
-                        {previewData.map((item, idx) => {
-                          const label = String(item[builderDimensions[0] || 'Category'])
-                          const pct = 100 - idx * 18
-                          return (
-                            <div key={idx} className="space-y-0.5">
-                              <div className="flex justify-between text-[11px] font-semibold text-[#1f2327]">
-                                <span>{label}</span>
-                                <span>{pct}% conversion</span>
-                              </div>
-                              <div
-                                className="h-6 rounded-[6px] bg-[#00c2cb] flex items-center justify-end px-2 text-[11px] font-bold text-white transition-all"
-                                style={{ width: `${pct}%` }}
-                              >
-                                {pct}%
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-
-                    {builderVisualization === 'KPI' && (
-                      <div className="text-center space-y-2">
-                        <span className="text-[12px] font-bold uppercase tracking-wider text-[#6f777f]">
-                          {builderMetrics[0] || 'Total Metric'}
-                        </span>
-                        <div className="text-[36px] font-extrabold text-[#1f2327]">
-                          AED 3,184,200
-                        </div>
-                        <div className="inline-flex items-center gap-1 rounded-full bg-[#e6f9fa] px-3 py-1 text-[12px] font-bold text-[#008f95]">
-                          <ArrowUpRight className="size-3.5" /> +18.4% vs previous period
-                        </div>
-                      </div>
-                    )}
-
-                    {(builderVisualization === 'Table' ||
-                      builderVisualization === 'Line Chart' ||
-                      builderVisualization === 'Area Chart') && (
-                      <div className="overflow-x-auto w-full">
-                        <table className="w-full text-left text-[12px]">
-                          <thead>
-                            <tr className="border-b border-[#d3d5d7] text-[10px] font-bold uppercase text-[#6f777f]">
-                              <th className="py-2 px-2">{builderDimensions[0] || 'Dimension'}</th>
-                              {builderMetrics.map((m) => (
-                                <th key={m} className="py-2 px-2 text-right">
-                                  {m}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-[#eef0f2]">
-                            {previewData.map((row, idx) => (
-                              <tr key={idx}>
-                                <td className="py-2 px-2 font-semibold text-[#1f2327]">
-                                  {String(row[builderDimensions[0] || 'Category'])}
-                                </td>
-                                {builderMetrics.map((m) => (
-                                  <td key={m} className="py-2 px-2 text-right font-medium text-[#4b5563]">
-                                    {typeof (row as Record<string, unknown>)[m] === 'number'
-                                      ? ((row as Record<string, unknown>)[m] as number).toLocaleString()
-                                      : String((row as Record<string, unknown>)[m] ?? 0)}
-                                  </td>
-                                ))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
+                    <ReportVisualizer
+                      visualization={builderVisualization}
+                      data={previewData}
+                      dimensionKey={builderDimensions[0] || 'Category'}
+                      metricKeys={builderMetrics}
+                    />
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-[#6f777f] pt-1 border-t border-[#eef0f2]">
@@ -2520,27 +2763,13 @@ function ReportsManagementInner() {
                   </div>
                 </div>
 
-                <div className="rounded-[10px] border border-[#eef0f2] bg-[#fafbfc] p-6 min-h-[300px] flex items-center justify-center">
-                  <div className="w-full max-w-xl space-y-3">
-                    {generatePreviewData(selectedReport.dataSource, selectedReport.metrics, selectedReport.dimensions).map((item, idx) => {
-                      const label = String(item[selectedReport.dimensions[0] || 'Category'])
-                      const val = Number(item[selectedReport.metrics[0] as keyof typeof item] || 100 * (5 - idx))
-                      const pct = Math.min(100, Math.max(20, (val / 2000000) * 100))
-                      return (
-                        <div key={idx} className="space-y-1">
-                          <div className="flex justify-between text-[12px]">
-                            <span className="font-semibold text-[#1f2327]">{label}</span>
-                            <span className="font-bold text-[#00c2cb]">
-                              {typeof val === 'number' && val > 1000 ? `AED ${val.toLocaleString()}` : val.toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="h-3 w-full rounded-full bg-[#eef0f2] overflow-hidden">
-                            <div className="h-full rounded-full bg-[#00c2cb]" style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
+                <div className="rounded-[10px] border border-[#eef0f2] bg-[#fafbfc] p-4 min-h-[320px] flex flex-col justify-center">
+                  <ReportVisualizer
+                    visualization={detailsVisualization}
+                    data={generatePreviewData(selectedReport.dataSource, selectedReport.metrics, selectedReport.dimensions)}
+                    dimensionKey={selectedReport.dimensions[0] || 'Category'}
+                    metricKeys={selectedReport.metrics}
+                  />
                 </div>
               </div>
             )}

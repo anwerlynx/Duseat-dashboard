@@ -1,6 +1,8 @@
 'use client'
 
 import * as React from 'react'
+import * as Flags3x2 from 'country-flag-icons/react/3x2'
+import * as Flags1x1 from 'country-flag-icons/react/1x1'
 import { cn } from '@/lib/utils'
 
 export type CountryCode =
@@ -36,9 +38,9 @@ export type CountryCode =
   | 'PK'
   | string
 
-export interface FlagProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+export interface FlagProps extends React.HTMLAttributes<HTMLElement> {
   code?: CountryCode
-  size?: 's' | 'm' | 'l' | 'xl'
+  size?: 'xs' | 's' | 'm' | 'l' | 'xl'
   aspectRatio?: '3:2' | '1:1'
   className?: string
   alt?: string
@@ -47,95 +49,120 @@ export interface FlagProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 // Comprehensive country name to ISO 3166-1 alpha-2 mapping dictionary
 const countryCodeMap: Record<string, string> = {
   // Middle East & GCC
-  uae: 'ae',
-  'united arab emirates': 'ae',
-  dubai: 'ae',
-  'abu dhabi': 'ae',
-  emirates: 'ae',
-  egypt: 'eg',
-  masr: 'eg',
-  saudi: 'sa',
-  'saudi arabia': 'sa',
-  ksa: 'sa',
-  kuwait: 'kw',
-  qatar: 'qa',
-  bahrain: 'bh',
-  oman: 'om',
-  lebanon: 'lb',
-  jordan: 'jo',
-  iraq: 'iq',
-  morocco: 'ma',
-  algeria: 'dz',
-  tunisia: 'tn',
+  uae: 'AE',
+  'united arab emirates': 'AE',
+  dubai: 'AE',
+  'abu dhabi': 'AE',
+  emirates: 'AE',
+  egypt: 'EG',
+  masr: 'EG',
+  saudi: 'SA',
+  'saudi arabia': 'SA',
+  ksa: 'SA',
+  kuwait: 'KW',
+  qatar: 'QA',
+  bahrain: 'BH',
+  oman: 'OM',
+  lebanon: 'LB',
+  jordan: 'JO',
+  iraq: 'IQ',
+  morocco: 'MA',
+  algeria: 'DZ',
+  tunisia: 'TN',
 
   // Europe
-  uk: 'gb',
-  'united kingdom': 'gb',
-  britain: 'gb',
-  england: 'gb',
-  germany: 'de',
-  deutschland: 'de',
-  france: 'fr',
-  italy: 'it',
-  spain: 'es',
-  switzerland: 'ch',
-  netherlands: 'nl',
-  holland: 'nl',
-  sweden: 'se',
-  norway: 'no',
-  russia: 'ru',
-  'russian federation': 'ru',
-  turkey: 'tr',
-  türkiye: 'tr',
-  monaco: 'mc',
-  cyprus: 'cy',
-  greece: 'gr',
-  portugal: 'pt',
-  austria: 'at',
-  belgium: 'be',
-  ireland: 'ie',
-  poland: 'pl',
+  uk: 'GB',
+  'united kingdom': 'GB',
+  britain: 'GB',
+  england: 'GB',
+  germany: 'DE',
+  deutschland: 'DE',
+  france: 'FR',
+  italy: 'IT',
+  spain: 'ES',
+  switzerland: 'CH',
+  netherlands: 'NL',
+  holland: 'NL',
+  sweden: 'SE',
+  norway: 'NO',
+  russia: 'RU',
+  'russian federation': 'RU',
+  turkey: 'TR',
+  türkiye: 'TR',
+  monaco: 'MC',
+  cyprus: 'CY',
+  greece: 'GR',
+  portugal: 'PT',
+  austria: 'AT',
+  belgium: 'BE',
+  ireland: 'IE',
+  poland: 'PL',
 
   // Americas
-  us: 'us',
-  usa: 'us',
-  'united states': 'us',
-  'united states of america': 'us',
-  america: 'us',
-  canada: 'ca',
-  brazil: 'br',
-  mexico: 'mx',
-  argentina: 'ar',
+  us: 'US',
+  usa: 'US',
+  'united states': 'US',
+  'united states of america': 'US',
+  america: 'US',
+  canada: 'CA',
+  brazil: 'BR',
+  mexico: 'MX',
+  argentina: 'AR',
 
   // Asia & Oceania
-  china: 'cn',
-  india: 'in',
-  japan: 'jp',
-  'south korea': 'kr',
-  korea: 'kr',
-  singapore: 'sg',
-  pakistan: 'pk',
-  australia: 'au',
-  'new zealand': 'nz',
-  'hong kong': 'hk',
-  malaysia: 'my',
-  thailand: 'th',
-  indonesia: 'id',
-  philippines: 'ph',
-  vietnam: 'vn',
+  china: 'CN',
+  india: 'IN',
+  japan: 'JP',
+  'south korea': 'KR',
+  korea: 'KR',
+  singapore: 'SG',
+  pakistan: 'PK',
+  australia: 'AU',
+  'new zealand': 'NZ',
+  'hong kong': 'HK',
+  malaysia: 'MY',
+  thailand: 'TH',
+  indonesia: 'ID',
+  philippines: 'PH',
+  vietnam: 'VN',
 }
 
-export function getCountryCode(countryName: string = ''): string {
-  if (!countryName) return 'AE'
-  const clean = countryName.toLowerCase().trim()
+/**
+ * Converts country name, raw emoji flag (e.g. '🇦🇪'), or ISO code into a standard 2-letter uppercase ISO code.
+ */
+export function getCountryCode(input: string = ''): string {
+  if (!input) return 'AE'
+  const trimmed = input.trim()
 
-  // Direct 2-letter ISO match
-  if (clean.length === 2) return clean.toUpperCase()
+  // 1. Check if input is a unicode Regional Indicator Symbol flag (e.g. '🇦🇪')
+  const chars = Array.from(trimmed)
+  if (chars.length === 2) {
+    const code0 = chars[0].codePointAt(0)
+    const code1 = chars[1].codePointAt(0)
+    if (
+      code0 &&
+      code1 &&
+      code0 >= 0x1f1e6 &&
+      code0 <= 0x1f1ff &&
+      code1 >= 0x1f1e6 &&
+      code1 <= 0x1f1ff
+    ) {
+      const c1 = String.fromCharCode(code0 - 0x1f1e6 + 65)
+      const c2 = String.fromCharCode(code1 - 0x1f1e6 + 65)
+      return `${c1}${c2}`.toUpperCase()
+    }
+  }
 
-  // Match in country dictionary
+  // 2. Direct 2-letter ISO match
+  if (trimmed.length === 2 && /^[a-zA-Z]{2}$/.test(trimmed)) {
+    return trimmed.toUpperCase()
+  }
+
+  // 3. Match in country dictionary
+  const clean = trimmed.toLowerCase()
   for (const [key, code] of Object.entries(countryCodeMap)) {
     if (clean === key || clean.includes(key)) {
-      return code.toUpperCase()
+      return code
     }
   }
 
@@ -143,8 +170,11 @@ export function getCountryCode(countryName: string = ''): string {
 }
 
 /**
- * Figma Node 2724:22777 Standard Vector Country Flag
- * Aspect ratio: 3:2 (standard 36x24px, 24x16px, 18x12px, 48x32px)
+ * Modern Vector Country Flag Component powered by country-flag-icons
+ * Features:
+ * - 100% offline, high-precision SVG vectors
+ * - Elegant rounded corners and subtle border ring
+ * - Automatic conversion from unicode emojis (e.g. '🇦🇪' -> 'AE') and country names
  */
 export function Flag({
   code = 'AE',
@@ -154,49 +184,49 @@ export function Flag({
   alt,
   ...props
 }: FlagProps) {
-  const [hasError, setHasError] = React.useState(false)
-
-  // Normalize code
-  const iso = (code.length === 2 ? code : getCountryCode(code)).toLowerCase()
+  const isoCode = getCountryCode(code)
 
   const sizeClasses = {
+    xs: aspectRatio === '3:2' ? 'w-[15px] h-[10px] rounded-[2px]' : 'size-[12px] rounded-full',
     s: aspectRatio === '3:2' ? 'w-[18px] h-[12px] rounded-[2px]' : 'size-[14px] rounded-full',
     m: aspectRatio === '3:2' ? 'w-[24px] h-[16px] rounded-[3px]' : 'size-[18px] rounded-full',
     l: aspectRatio === '3:2' ? 'w-[36px] h-[24px] rounded-[4px]' : 'size-[24px] rounded-full',
     xl: aspectRatio === '3:2' ? 'w-[48px] h-[32px] rounded-[5px]' : 'size-[32px] rounded-full',
   }[size]
 
-  if (hasError) {
+  // Retrieve matching SVG vector from country-flag-icons
+  const FlagsMap = aspectRatio === '1:1' ? (Flags1x1 as Record<string, React.ComponentType<any>>) : (Flags3x2 as Record<string, React.ComponentType<any>>)
+  const FlagSvg = FlagsMap[isoCode] || (Flags3x2 as Record<string, React.ComponentType<any>>)[isoCode]
+
+  if (FlagSvg) {
     return (
       <span
         className={cn(
-          'inline-flex items-center justify-center font-mono font-bold text-[9px] uppercase bg-[#e5f6f7] text-[#00a4ac] ring-1 ring-black/10 shrink-0 select-none shadow-2xs',
+          'inline-flex shrink-0 items-center justify-center overflow-hidden align-middle shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/10 select-none bg-slate-100',
           sizeClasses,
           className
         )}
-        title={code}
+        title={alt || isoCode}
+        {...props}
       >
-        {iso.toUpperCase()}
+        <FlagSvg className="h-full w-full object-cover" />
       </span>
     )
   }
 
-  // High-def vector SVG from FlagCDN
-  const flagSvgUrl = `https://flagcdn.com/${iso}.svg`
-
+  // Fallback if country code is not in package
   return (
-    <img
-      src={flagSvgUrl}
-      alt={alt || `${code} flag`}
-      loading="lazy"
-      onError={() => setHasError(true)}
+    <span
       className={cn(
-        'inline-block shrink-0 object-cover shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/10 overflow-hidden select-none',
+        'inline-flex items-center justify-center font-mono font-bold text-[9px] uppercase bg-[#e5f6f7] text-[#00a4ac] ring-1 ring-black/10 shrink-0 select-none shadow-2xs',
         sizeClasses,
         className
       )}
+      title={isoCode}
       {...props}
-    />
+    >
+      {isoCode}
+    </span>
   )
 }
 
@@ -213,7 +243,7 @@ export function CountryBadge({
   code: CountryCode
   name?: string
   dial?: string
-  size?: 's' | 'm' | 'l'
+  size?: 'xs' | 's' | 'm' | 'l'
   className?: string
 }) {
   const resolvedCode = getCountryCode(code)
@@ -246,7 +276,7 @@ export function AvatarFlagOverlay({
   return (
     <div className={cn('relative inline-block', className)}>
       {children}
-      <div className="absolute -bottom-1 -right-1 z-10">
+      <div className="absolute -bottom-1 -right-1 z-10 shadow-xs">
         <Flag code={code} size="s" className="ring-2 ring-white" />
       </div>
     </div>

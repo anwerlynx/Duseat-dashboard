@@ -1248,7 +1248,7 @@ export function ChatModerator({
         {showRightPanel && (
           <div
             className={cn(
-              'w-80 sm:w-96 flex flex-col border-l border-[#d3d5d7] bg-white overflow-y-auto shrink-0 divide-y divide-[#d3d5d7] z-30 transition-all',
+              'w-80 sm:w-[380px] lg:w-[400px] flex flex-col border-l border-[#d3d5d7] bg-white overflow-y-auto shrink-0 divide-y divide-[#d3d5d7] z-30 transition-all',
               'absolute right-0 top-0 bottom-0 shadow-2xl bg-white ant-fade-in'
             )}
           >
@@ -1552,12 +1552,12 @@ export function ChatModerator({
 
               {expandedSections.surveillance && (
                 <div className="space-y-1.5 text-[11.5px]">
-                  <div className="flex items-center justify-between p-1.5 rounded-[5px] bg-[#dfefe8] text-[#17b26a] font-bold">
+                  <div className="flex items-center justify-between p-1.5 rounded-[5px] bg-[#E8F7F0] text-[#16A86B] font-semibold text-[11px]">
                     <span className="flex items-center gap-1">
                       <ShieldCheck className="size-3" />
-                      <span>AI Safety Score</span>
+                      <span>Trust Score</span>
                     </span>
-                    <span>CLEARED (99.4%)</span>
+                    <span>99/100 — High</span>
                   </div>
 
                   <div className="flex justify-between p-1.5 rounded-[5px] bg-[#fcfcfc] border border-[#d3d5d7]">

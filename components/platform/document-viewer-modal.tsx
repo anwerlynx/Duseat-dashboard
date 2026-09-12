@@ -622,8 +622,8 @@ function EmiratesIdCard({ userName, side }: { userName: string; side: 'front' | 
   return (
     <div className="relative aspect-[1.586/1] w-full rounded-2xl border border-amber-200/40 dark:border-amber-900/40 bg-gradient-to-br from-[#FEFDFB] via-[#F8FAFC] to-[#EFF6FF] dark:from-[#0F172A] dark:via-[#1E293B] dark:to-[#0B0F19] p-5 shadow-2xl overflow-hidden font-sans text-slate-800 dark:text-slate-100">
       {/* UAE Hologram eagle background */}
-      <div className="absolute right-4 top-4 size-32 rounded-full opacity-10 pointer-events-none border-4 border-amber-500 flex items-center justify-center font-bold text-5xl">
-        🇦🇪
+      <div className="absolute right-4 top-4 size-32 rounded-full opacity-15 pointer-events-none border-4 border-amber-500/50 flex items-center justify-center overflow-hidden">
+        <Flag code="AE" size="xl" className="scale-150 shadow-none border-none" />
       </div>
 
       <div className="relative h-full flex flex-col justify-between">

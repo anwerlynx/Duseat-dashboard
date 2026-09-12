@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Search,
@@ -38,6 +38,7 @@ import { PlatformShell } from './platform-shell'
 import {
   ALL_TOOLS_REGISTRY,
   FREQUENTLY_USED,
+  isToolItemActive,
   type ToolItem,
 } from './all-tools-modal'
 import { cn } from '@/lib/utils'
@@ -49,8 +50,18 @@ const CATEGORIES: ToolItem['category'][] = [
 ]
 
 export function AllTools() {
+  return (
+    <React.Suspense fallback={<div className="p-8 text-center text-[#6f777f]">Loading Platform Suite...</div>}>
+      <AllToolsInner />
+    </React.Suspense>
+  )
+}
+
+function AllToolsInner() {
   const router = useRouter()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const currentTab = searchParams ? searchParams.get('tab') : null
   const [query, setQuery] = React.useState('')
 
   const filteredTools = ALL_TOOLS_REGISTRY.filter((tool) => {
@@ -117,7 +128,7 @@ export function AllTools() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {FREQUENTLY_USED.map((item) => {
                 const Icon = item.icon
-                const isActive = pathname === item.href
+                const isActive = isToolItemActive(item.href, pathname, currentTab)
 
                 return (
                   <button
@@ -181,7 +192,7 @@ export function AllTools() {
                   <div className="grid grid-cols-1 gap-1.5 pt-3">
                     {items.map((tool) => {
                       const Icon = tool.icon
-                      const isActive = pathname === tool.href || (tool.href !== '/' && pathname.startsWith(tool.href))
+                      const isActive = isToolItemActive(tool.href, pathname, currentTab)
 
                       return (
                         <button

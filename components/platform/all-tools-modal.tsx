@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Search,
@@ -9,6 +9,9 @@ import {
   LayoutDashboard,
   Users,
   UserCheck,
+  UserX,
+  Trash2,
+  Headphones,
   ShieldCheck,
   FileText,
   ScrollText,
@@ -53,6 +56,8 @@ export const ALL_TOOLS_REGISTRY: ToolItem[] = [
   { id: 'dashboard', title: 'Account Overview', href: '/', icon: LayoutDashboard, category: 'Manage', description: 'Platform overview and key executive KPI metrics' },
   { id: 'investors', title: 'Investors Directory', href: '/investors', icon: Users, category: 'Manage', description: 'Investor profiles, KYC records and buyer briefs' },
   { id: 'agents', title: 'Agents & Brokers', href: '/agents', icon: UserCheck, category: 'Manage', description: 'Licensed RERA brokers and agency directories' },
+  { id: 'suspended', title: 'Suspended Users', href: '/users/suspended', icon: UserX, category: 'Manage', description: 'Account enforcement penalties, bans, and suspension audits' },
+  { id: 'deleted', title: 'Deleted Archive', href: '/users/deleted', icon: Trash2, category: 'Manage', description: 'Soft-deleted accounts retention and restoration desk' },
   { id: 'verification', title: 'Verification Center', href: '/verification', icon: ShieldCheck, category: 'Manage', badge: 'Active', description: 'Audit compliance, ID cards, and trade licenses' },
   { id: 'requests', title: 'Property Requests', href: '/requests', icon: FileText, category: 'Manage', description: 'Investor demand briefs and property criteria' },
   { id: 'offers', title: 'Offers & Pitches', href: '/offers', icon: ScrollText, category: 'Manage', description: 'Agent proposals and developer pitches' },
@@ -61,34 +66,78 @@ export const ALL_TOOLS_REGISTRY: ToolItem[] = [
   { id: 'ai-moderation', title: 'AI Moderation & Trust', href: '/ai-moderation', icon: Bot, category: 'Manage', badge: 'AI', description: 'Automated spam detection and fraud prevention' },
 
   // 2. Advertise & Growth (Marketing & Analytics)
-  { id: 'marketing', title: 'Campaigns & Ads', href: '/marketing', icon: Megaphone, category: 'Advertise', description: 'Marketing campaigns, promotions and sponsored placements' },
-  { id: 'referrals', title: 'Referral Program', href: '/marketing', icon: Users, category: 'Advertise', description: 'Affiliate tracking, rewards and agent referrals' },
-  { id: 'promo-codes', title: 'Promotional Codes', href: '/marketing', icon: TagIcon, category: 'Advertise', description: 'Discount codes, vouchers and seasonal discounts' },
-  { id: 'featured-listings', title: 'Featured Listings', href: '/marketing', icon: Flame, category: 'Advertise', badge: 'Hot', description: 'Boosted property listings on the investor feed' },
+  { id: 'business-intelligence', title: 'Business Intelligence', href: '/business-intelligence', icon: TrendingUp, category: 'Advertise', badge: 'Executive', description: 'Marketplace conversion funnel, LTV/CAC and forecasting' },
+  { id: 'marketing', title: 'Campaigns & Ads', href: '/marketing?tab=campaigns', icon: Megaphone, category: 'Advertise', description: 'Marketing campaigns, promotions and sponsored placements' },
+  { id: 'referrals', title: 'Referral Program', href: '/marketing?tab=referrals', icon: Users, category: 'Advertise', description: 'Affiliate tracking, rewards and agent referrals' },
+  { id: 'promo-codes', title: 'Promotional Codes', href: '/marketing?tab=promos', icon: TagIcon, category: 'Advertise', description: 'Discount codes, vouchers and seasonal discounts' },
+  { id: 'featured-listings', title: 'Featured Listings', href: '/marketing?tab=featured', icon: Flame, category: 'Advertise', badge: 'Hot', description: 'Boosted property listings on the investor feed' },
   { id: 'analytics', title: 'Analytics Suite', href: '/analytics', icon: BarChart3, category: 'Advertise', description: 'Acquisition funnels, conversions and market trends' },
   { id: 'reports', title: 'Custom Reports', href: '/reports', icon: LineChart, category: 'Advertise', description: 'Custom scheduled reports and CSV data export engine' },
   { id: 'notifications', title: 'Notifications Hub', href: '/notifications', icon: Bell, category: 'Advertise', description: 'Push broadcasts, SMS and automated system alerts' },
   { id: 'cms', title: 'Content Management (CMS)', href: '/cms', icon: FileCode, category: 'Advertise', description: 'Landing pages, blog posts, FAQs and legal pages' },
 
   // 3. Platform & Settings (System Configuration)
+  { id: 'support', title: 'Support Center', href: '/support', icon: Headphones, category: 'Platform & Settings', badge: 'Helpdesk', description: 'Triage user tickets, bug reports, and resolution logs' },
   { id: 'settings', title: 'Platform Settings', href: '/settings', icon: Settings, category: 'Platform & Settings', description: 'Centralized platform rules, feature flags and policies' },
   { id: 'subscriptions', title: 'Subscriptions & Plans', href: '/subscriptions', icon: CreditCard, category: 'Platform & Settings', badge: 'Pro/Elite', description: 'Agent monthly & annual plan management' },
   { id: 'finance', title: 'Finance & Ledger', href: '/finance', icon: Banknote, category: 'Platform & Settings', description: 'Revenue ledger, payouts, and escrow transfers' },
   { id: 'admin', title: 'Admin & Role Access', href: '/admin', icon: Briefcase, category: 'Platform & Settings', description: 'Staff permissions, roles and team access control' },
-  { id: 'integrations', title: 'Integrations & Webhooks', href: '/settings', icon: Layers, category: 'Platform & Settings', description: 'Google Maps, Stripe, Checkout and API keys' },
-  { id: 'security', title: 'Security & 2FA', href: '/settings', icon: Shield, category: 'Platform & Settings', description: 'Authentication policies and active session controls' },
   { id: 'activity', title: 'Audit & Activity Log', href: '/activity', icon: Clock, category: 'Platform & Settings', description: 'Immutable system audit trail and compliance actions' },
-  { id: 'monitoring', title: 'System Monitoring', href: '/monitoring', icon: Gauge, category: 'Platform & Settings', description: 'Server latency, uptime and API health stats' },
+  { id: 'monitoring', title: 'System Monitoring', href: '/monitoring', icon: Gauge, category: 'Platform & Settings', description: 'Real-time telemetry, pod health, redis queues and error logs' },
+  { id: 'integrations', title: 'Integrations & Webhooks', href: '/settings?tab=integrations', icon: Layers, category: 'Platform & Settings', description: 'Google Maps, Stripe, Checkout and API keys' },
+  { id: 'security', title: 'Security & 2FA', href: '/settings?tab=security', icon: Shield, category: 'Platform & Settings', description: 'Authentication policies and active session controls' },
 ]
 
 export const FREQUENTLY_USED = [
-  { label: 'Ads Manager', href: '/marketing', icon: Megaphone, subtitle: 'Marketing & Ads' },
+  { label: 'Ads Manager', href: '/marketing?tab=campaigns', icon: Megaphone, subtitle: 'Marketing & Ads' },
   { label: 'Billing & payments', href: '/finance', icon: Banknote, subtitle: 'Finance & Ledger' },
   { label: 'Audiences & Users', href: '/investors', icon: Users, subtitle: 'Investor Directory' },
   { label: 'Business settings', href: '/settings', icon: Settings, subtitle: 'Platform Config' },
   { label: 'Events Manager', href: '/verification', icon: ShieldCheck, subtitle: 'Verification Center' },
   { label: 'Commerce Manager', href: '/requests', icon: FileText, subtitle: 'Property Requests' },
 ]
+
+export function isToolItemActive(
+  toolHref: string,
+  pathname: string,
+  currentTab: string | null
+): boolean {
+  const [toolPath, toolQuery] = toolHref.split('?')
+
+  // Base path must match
+  if (pathname !== toolPath) {
+    if (toolPath !== '/' && pathname.startsWith(toolPath + '/')) {
+      return true
+    }
+    return false
+  }
+
+  // If tool specifies a ?tab= parameter
+  if (toolQuery) {
+    const params = new URLSearchParams(toolQuery)
+    const expectedTab = params.get('tab')
+    if (expectedTab) {
+      if (currentTab === expectedTab) return true
+      // On /marketing, if no tab param is provided, default to campaigns
+      if (!currentTab && expectedTab === 'campaigns' && toolPath === '/marketing') {
+        return true
+      }
+      return false
+    }
+  }
+
+  // If tool has NO query params (e.g. general /settings)
+  if (currentTab) {
+    if (toolPath === '/marketing') {
+      return currentTab === 'overview' || currentTab === 'campaigns'
+    }
+    if (toolPath === '/settings') {
+      return currentTab === 'general'
+    }
+  }
+
+  return true
+}
 
 const CATEGORIES: ToolItem['category'][] = [
   'Manage',
@@ -102,9 +151,21 @@ interface AllToolsModalProps {
   sidebarCollapsed?: boolean
 }
 
-export function AllToolsModal({ isOpen, onClose, sidebarCollapsed = false }: AllToolsModalProps) {
+export function AllToolsModal(props: AllToolsModalProps) {
+  if (!props.isOpen) return null
+
+  return (
+    <React.Suspense fallback={null}>
+      <AllToolsModalInner {...props} />
+    </React.Suspense>
+  )
+}
+
+function AllToolsModalInner({ isOpen, onClose, sidebarCollapsed = false }: AllToolsModalProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const currentTab = searchParams ? searchParams.get('tab') : null
   const [query, setQuery] = React.useState('')
   const inputRef = React.useRef<HTMLInputElement>(null)
 
@@ -221,7 +282,7 @@ export function AllToolsModal({ isOpen, onClose, sidebarCollapsed = false }: All
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-2.5">
                 {FREQUENTLY_USED.map((item) => {
                   const Icon = item.icon
-                  const isActive = pathname === item.href
+                  const isActive = isToolItemActive(item.href, pathname, currentTab)
 
                   return (
                     <button
@@ -276,7 +337,7 @@ export function AllToolsModal({ isOpen, onClose, sidebarCollapsed = false }: All
                   <div className="flex flex-col gap-1 pt-2.5">
                     {items.map((tool) => {
                       const Icon = tool.icon
-                      const isActive = pathname === tool.href || (tool.href !== '/' && pathname.startsWith(tool.href))
+                      const isActive = isToolItemActive(tool.href, pathname, currentTab)
 
                       return (
                         <button
