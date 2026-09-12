@@ -1,8 +1,15 @@
 'use client'
 
 import * as React from 'react'
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, ArrowUpRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+export interface SupportingMetricItem {
+  label: string
+  value: string | number
+  delta?: string
+  trend?: 'up' | 'down'
+}
 
 export interface MetricCardProps {
   label: string
@@ -17,6 +24,7 @@ export interface MetricCardProps {
   active?: boolean
   onClick?: () => void
   className?: string
+  supporting?: SupportingMetricItem[]
 }
 
 export function MetricCard({
@@ -32,6 +40,7 @@ export function MetricCard({
   active = false,
   onClick,
   className,
+  supporting,
 }: MetricCardProps) {
   const displayCount = value !== undefined ? value : count ?? 0
   const isCardActive = active || isActive
@@ -44,40 +53,31 @@ export function MetricCard({
         : 'down'
       : trendDirection
 
-  const toneColors = {
-    neutral: 'text-[#00c2cb]',
-    brand: 'text-[#00c2cb]',
-    success: 'text-[#17b26a]',
-    warning: 'text-[#f79009]',
-    destructive: 'text-[#d92d20]',
-    info: 'text-[#1570ef]',
-  }
-
   const iconBgColors = {
-    neutral: 'bg-[#00c2cb]/10 text-[#00c2cb]',
-    brand: 'bg-[#00c2cb]/10 text-[#00c2cb]',
-    success: 'bg-[#17b26a]/10 text-[#17b26a]',
-    warning: 'bg-[#f79009]/10 text-[#f79009]',
-    destructive: 'bg-[#d92d20]/10 text-[#d92d20]',
-    info: 'bg-[#1570ef]/10 text-[#1570ef]',
+    neutral: 'bg-[#f4f5f6] text-[#1f2327] group-hover:bg-[#1f2327] group-hover:text-white',
+    brand: 'bg-[#f4f5f6] text-[#1f2327] group-hover:bg-[#1f2327] group-hover:text-white',
+    success: 'bg-[#dfefe8] text-[#17b26a] group-hover:bg-[#17b26a] group-hover:text-white',
+    warning: 'bg-[#fff5e5] text-[#f79009] group-hover:bg-[#f79009] group-hover:text-white',
+    destructive: 'bg-[#fee4e2] text-[#d92d20] group-hover:bg-[#d92d20] group-hover:text-white',
+    info: 'bg-[#e0f2fe] text-[#1570ef] group-hover:bg-[#1570ef] group-hover:text-white',
   }
 
   const activeStyles = {
-    neutral: 'border-2 border-[#00c2cb] bg-[#00c2cb]/[0.04] ring-2 ring-[#00c2cb]/20 shadow-[0_2px_12px_rgba(0,194,203,0.12)]',
-    brand: 'border-2 border-[#00c2cb] bg-[#00c2cb]/[0.04] ring-2 ring-[#00c2cb]/20 shadow-[0_2px_12px_rgba(0,194,203,0.12)]',
-    success: 'border-2 border-[#17b26a] bg-[#17b26a]/[0.04] ring-2 ring-[#17b26a]/20 shadow-[0_2px_12px_rgba(23,178,106,0.12)]',
-    warning: 'border-2 border-[#f79009] bg-[#f79009]/[0.04] ring-2 ring-[#f79009]/20 shadow-[0_2px_12px_rgba(247,144,9,0.12)]',
-    destructive: 'border-2 border-[#d92d20] bg-[#d92d20]/[0.04] ring-2 ring-[#d92d20]/20 shadow-[0_2px_12px_rgba(217,45,32,0.12)]',
-    info: 'border-2 border-[#1570ef] bg-[#1570ef]/[0.04] ring-2 ring-[#1570ef]/20 shadow-[0_2px_12px_rgba(21,112,239,0.12)]',
+    neutral: 'border-2 border-[#1f2327] bg-[#1f2327]/[0.02] ring-2 ring-[#1f2327]/15 shadow-sm',
+    brand: 'border-2 border-[#1f2327] bg-[#1f2327]/[0.02] ring-2 ring-[#1f2327]/15 shadow-sm',
+    success: 'border-2 border-[#17b26a] bg-[#17b26a]/[0.02] ring-2 ring-[#17b26a]/15 shadow-sm',
+    warning: 'border-2 border-[#f79009] bg-[#f79009]/[0.02] ring-2 ring-[#f79009]/15 shadow-sm',
+    destructive: 'border-2 border-[#d92d20] bg-[#d92d20]/[0.02] ring-2 ring-[#d92d20]/15 shadow-sm',
+    info: 'border-2 border-[#1570ef] bg-[#1570ef]/[0.02] ring-2 ring-[#1570ef]/15 shadow-sm',
   }
 
   const hoverStyles = {
-    neutral: 'hover:border-[#00c2cb]',
-    brand: 'hover:border-[#00c2cb]',
-    success: 'hover:border-[#17b26a]',
-    warning: 'hover:border-[#f79009]',
-    destructive: 'hover:border-[#d92d20]',
-    info: 'hover:border-[#1570ef]',
+    neutral: 'hover:border-[#1f2327]/40',
+    brand: 'hover:border-[#1f2327]/40',
+    success: 'hover:border-[#17b26a]/60',
+    warning: 'hover:border-[#f79009]/60',
+    destructive: 'hover:border-[#d92d20]/60',
+    info: 'hover:border-[#1570ef]/60',
   }
 
   return (
@@ -85,46 +85,61 @@ export function MetricCard({
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onClick()
+              }
+            }
+          : undefined
+      }
       className={cn(
-        'group flex flex-col justify-between rounded-[12px] border-2 border-[#e5e7eb] bg-white p-3.5 sm:p-4 min-h-[90px]',
-        'drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)]',
-        'transition-all duration-150 select-none font-sans',
-        onClick && 'cursor-pointer hover:shadow-xs hover:-translate-y-0.5',
+        'group relative flex flex-col justify-between rounded-xl border border-[#d3d5d7] bg-white p-4 shadow-sm outline-none transition-all duration-200 select-none font-sans min-h-[96px]',
+        onClick && 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md',
         onClick && hoverStyles[tone],
         isCardActive && activeStyles[tone],
         className
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[13px] font-medium text-[#6f777f] truncate" title={label}>
-          {label}
-        </span>
+      {/* Header with Icon on the Left, Title, and subtle ArrowUpRight on the Right */}
+      <div className="flex items-center gap-2.5">
         {Icon && (
           <span
             className={cn(
-              'flex size-6 shrink-0 items-center justify-center rounded-[6px] transition-colors',
+              'flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors',
               iconBgColors[tone]
             )}
           >
-            <Icon className="size-3.5" />
+            <Icon className="size-[17px]" />
           </span>
+        )}
+        <span className="text-[13.5px] font-medium text-[#6f777f] group-hover:text-[#1f2327] transition-colors truncate" title={label}>
+          {label}
+        </span>
+        {onClick && (
+          <div className="ml-auto flex items-center">
+            <ArrowUpRight className="size-4 text-[#98a2b3] opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[#1f2327]" />
+          </div>
         )}
       </div>
 
-      <div className="mt-2 flex items-baseline justify-between gap-2">
-        <span
-          className={cn(
-            'text-[24px] sm:text-[26px] font-semibold leading-none tracking-tight font-sans truncate',
-            toneColors[tone]
+      {/* Value row with bold black numbers and trend pill badge */}
+      <div className="mt-2.5 flex items-end justify-between gap-2">
+        <div className="min-w-0">
+          <span className="text-[24px] sm:text-[26px] font-bold leading-tight tracking-tight text-[#1f2327] block truncate tabular-nums font-sans">
+            {displayCount}
+          </span>
+          {subtitle && (
+            <p className="mt-0.5 text-[12px] leading-[16px] text-[#6f777f] truncate">{subtitle}</p>
           )}
-        >
-          {displayCount}
-        </span>
+        </div>
 
         {trendText ? (
           <span
             className={cn(
-              'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-bold shrink-0',
+              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold shrink-0',
               effectiveDirection === 'up'
                 ? 'bg-[#dfefe8] text-[#17b26a]'
                 : effectiveDirection === 'down'
@@ -137,10 +152,33 @@ export function MetricCard({
             {effectiveDirection === 'neutral' && <Minus className="size-3" />}
             <span>{trendText}</span>
           </span>
-        ) : subtitle ? (
-          <span className="text-[11px] font-medium text-[#6f777f] truncate">{subtitle}</span>
         ) : null}
       </div>
+
+      {/* Optional supporting metrics list (matching Dashboard KpiCard) */}
+      {supporting && supporting.length > 0 && (
+        <div className="mt-3 space-y-1.5 border-t border-[#f2f4f7] pt-2.5">
+          {supporting.map((m) => (
+            <div key={m.label} className="flex items-center justify-between gap-2 text-[12px] leading-[16px]">
+              <span className="truncate text-[#6f777f] font-normal">{m.label}</span>
+              <span className="flex items-center gap-1.5">
+                <span className="font-semibold tabular-nums text-[#1f2327]">{m.value}</span>
+                {m.delta && (
+                  <span
+                    className={cn(
+                      'text-[11px] font-bold',
+                      m.trend === 'down' ? 'text-[#d92d20]' : 'text-[#17b26a]'
+                    )}
+                  >
+                    {m.delta}
+                  </span>
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
+

@@ -9,6 +9,7 @@ import {
   Plus,
   ArrowUpDown,
   ChevronDown,
+  ChevronUp,
   Download,
   Eye,
   Trash2,
@@ -31,6 +32,7 @@ import {
   List,
   X,
   MoreHorizontal,
+  Settings2,
 } from 'lucide-react'
 import { PlatformShell } from './platform-shell'
 import { ToastProvider, useToast } from '@/components/dashboard/toast'
@@ -48,6 +50,126 @@ import {
   initialPlatformOffers,
 } from '@/lib/offers-data'
 import { OfferReviewModal } from './offer-review-modal'
+import { CustomizeTableDialog, type TableViewPreset, type ColumnCategory } from './customize-table-dialog'
+
+const OFFER_DEFAULT_COLUMNS = [
+  'Offer ID',
+  'Agent & Agency',
+  'Target Investor Request',
+  'Property Specs',
+  'Location',
+  'Offer Price',
+  'Docs',
+  'Status',
+  'Submitted Date',
+]
+
+const defaultOfferPresets: TableViewPreset[] = [
+  {
+    id: 'default',
+    name: 'Default Overview',
+    columns: OFFER_DEFAULT_COLUMNS,
+    isBuiltIn: true,
+  },
+  {
+    id: 'property-financials',
+    name: 'Property & Financials',
+    columns: [
+      'Offer ID',
+      'Property Specs',
+      'Location',
+      'Offer Price',
+      'Commission',
+      'Payment Plan',
+      'Handover Date',
+      'Status',
+    ],
+    isBuiltIn: true,
+  },
+  {
+    id: 'agent-focus',
+    name: 'Agent & Brokerage',
+    columns: [
+      'Offer ID',
+      'Agent & Agency',
+      'Agent ID',
+      'Agent Rating',
+      'Agent Plan',
+      'Offer Price',
+      'Docs',
+      'Status',
+      'Submitted Date',
+    ],
+    isBuiltIn: true,
+  },
+  {
+    id: 'compliance-audit',
+    name: 'Compliance & Audit',
+    columns: [
+      'Offer ID',
+      'Agent & Agency',
+      'Target Investor Request',
+      'Docs',
+      'Status',
+      'Submitted Date',
+      'Expiry Date',
+    ],
+    isBuiltIn: true,
+  },
+]
+
+const OFFER_COLUMN_CATEGORIES: ColumnCategory[] = [
+  {
+    id: 'general',
+    name: 'General & Status',
+    items: [
+      { id: 'Offer ID', label: 'Offer ID' },
+      { id: 'Status', label: 'Status' },
+      { id: 'Submitted Date', label: 'Submitted Date' },
+      { id: 'Expiry Date', label: 'Expiry Date' },
+    ],
+  },
+  {
+    id: 'agent',
+    name: 'Agent Details',
+    items: [
+      { id: 'Agent & Agency', label: 'Agent & Agency' },
+      { id: 'Agent ID', label: 'Agent ID' },
+      { id: 'Agent Rating', label: 'Agent Rating' },
+      { id: 'Agent Plan', label: 'Agent Plan' },
+    ],
+  },
+  {
+    id: 'request',
+    name: 'Investor & Request',
+    items: [
+      { id: 'Target Investor Request', label: 'Target Investor Request' },
+      { id: 'Investor Name', label: 'Investor Name' },
+      { id: 'Request ID', label: 'Request ID' },
+    ],
+  },
+  {
+    id: 'property',
+    name: 'Property Details',
+    items: [
+      { id: 'Property Specs', label: 'Property Specs' },
+      { id: 'Property Title', label: 'Property Title' },
+      { id: 'Location', label: 'Location' },
+      { id: 'Property Type', label: 'Property Type' },
+      { id: 'Handover Date', label: 'Handover Date' },
+    ],
+  },
+  {
+    id: 'financials',
+    name: 'Financials & Docs',
+    items: [
+      { id: 'Offer Price', label: 'Offer Price' },
+      { id: 'Commission', label: 'Commission' },
+      { id: 'Payment Plan', label: 'Payment Plan' },
+      { id: 'Docs', label: 'Docs' },
+    ],
+  },
+]
 
 const OFFER_STATUSES: (OfferStatus | 'All')[] = [
   'All',
@@ -76,6 +198,175 @@ const PROPERTY_TYPE_OPTIONS = [
   { label: 'Office', value: 'Office' },
 ]
 
+function renderOfferCell(
+  column: string,
+  item: PlatformOffer,
+  setSelectedOffer: (o: PlatformOffer) => void
+) {
+  switch (column) {
+    case 'Offer ID':
+      return (
+        <button
+          type="button"
+          onClick={() => setSelectedOffer(item)}
+          className="font-mono text-[14px] leading-[20px] font-semibold text-[#00c2cb] hover:underline cursor-pointer"
+        >
+          {item.id}
+        </button>
+      )
+
+    case 'Agent & Agency':
+      return (
+        <div className="flex items-center gap-2.5 whitespace-nowrap font-sans">
+          <Link href={`/agents/${item.agentId}`} className="cursor-pointer">
+            <TableAvatar
+              src={item.agentAvatar}
+              name={item.agentName}
+              size="md"
+              variant="brand"
+            />
+          </Link>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <Link
+                href={`/agents/${item.agentId}`}
+                className="font-semibold text-[#1f2327] text-[14px] leading-[20px] hover:text-[#00c2cb] hover:underline transition-colors block"
+              >
+                {item.agentName}
+              </Link>
+              <span className="font-mono text-[11px] font-semibold text-[#00c2cb] bg-[#00c2cb]/10 px-1.5 py-0.2 rounded-[4px] shrink-0">
+                {item.agentId}
+              </span>
+            </div>
+            <span className="text-[12px] leading-[16px] text-[#6f777f] block whitespace-nowrap">{item.agentAgency}</span>
+          </div>
+        </div>
+      )
+
+    case 'Agent ID':
+      return (
+        <Link
+          href={`/agents/${item.agentId}`}
+          className="font-mono text-[13px] font-semibold text-[#00c2cb] hover:underline"
+        >
+          {item.agentId}
+        </Link>
+      )
+
+    case 'Agent Rating':
+      return (
+        <span className="inline-flex items-center gap-1 font-semibold text-[#1f2327] text-[13px]">
+          ★ {item.agentRating.toFixed(1)}
+        </span>
+      )
+
+    case 'Agent Plan':
+      return <AgentPlanBadge plan={item.agentPlan} />
+
+    case 'Target Investor Request':
+      return (
+        <div>
+          <Link
+            href={`/investors/${item.investorId || 'IN-2045'}`}
+            className="font-semibold text-[#1f2327] text-[14px] leading-[20px] hover:text-[#00c2cb] hover:underline transition-colors block"
+          >
+            {item.investorName}
+          </Link>
+          <Link
+            href={`/request-insights?id=${item.requestId}`}
+            className="font-mono text-[12px] text-[#00c2cb] hover:underline block"
+          >
+            {item.requestId}
+          </Link>
+        </div>
+      )
+
+    case 'Investor Name':
+      return (
+        <Link
+          href={`/investors/${item.investorId || 'IN-2045'}`}
+          className="font-semibold text-[#1f2327] text-[14px] leading-[20px] hover:text-[#00c2cb] hover:underline transition-colors"
+        >
+          {item.investorName}
+        </Link>
+      )
+
+    case 'Request ID':
+      return (
+        <Link
+          href={`/request-insights?id=${item.requestId}`}
+          className="font-mono text-[13px] text-[#00c2cb] hover:underline"
+        >
+          {item.requestId}
+        </Link>
+      )
+
+    case 'Property Specs':
+      return (
+        <div>
+          <p className="font-semibold text-[#1f2327] text-[14px] leading-[20px]">{item.propertyTitle}</p>
+          <div className="flex items-center gap-1 text-[12px] leading-[16px] text-[#6f777f]">
+            <span>{item.propertyType}</span>
+            <span>•</span>
+            <span>{item.bedrooms}</span>
+            <span>•</span>
+            <span>{item.sizeSqFt} sq.ft</span>
+          </div>
+        </div>
+      )
+
+    case 'Property Title':
+      return <span className="font-semibold text-[#1f2327] text-[14px]">{item.propertyTitle}</span>
+
+    case 'Property Type':
+      return (
+        <span className="rounded-[6px] bg-[#eff1f3] px-2 py-0.5 text-[12px] font-medium text-[#1f2327]">
+          {item.propertyType}
+        </span>
+      )
+
+    case 'Location':
+      return (
+        <span className="text-[13px] leading-[18px] text-[#1f2327] flex items-center gap-1.5">
+          <MapPin className="size-3.5 text-[#00c2cb]" />
+          {item.propertyLocation}
+        </span>
+      )
+
+    case 'Offer Price':
+      return <span className="font-semibold text-[#1f2327] text-[14px] leading-[20px]">{item.price}</span>
+
+    case 'Commission':
+      return <span className="font-medium text-[#1f2327] text-[13px]">{item.commission}</span>
+
+    case 'Payment Plan':
+      return <span className="text-[13px] text-[#6f777f]">{item.paymentPlan}</span>
+
+    case 'Handover Date':
+      return <span className="text-[13px] text-[#6f777f]">{item.handoverDate}</span>
+
+    case 'Docs':
+      return (
+        <span className="inline-flex items-center gap-1 rounded-[6px] border border-[#d3d5d7] bg-[#eff1f3] px-2 py-0.5 text-[12px] font-medium text-[#1f2327]">
+          <FileCheck className="size-3.5 text-[#17b26a]" />
+          {item.documents.length} files
+        </span>
+      )
+
+    case 'Status':
+      return <FigmaStatusBadge status={item.status} />
+
+    case 'Submitted Date':
+      return <span className="text-[13px] leading-[18px] text-[#6f777f]">{item.submittedAt}</span>
+
+    case 'Expiry Date':
+      return <span className="text-[13px] text-[#6f777f]">{item.expiryDate}</span>
+
+    default:
+      return <span className="text-xs text-[#6f777f]">{(item as any)[column] || '—'}</span>
+  }
+}
+
 export function OffersManagementInner() {
   const { toast } = useToast()
   const searchParams = useSearchParams()
@@ -98,6 +389,12 @@ export function OffersManagementInner() {
   const [sortOption, setSortOption] = React.useState('newest')
   const [currentPage, setCurrentPage] = React.useState(1)
   const [rowsPerPage, setRowsPerPage] = React.useState(10)
+  const [headerCollapsed, setHeaderCollapsed] = React.useState(false)
+
+  const [columnsOpen, setColumnsOpen] = React.useState(false)
+  const [visibleColumns, setVisibleColumns] = React.useState<string[]>(OFFER_DEFAULT_COLUMNS)
+  const [activePresetId, setActivePresetId] = React.useState('default')
+  const [presets, setPresets] = React.useState<TableViewPreset[]>(defaultOfferPresets)
 
   // Load from localStorage & check searchParams
   React.useEffect(() => {
@@ -370,18 +667,31 @@ export function OffersManagementInner() {
         {/* =========================================================================
             1. TOP HEADER CARD
            ========================================================================= */}
-        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
-                Offers & Proposals
-              </h1>
-              <p className="mt-0.5 text-[14px] leading-[20px] text-[#6f777f]">
-                Audit, review, and moderate property proposals submitted by licensed RERA agents to verified investor briefs.
-              </p>
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-3.5 sm:gap-4 transition-all">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start justify-between sm:block gap-2">
+              <div>
+                <h1 className="text-[20px] sm:text-[32px] font-bold leading-[28px] sm:leading-[40px] text-[#1f2327]">
+                  Offers & Proposals
+                </h1>
+                <p className={cn("mt-0.5 text-[13px] sm:text-[14px] leading-[18px] sm:leading-[20px] text-[#6f777f]", headerCollapsed && "hidden sm:block")}>
+                  Audit, review, and moderate property proposals submitted by licensed RERA agents to verified investor briefs.
+                </p>
+              </div>
+
+              {/* Mobile Collapse Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setHeaderCollapsed(!headerCollapsed)}
+                className="flex sm:hidden h-[30px] items-center gap-1.5 rounded-[6px] border border-[#d3d5d7] bg-[#f8f9fa] px-2.5 text-[11.5px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors shrink-0 cursor-pointer select-none"
+                aria-label={headerCollapsed ? 'Expand header details' : 'Collapse header details'}
+              >
+                <span>{headerCollapsed ? 'Stats & Tools' : 'Collapse'}</span>
+                {headerCollapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
+              </button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className={cn("flex flex-wrap items-center gap-2 sm:gap-2.5", headerCollapsed && "hidden sm:flex")}>
               {/* View Switchers */}
               <div className="flex items-center rounded-[8px] border border-[#d3d5d7] bg-[#fcfcfc] p-1 shadow-2xs">
                 <button
@@ -389,7 +699,7 @@ export function OffersManagementInner() {
                   onClick={() => setViewMode('table')}
                   className={cn(
                     'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-medium transition-all cursor-pointer',
-                    viewMode === 'table' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
+                    viewMode === 'table' ? 'bg-[#1f2327] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
                   )}
                 >
                   <List className="size-3.5" />
@@ -400,7 +710,7 @@ export function OffersManagementInner() {
                   onClick={() => setViewMode('grid')}
                   className={cn(
                     'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-medium transition-all cursor-pointer',
-                    viewMode === 'grid' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
+                    viewMode === 'grid' ? 'bg-[#1f2327] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
                   )}
                 >
                   <LayoutGrid className="size-3.5" />
@@ -412,16 +722,16 @@ export function OffersManagementInner() {
               <button
                 type="button"
                 onClick={handleExportCSV}
-                className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer"
+                className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer"
               >
                 <Download className="size-4 text-[#6f777f]" />
-                <span>Export CSV</span>
+                <span className="whitespace-nowrap">Export CSV</span>
               </button>
             </div>
           </div>
 
           {/* 5 Stat Metric Cards */}
-          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-5 lg:gap-3">
+          <div className={cn("grid grid-cols-2 gap-2.5 lg:grid-cols-5 lg:gap-3", headerCollapsed && "hidden sm:grid")}>
             <MetricCard
               label="Total Offers"
               value={stats.total}
@@ -469,8 +779,8 @@ export function OffersManagementInner() {
           {/* Top Status Tabs & Actions Header Bar */}
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-              {/* Left Status Tabs */}
-              <div className="flex flex-wrap items-center gap-2 py-0.5 max-w-full">
+              {/* Left Status Tabs - Swipeable */}
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none max-w-full py-1 -mx-1 px-1 sm:mx-0 sm:px-0 select-none">
                 {(
                   [
                     { id: 'All', label: 'All offers', count: stats.total },
@@ -503,7 +813,7 @@ export function OffersManagementInner() {
                             ? 'bg-[#f79009] text-white shadow-2xs font-semibold'
                             : item.id === 'Rejected' || item.id === 'Flagged' || item.id === 'Expired'
                             ? 'bg-[#d92d20] text-white shadow-2xs font-semibold'
-                            : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                            : 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                           : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                       )}
                     >
@@ -530,7 +840,7 @@ export function OffersManagementInner() {
               </div>
 
               {/* Right Controls: Sort, Switcher, Export */}
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-between sm:justify-end pt-2 lg:pt-0 border-t border-[#f2f4f7] lg:border-t-0">
                 <Dropdown
                   align="end"
                   value={sortOption}
@@ -562,7 +872,7 @@ export function OffersManagementInner() {
                     onClick={() => setViewMode('table')}
                     className={cn(
                       'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 text-[12.5px] font-medium transition-all cursor-pointer whitespace-nowrap',
-                      viewMode === 'table' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
+                      viewMode === 'table' ? 'bg-[#1f2327] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
                     )}
                   >
                     <List className="size-3.5" />
@@ -573,7 +883,7 @@ export function OffersManagementInner() {
                     onClick={() => setViewMode('grid')}
                     className={cn(
                       'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 text-[12.5px] font-medium transition-all cursor-pointer whitespace-nowrap',
-                      viewMode === 'grid' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
+                      viewMode === 'grid' ? 'bg-[#1f2327] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
                     )}
                   >
                     <LayoutGrid className="size-3.5" />
@@ -581,13 +891,50 @@ export function OffersManagementInner() {
                   </button>
                 </div>
 
+                <Dropdown
+                  align="end"
+                  floating
+                  options={presets.map((p) => ({ label: p.name, value: p.id }))}
+                  onSelect={(val) => {
+                    const preset = presets.find((p) => p.id === val)
+                    if (preset) {
+                      setActivePresetId(preset.id)
+                      setVisibleColumns(preset.columns)
+                      toast({ variant: 'info', title: 'View Applied', description: `Switched view template to "${preset.name}".` })
+                    }
+                  }}
+                  trigger={
+                    <button
+                      type="button"
+                      className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap shadow-2xs"
+                    >
+                      <SlidersHorizontal className="size-4 text-[#6f777f]" />
+                      <span className="max-w-[90px] sm:max-w-[130px] truncate text-left">
+                        {presets.find((p) => p.id === activePresetId)?.name || 'Custom View'}
+                      </span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </button>
+                  }
+                  ariaLabel="Select table template view"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setColumnsOpen(true)}
+                  className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 sm:px-3.5 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap shadow-2xs"
+                >
+                  <Settings2 className="size-4 text-[#6f777f]" />
+                  <span className="hidden sm:inline">Customize </span>
+                  <span>Columns</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={handleExportCSV}
-                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 sm:px-3.5 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
                 >
                   <Download className="size-4 text-[#6f777f]" />
-                  <span className="whitespace-nowrap">Export CSV</span>
+                  <span className="whitespace-nowrap">Export</span>
                 </button>
               </div>
             </div>
@@ -730,15 +1077,11 @@ export function OffersManagementInner() {
                         ariaLabel="Select all offers"
                       />
                     </th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Offer ID</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Agent & Agency</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Target Investor Request</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Property Specs</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Location</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Offer Price</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Docs</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Status</th>
-                    <th className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Submitted Date</th>
+                    {visibleColumns.map((col) => (
+                      <th key={col} className="px-4 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
+                        {col}
+                      </th>
+                    ))}
                     <th className="px-4 text-right text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
@@ -746,7 +1089,7 @@ export function OffersManagementInner() {
                 <tbody className="divide-y divide-[#d3d5d7]">
                   {paginatedOffers.length === 0 ? (
                     <tr>
-                      <td colSpan={11} className="py-8 text-center text-[#6f777f]">
+                      <td colSpan={visibleColumns.length + 2} className="py-8 text-center text-[#6f777f]">
                         <EmptyState
                           title="No property offers found"
                           description="Try adjusting your filters or search keywords"
@@ -774,79 +1117,11 @@ export function OffersManagementInner() {
                               ariaLabel={`Select offer ${item.id}`}
                             />
                           </td>
-                          <td className="px-4 font-mono text-[14px] leading-[20px] font-semibold text-[#1f2327] whitespace-nowrap">
-                            {item.id}
-                          </td>
-                          <td className="px-4 whitespace-nowrap font-sans">
-                            <div className="flex items-center gap-2.5 whitespace-nowrap">
-                              <Link href={`/agents/${item.agentId}`} className="cursor-pointer">
-                                <TableAvatar
-                                  src={item.agentAvatar}
-                                  name={item.agentName}
-                                  size="md"
-                                  variant="brand"
-                                />
-                              </Link>
-                              <div className="min-w-0">
-                                <Link
-                                  href={`/agents/${item.agentId}`}
-                                  className="font-semibold text-[#1f2327] text-[14px] leading-[20px] hover:text-[#00c2cb] hover:underline transition-colors block"
-                                >
-                                  {item.agentName}
-                                </Link>
-                                <span className="text-[12px] leading-[16px] text-[#6f777f] block whitespace-nowrap">{item.agentAgency}</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 whitespace-nowrap font-sans">
-                            <div>
-                              <Link
-                                href={`/investors/${item.investorId || 'IN-2045'}`}
-                                className="font-semibold text-[#1f2327] text-[14px] leading-[20px] hover:text-[#00c2cb] hover:underline transition-colors block"
-                              >
-                                {item.investorName}
-                              </Link>
-                              <Link
-                                href={`/request-insights?id=${item.requestId}`}
-                                className="font-mono text-[12px] text-[#00c2cb] hover:underline block"
-                              >
-                                {item.requestId}
-                              </Link>
-                            </div>
-                          </td>
-                          <td className="px-4 whitespace-nowrap font-sans">
-                            <div>
-                              <p className="font-semibold text-[#1f2327] text-[14px] leading-[20px]">{item.propertyTitle}</p>
-                              <div className="flex items-center gap-1 text-[12px] leading-[16px] text-[#6f777f]">
-                                <span>{item.propertyType}</span>
-                                <span>•</span>
-                                <span>{item.bedrooms}</span>
-                                <span>•</span>
-                                <span>{item.sizeSqFt} sq.ft</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 whitespace-nowrap font-sans">
-                            <span className="text-[13px] leading-[18px] text-[#1f2327] flex items-center gap-1.5">
-                              <MapPin className="size-3.5 text-[#00c2cb]" />
-                              {item.propertyLocation}
-                            </span>
-                          </td>
-                          <td className="px-4 whitespace-nowrap font-sans">
-                            <span className="font-semibold text-[#1f2327] text-[14px] leading-[20px]">{item.price}</span>
-                          </td>
-                          <td className="px-4 whitespace-nowrap font-sans">
-                            <span className="inline-flex items-center gap-1 rounded-[6px] border border-[#d3d5d7] bg-[#eff1f3] px-2 py-0.5 text-[12px] font-medium text-[#1f2327]">
-                              <FileCheck className="size-3.5 text-[#17b26a]" />
-                              {item.documents.length} files
-                            </span>
-                          </td>
-                          <td className="px-4 whitespace-nowrap font-sans">
-                            <FigmaStatusBadge status={item.status} />
-                          </td>
-                          <td className="px-4 text-[13px] leading-[18px] text-[#6f777f] whitespace-nowrap font-sans">
-                            {item.submittedAt}
-                          </td>
+                          {visibleColumns.map((col) => (
+                            <td key={col} className="px-4 whitespace-nowrap font-sans">
+                              {renderOfferCell(col, item, setSelectedOffer)}
+                            </td>
+                          ))}
                           <td className="px-4 whitespace-nowrap text-right font-sans">
                             <div className="flex items-center justify-end gap-1.5">
                               <button
@@ -1009,6 +1284,23 @@ export function OffersManagementInner() {
       {confirmDialog && (
         <ConfirmDialog request={confirmDialog} onClose={() => setConfirmDialog(null)} />
       )}
+
+      {/* CUSTOMIZE TABLE DIALOG */}
+      <CustomizeTableDialog
+        isOpen={columnsOpen}
+        visibleColumns={visibleColumns}
+        activePresetId={activePresetId}
+        presets={presets}
+        categories={OFFER_COLUMN_CATEGORIES}
+        storageKeyPrefix="offers"
+        onPresetsChange={(newPresets) => setPresets(newPresets)}
+        onApply={(cols, presetId) => {
+          setVisibleColumns(cols)
+          if (presetId) setActivePresetId(presetId)
+          toast({ variant: 'success', title: 'Table customized', description: `${cols.length} visible columns applied.` })
+        }}
+        onClose={() => setColumnsOpen(false)}
+      />
     </PlatformShell>
   )
 }

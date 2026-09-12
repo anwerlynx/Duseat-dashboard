@@ -15,6 +15,7 @@ import {
   LogIn,
   Mail,
   ChevronDown,
+  ChevronUp,
   X,
   Check,
   UserCheck,
@@ -153,6 +154,7 @@ function InvestorsInner() {
   const [activePresetId, setActivePresetId] = React.useState('default')
   const [presets, setPresets] = React.useState<TableViewPreset[]>(defaultInvestorPresets)
   const [scheduleModalOpen, setScheduleModalOpen] = React.useState(false)
+  const [headerCollapsed, setHeaderCollapsed] = React.useState(false)
 
   React.useEffect(() => {
     try {
@@ -350,17 +352,30 @@ function InvestorsInner() {
     >
       <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
         {/* Top Header Card */}
-        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-3.5 sm:gap-4 transition-all">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">Investors Directory & KYC</h1>
-              <p className="mt-0.5 text-[14px] leading-[20px] text-[#6f777f]">
-                Manage verified investors, track KYC & proof of funds, monitor active requests and deal flow.
-              </p>
+            <div className="flex items-start justify-between sm:block gap-2">
+              <div>
+                <h1 className="text-[20px] sm:text-[32px] font-bold leading-[28px] sm:leading-[40px] text-[#1f2327]">Investors Directory & KYC</h1>
+                <p className={cn("mt-0.5 text-[13px] sm:text-[14px] leading-[18px] sm:leading-[20px] text-[#6f777f]", headerCollapsed && "hidden sm:block")}>
+                  Manage verified investors, track KYC & proof of funds, monitor active requests and deal flow.
+                </p>
+              </div>
+
+              {/* Mobile Collapse Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setHeaderCollapsed(!headerCollapsed)}
+                className="flex sm:hidden h-[30px] items-center gap-1.5 rounded-[6px] border border-[#d3d5d7] bg-[#f8f9fa] px-2.5 text-[11.5px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors shrink-0 cursor-pointer select-none"
+                aria-label={headerCollapsed ? 'Expand header details' : 'Collapse header details'}
+              >
+                <span>{headerCollapsed ? 'Stats & Links' : 'Collapse'}</span>
+                {headerCollapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
+              </button>
             </div>
 
             {/* Quick Links to Additional User Sections */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className={cn("flex flex-wrap items-center gap-2", headerCollapsed && "hidden sm:flex")}>
               <Link
                 href="/verification"
                 className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] leading-[20px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors"
@@ -380,7 +395,7 @@ function InvestorsInner() {
           </div>
 
           {/* 4 Stat Metric Cards */}
-          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3">
+          <div className={cn("grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3", headerCollapsed && "hidden sm:grid")}>
             <MetricCard
               label="Total Investors"
               value={rows.length}
@@ -419,7 +434,8 @@ function InvestorsInner() {
           {/* Top Tabs Bar */}
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2 py-0.5 max-w-full">
+              {/* Horizontal scrollable / swipeable tabs */}
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none max-w-full py-1 -mx-1 px-1 sm:mx-0 sm:px-0 select-none">
                 {(['All investors', 'Verified', 'Pending verification'] as const).map((item) => {
                   const count =
                     item === 'All investors'
@@ -440,7 +456,7 @@ function InvestorsInner() {
                             ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
                             : item === 'Pending verification'
                             ? 'bg-[#f79009] text-white shadow-2xs font-semibold'
-                            : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                            : 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                           : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                       )}
                     >
@@ -464,7 +480,8 @@ function InvestorsInner() {
                 })}
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              {/* Action Toolbar on the right */}
+              <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-between sm:justify-end pt-2 lg:pt-0 border-t border-[#f2f4f7] lg:border-t-0">
                 {/* Saved View / Preset Selector */}
                 <Dropdown
                   align="end"
@@ -486,10 +503,10 @@ function InvestorsInner() {
                   trigger={
                     <button
                       type="button"
-                      className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                      className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 sm:px-3.5 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
                     >
                       <Bookmark className="size-4 text-[#00c2cb]" />
-                      <span className="max-w-[140px] truncate">
+                      <span className="max-w-[100px] sm:max-w-[140px] truncate">
                         {presets.find((p) => p.id === activePresetId)?.name || 'Custom View'}
                       </span>
                       <ChevronDown className="size-3.5 text-[#9da4ae]" />
@@ -501,10 +518,11 @@ function InvestorsInner() {
                 <button
                   type="button"
                   onClick={() => setColumnsOpen(true)}
-                  className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                  className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 sm:px-3.5 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
                 >
                   <Settings2 className="size-4 text-[#6f777f]" />
-                  <span className="whitespace-nowrap">Customize columns</span>
+                  <span className="hidden sm:inline">Customize </span>
+                  <span>Columns</span>
                 </button>
 
                 <Dropdown
@@ -521,7 +539,7 @@ function InvestorsInner() {
                   trigger={
                     <button
                       type="button"
-                      className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3.5 text-[14px] font-medium text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn font-sans shrink-0 whitespace-nowrap"
+                      className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3 sm:px-3.5 text-[13px] sm:text-[14px] font-medium text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn font-sans shrink-0 whitespace-nowrap"
                     >
                       <Download className="size-4 text-white" />
                       <span className="whitespace-nowrap">Export</span>

@@ -9,6 +9,7 @@ import {
   Plus,
   ArrowUpDown,
   ChevronDown,
+  ChevronUp,
   Download,
   Eye,
   Pencil,
@@ -372,6 +373,7 @@ export function RequestsManagementInner() {
   const [isAssignAdminOpen, setIsAssignAdminOpen] = React.useState(false)
   const [assignAdminTargetRequests, setAssignAdminTargetRequests] = React.useState<PropertyRequest[]>([])
   const [confirmDialog, setConfirmDialog] = React.useState<ConfirmRequest | null>(null)
+  const [headerCollapsed, setHeaderCollapsed] = React.useState(false)
 
   // Load from localStorage on mount & check searchParams
   React.useEffect(() => {
@@ -699,19 +701,32 @@ export function RequestsManagementInner() {
         {/* =========================================================================
             1. TOP HEADER CARD
            ========================================================================= */}
-        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
-                Property Requests
-              </h1>
-              <p className="mt-0.5 text-[14px] leading-[20px] text-[#6f777f]">
-                Monitor investor property briefs, track matching agents, manage proposal bids and pipeline closures.
-              </p>
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-3.5 sm:gap-4 transition-all">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start justify-between sm:block gap-2">
+              <div>
+                <h1 className="text-[20px] sm:text-[32px] font-bold leading-[28px] sm:leading-[40px] text-[#1f2327]">
+                  Property Requests
+                </h1>
+                <p className={cn("mt-0.5 text-[13px] sm:text-[14px] leading-[18px] sm:leading-[20px] text-[#6f777f]", headerCollapsed && "hidden sm:block")}>
+                  Monitor investor property briefs, track matching agents, manage proposal bids and pipeline closures.
+                </p>
+              </div>
+
+              {/* Mobile Collapse Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setHeaderCollapsed(!headerCollapsed)}
+                className="flex sm:hidden h-[30px] items-center gap-1.5 rounded-[6px] border border-[#d3d5d7] bg-[#f8f9fa] px-2.5 text-[11.5px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors shrink-0 cursor-pointer select-none"
+                aria-label={headerCollapsed ? 'Expand header details' : 'Collapse header details'}
+              >
+                <span>{headerCollapsed ? 'Stats & Links' : 'Collapse'}</span>
+                {headerCollapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
+              </button>
             </div>
 
             {/* Quick Links */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className={cn("flex flex-wrap items-center gap-2", headerCollapsed && "hidden sm:flex")}>
               <Link
                 href="/deals"
                 className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] leading-[20px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors"
@@ -733,7 +748,7 @@ export function RequestsManagementInner() {
           </div>
 
           {/* 5 Stat Metric Cards */}
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 lg:gap-3">
+          <div className={cn("grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 lg:gap-3", headerCollapsed && "hidden sm:grid")}>
             <MetricCard
               label="Total Requests"
               value={stats.total}
@@ -799,8 +814,8 @@ export function RequestsManagementInner() {
           {/* Top Tabs & Actions Header Bar */}
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-              {/* Filter Tabs List */}
-              <div className="flex flex-wrap items-center gap-2 py-0.5 max-w-full">
+              {/* Filter Tabs List - Swipeable on mobile */}
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none max-w-full py-1 -mx-1 px-1 sm:mx-0 sm:px-0 select-none">
                 {(
                   [
                     { id: 'All', label: 'All Requests', count: stats.total },
@@ -831,7 +846,7 @@ export function RequestsManagementInner() {
                             ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
                             : item.id === 'Urgent'
                             ? 'bg-[#f79009] text-white shadow-2xs font-semibold'
-                            : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                            : 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                           : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                       )}
                     >
@@ -855,16 +870,16 @@ export function RequestsManagementInner() {
                 })}
               </div>
 
-              {/* View Mode Switcher, Export, and Add Action */}
-              <div className="flex items-center gap-2 shrink-0">
+              {/* View Mode Switcher, Presets, Customize Columns, and Actions */}
+              <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-between sm:justify-end pt-2 lg:pt-0 border-t border-[#f2f4f7] lg:border-t-0">
                 <div className="flex items-center rounded-[8px] border border-[#d3d5d7] bg-[#fcfcfc] p-0.5 shadow-2xs">
                   <button
                     type="button"
                     onClick={() => setViewMode('table')}
                     className={cn(
-                      'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-medium transition-all cursor-pointer whitespace-nowrap',
+                      'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 sm:px-3 text-[12px] sm:text-[13px] font-medium transition-all cursor-pointer whitespace-nowrap',
                       viewMode === 'table'
-                        ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                        ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                         : 'text-[#6f777f] hover:text-[#1f2327]'
                     )}
                     title="Data Table View"
@@ -876,9 +891,9 @@ export function RequestsManagementInner() {
                     type="button"
                     onClick={() => setViewMode('timeline')}
                     className={cn(
-                      'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-medium transition-all cursor-pointer whitespace-nowrap',
+                      'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 sm:px-3 text-[12px] sm:text-[13px] font-medium transition-all cursor-pointer whitespace-nowrap',
                       viewMode === 'timeline'
-                        ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                        ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                         : 'text-[#6f777f] hover:text-[#1f2327]'
                     )}
                     title="Timeline Feed Mode"
@@ -890,9 +905,9 @@ export function RequestsManagementInner() {
                     type="button"
                     onClick={() => setViewMode('kanban')}
                     className={cn(
-                      'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-semibold transition-all cursor-pointer whitespace-nowrap',
+                      'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 sm:px-3 text-[12px] sm:text-[13px] font-semibold transition-all cursor-pointer whitespace-nowrap',
                       viewMode === 'kanban'
-                        ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                        ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                         : 'text-[#6f777f] hover:text-[#1f2327]'
                     )}
                     title="Kanban Board Pipeline"
@@ -926,35 +941,38 @@ export function RequestsManagementInner() {
                   trigger={
                     <button
                       type="button"
-                      className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                      className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-2.5 sm:px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0"
                     >
-                      <Bookmark className="size-4 text-[#00c2cb]" />
-                      <span className="max-w-[140px] truncate">
+                      <Bookmark className="size-4 text-[#00c2cb] shrink-0" />
+                      <span className="hidden sm:inline max-w-[120px] truncate whitespace-nowrap">
                         {presets.find((p) => p.id === activePresetId)?.name || 'Custom View'}
                       </span>
-                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                      <ChevronDown className="size-3 text-[#9da4ae] shrink-0" />
                     </button>
                   }
                   ariaLabel="Select table template view"
                 />
 
-                {/* Customize Columns Button */}
+                {/* Customize Columns Button with responsive text */}
                 <button
                   type="button"
                   onClick={() => setColumnsOpen(true)}
-                  className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-2.5 sm:px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                  title="Customize Columns"
                 >
-                  <Settings2 className="size-4 text-[#6f777f]" />
-                  <span className="whitespace-nowrap">Customize columns</span>
+                  <Settings2 className="size-4 text-[#6f777f] shrink-0" />
+                  <span className="hidden sm:inline">Customize </span>
+                  <span>Columns</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleExportCSV}
-                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-2.5 sm:px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
                 >
-                  <Download className="size-4 text-[#6f777f]" />
-                  <span className="whitespace-nowrap">Export CSV</span>
+                  <Download className="size-4 text-[#6f777f] shrink-0" />
+                  <span className="hidden sm:inline">Export </span>
+                  <span>CSV</span>
                 </button>
 
                 <button

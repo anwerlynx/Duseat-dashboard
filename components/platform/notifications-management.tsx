@@ -717,7 +717,7 @@ function NotificationsManagementInner() {
                               ? 'bg-[#f79009] text-white shadow-2xs font-semibold'
                               : item.id === 'failed' || item.id === 'cancelled'
                               ? 'bg-[#d92d20] text-white shadow-2xs font-semibold'
-                              : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                              : 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                             : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                         )}
                       >

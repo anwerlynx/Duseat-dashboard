@@ -24,6 +24,7 @@ import {
   Plus,
   Pin,
   ChevronDown,
+  ChevronUp,
   Layers,
   Sparkles,
   ArrowUpDown,
@@ -161,6 +162,7 @@ export function VerificationCenterInner() {
   const [noteTargetCase, setNoteTargetCase] = React.useState<VerificationCase | null>(null)
   const [editingNote, setEditingNote] = React.useState<VerificationNote | null>(null)
   const [confirmDialog, setConfirmDialog] = React.useState<ConfirmRequest | null>(null)
+  const [headerCollapsed, setHeaderCollapsed] = React.useState(false)
 
   // Load data from localStorage on mount
   React.useEffect(() => {
@@ -654,24 +656,37 @@ export function VerificationCenterInner() {
     >
       <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
         {/* SECTION 1: HEADER */}
-        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-5 shadow-[0px_1px_3px_rgba(16,24,40,0.05)] flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-[24px] sm:text-[32px] font-bold leading-tight text-[#1f2327]">
-                Verification Center
-              </h1>
-              <p className="mt-0.5 text-[14px] leading-[20px] text-[#6f777f]">
-                Manage, review, approve, reject, and track investor and agent verification requests.
-              </p>
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-3.5 sm:gap-4 transition-all">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="flex items-start justify-between sm:block gap-2">
+              <div>
+                <h1 className="text-[20px] sm:text-[32px] font-bold leading-[28px] sm:leading-tight text-[#1f2327]">
+                  Verification Center
+                </h1>
+                <p className={cn("mt-0.5 text-[13px] sm:text-[14px] leading-[18px] sm:leading-[20px] text-[#6f777f]", headerCollapsed && "hidden sm:block")}>
+                  Manage, review, approve, reject, and track investor and agent verification requests.
+                </p>
+              </div>
+
+              {/* Mobile Collapse Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setHeaderCollapsed(!headerCollapsed)}
+                className="flex sm:hidden h-[30px] items-center gap-1.5 rounded-[6px] border border-[#d3d5d7] bg-[#f8f9fa] px-2.5 text-[11.5px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors shrink-0 cursor-pointer select-none"
+                aria-label={headerCollapsed ? 'Expand header details' : 'Collapse header details'}
+              >
+                <span>{headerCollapsed ? 'Stats & Tools' : 'Collapse'}</span>
+                {headerCollapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
+              </button>
             </div>
 
             {/* Header Actions */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className={cn("flex flex-wrap items-center gap-2", headerCollapsed && "hidden sm:flex")}>
               <button
                 type="button"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn"
+                className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn"
               >
                 <RefreshCw className={cn('size-4 text-[#6f777f]', isRefreshing && 'animate-spin text-[#00c2cb]')} />
                 <span>Refresh</span>
@@ -680,7 +695,7 @@ export function VerificationCenterInner() {
               <button
                 type="button"
                 onClick={handleExportCsv}
-                className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn"
+                className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn"
               >
                 <Download className="size-4 text-[#6f777f]" />
                 <span>Export</span>
@@ -689,7 +704,7 @@ export function VerificationCenterInner() {
           </div>
 
           {/* 5 Stat Metric Cards */}
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 lg:gap-3">
+          <div className={cn("grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 lg:gap-3", headerCollapsed && "hidden sm:grid")}>
             <MetricCard
               label="Pending Reviews"
               count={pendingCount}
@@ -747,8 +762,9 @@ export function VerificationCenterInner() {
         <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
           {/* Top Tabs Bar */}
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2 max-w-full py-0.5">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              {/* Swipeable Tabs */}
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none max-w-full py-1 -mx-1 px-1 sm:mx-0 sm:px-0 select-none">
                 {[
                   { label: 'Verification Queue', value: 'queue', count: cases.length },
                   { label: 'Expired Documents', value: 'expired', count: expiredDocsList.length },
@@ -770,7 +786,9 @@ export function VerificationCenterInner() {
                       activeTab === item.value
                         ? item.value === 'expired'
                           ? 'bg-[#d92d20] text-white shadow-2xs font-semibold'
-                          : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                          : item.value === 'queue'
+                          ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
+                          : 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                         : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                     )}
                   >
@@ -791,11 +809,12 @@ export function VerificationCenterInner() {
                 ))}
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Action Toolbar on the right */}
+              <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-between sm:justify-end pt-2 lg:pt-0 border-t border-[#f2f4f7] lg:border-t-0">
                 <button
                   type="button"
                   onClick={handleExportCsv}
-                  className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn"
+                  className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn"
                 >
                   <Download className="size-4 text-[#6f777f]" />
                   <span>Export</span>

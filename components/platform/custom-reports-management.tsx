@@ -39,6 +39,7 @@ import {
   DollarSign,
   Activity,
   ChevronDown,
+  ChevronUp,
   ChevronRight,
   ChevronLeft,
   X,
@@ -53,16 +54,107 @@ import {
   HelpCircle,
   Flame,
   Globe,
+  Settings2,
   Sliders as ControlsIcon,
 } from 'lucide-react'
 import { PlatformShell } from './platform-shell'
 import { MainButton } from '@/components/ui/main-button'
 import { FigmaStatusBadge } from '@/components/ui/figma-badges'
 import { TableCheckbox } from '@/components/ui/table-checkbox'
+import { Dropdown } from '@/components/dashboard/menu'
+import { CustomizeTableDialog, type TableViewPreset } from './customize-table-dialog'
 
 import { Pagination, MetricCard } from '@/components/ui'
 import { ToastProvider, useToast } from '@/components/dashboard/toast'
 import { cn, exportToCsv } from '@/lib/utils'
+
+export const CUSTOM_REPORTS_DEFAULT_COLUMNS = [
+  'Report Name & Details',
+  'Data Source',
+  'Created By',
+  'Schedule',
+  'Last Generated',
+  'Status',
+  'Actions',
+]
+
+export const CUSTOM_REPORTS_ALL_COLUMNS = [
+  'Report ID',
+  'Report Name & Details',
+  'Data Source',
+  'Secondary Source',
+  'Created By',
+  'Schedule',
+  'Recipients',
+  'Format',
+  'Last Updated',
+  'Last Generated',
+  'Status',
+  'Actions',
+]
+
+export const CUSTOM_REPORTS_CATEGORIES = [
+  {
+    name: 'Report Identity',
+    columns: ['Report ID', 'Report Name & Details', 'Created By', 'Last Updated'],
+  },
+  {
+    name: 'Data Source & Metrics',
+    columns: ['Data Source', 'Secondary Source'],
+  },
+  {
+    name: 'Automation & Delivery',
+    columns: ['Schedule', 'Recipients', 'Format', 'Last Generated'],
+  },
+  {
+    name: 'Status & Governance',
+    columns: ['Status', 'Actions'],
+  },
+]
+
+export const defaultCustomReportsPresets: TableViewPreset[] = [
+  {
+    id: 'default',
+    name: 'Default Overview',
+    columns: [
+      'Report Name & Details',
+      'Data Source',
+      'Created By',
+      'Schedule',
+      'Last Generated',
+      'Status',
+      'Actions',
+    ],
+  },
+  {
+    id: 'schedule_focus',
+    name: 'Automated & Schedules',
+    columns: [
+      'Report Name & Details',
+      'Data Source',
+      'Schedule',
+      'Recipients',
+      'Format',
+      'Last Generated',
+      'Status',
+      'Actions',
+    ],
+  },
+  {
+    id: 'audit_details',
+    name: 'Audit & Governance',
+    columns: [
+      'Report ID',
+      'Report Name & Details',
+      'Data Source',
+      'Secondary Source',
+      'Created By',
+      'Last Updated',
+      'Status',
+      'Actions',
+    ],
+  },
+]
 import {
   ResponsiveContainer,
   BarChart,
@@ -1060,6 +1152,13 @@ function ReportsManagementInner() {
   const [rowsPerPage, setRowsPerPage] = React.useState(10)
   const [selectedIds, setSelectedIds] = React.useState<string[]>([])
 
+  // Table Customization & Responsive State
+  const [columnsOpen, setColumnsOpen] = React.useState(false)
+  const [visibleColumns, setVisibleColumns] = React.useState<string[]>(CUSTOM_REPORTS_DEFAULT_COLUMNS)
+  const [activePresetId, setActivePresetId] = React.useState('default')
+  const [presets, setPresets] = React.useState<TableViewPreset[]>(defaultCustomReportsPresets)
+  const [headerCollapsed, setHeaderCollapsed] = React.useState(false)
+
   // ==========================================
   // BUILDER STATE (3-COLUMN WORKSPACE)
   // ==========================================
@@ -1523,8 +1622,172 @@ function ReportsManagementInner() {
   const paginatedReports = filteredReports.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage)
 
   const [showFilters, setShowFilters] = React.useState(true)
-
   const activeSourceConfig = DATA_SOURCES_CONFIG[builderSource]
+
+  const renderReportCell = (report: ReportItem, col: string) => {
+    const SourceIcon = DATA_SOURCES_CONFIG[report.dataSource]?.icon || FileText
+    switch (col) {
+      case 'Report ID':
+        return (
+          <span className="font-mono text-[12px] font-medium text-[#6f777f]">
+            {report.id}
+          </span>
+        )
+      case 'Report Name & Details':
+        return (
+          <div className="space-y-0.5">
+            <button
+              type="button"
+              onClick={() => openReportDetails(report)}
+              className="text-left font-semibold text-[14px] text-[#1f2327] hover:text-[#00c2cb] transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              {report.name}
+            </button>
+            <p className="text-[12px] text-[#6f777f] line-clamp-1 max-w-md">
+              {report.description}
+            </p>
+          </div>
+        )
+      case 'Data Source':
+        return (
+          <div className="flex items-center gap-1.5">
+            <SourceIcon className="size-3.5 text-[#00c2cb]" />
+            <span className="font-semibold text-[#1f2327] text-[13px]">{report.dataSource}</span>
+            {report.secondarySource && (
+              <span className="text-[11px] text-[#6f777f]">+{report.secondarySource}</span>
+            )}
+          </div>
+        )
+      case 'Secondary Source':
+        return (
+          <span className="text-[12px] text-[#6f777f]">
+            {report.secondarySource || '—'}
+          </span>
+        )
+      case 'Created By':
+        return (
+          <div className="space-y-0.5">
+            <div className="text-[13px] font-medium text-[#1f2327]">{report.createdBy}</div>
+            <div className="text-[11px] text-[#9ca3af]">{report.lastUpdated}</div>
+          </div>
+        )
+      case 'Schedule':
+        return report.schedule ? (
+          <div className="space-y-0.5">
+            <span className="inline-flex items-center gap-1 rounded-[6px] bg-[#e6f9fa] px-2 py-0.5 text-[11px] font-bold text-[#008f95]">
+              <Clock className="size-3" /> {report.schedule.frequency}
+            </span>
+            <div className="text-[11px] text-[#6f777f]">
+              {report.schedule.format} • {report.schedule.recipients.length} recp
+            </div>
+          </div>
+        ) : (
+          <span className="text-[12px] text-[#9ca3af]">On demand</span>
+        )
+      case 'Recipients':
+        return (
+          <span className="text-[12px] text-[#6f777f] font-mono">
+            {report.schedule?.recipients?.length ? report.schedule.recipients.join(', ') : '—'}
+          </span>
+        )
+      case 'Format':
+        return (
+          <span className="rounded-[4px] bg-[#f4f5f6] px-2 py-0.5 text-[11px] font-mono font-medium text-[#1f2327]">
+            {report.schedule?.format || 'CSV'}
+          </span>
+        )
+      case 'Last Updated':
+        return (
+          <span className="text-[13px] text-[#4b5563]">
+            {report.lastUpdated}
+          </span>
+        )
+      case 'Last Generated':
+        return (
+          <span className="text-[13px] text-[#4b5563]">
+            {report.lastGenerated}
+          </span>
+        )
+      case 'Status':
+        return (
+          <FigmaStatusBadge
+            status={
+              report.status === 'Ready' || report.status === 'Completed'
+                ? 'Completed'
+                : report.status === 'Scheduled'
+                ? 'In progress'
+                : report.status === 'Draft'
+                ? 'Pending'
+                : report.status === 'Failed'
+                ? 'Failed'
+                : 'Cancelled'
+            }
+          />
+        )
+      case 'Actions':
+        return (
+          <div className="flex items-center justify-end gap-1">
+            <button
+              type="button"
+              onClick={() => openReportDetails(report)}
+              className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+              title="View Report Details"
+            >
+              <Eye className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => openEditReport(report)}
+              className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+              title="Edit Report"
+            >
+              <Edit className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setExportModalReport(report)}
+              className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+              title="Export Report"
+            >
+              <Download className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setScheduleModalReport(report)}
+              className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+              title="Configure Schedule"
+            >
+              <Clock className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard?.writeText?.(typeof window !== 'undefined' ? window.location.origin + `/reports?id=${report.id}` : '')
+                toast({
+                  variant: 'success',
+                  title: 'Share Link Copied',
+                  description: `Link for "${report.name}" copied to clipboard.`,
+                })
+              }}
+              className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+              title="Share Link"
+            >
+              <Share2 className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeleteConfirmReport(report)}
+              className="flex size-8 items-center justify-center rounded-[6px] border border-[#d3d5d7] bg-white text-[#d92d20] hover:bg-[#fef3f2] hover:border-[#fda29b] transition-colors cursor-pointer"
+              title="Delete Report"
+            >
+              <Trash2 className="size-4" />
+            </button>
+          </div>
+        )
+      default:
+        return <span className="text-[12px] text-[#6f777f]">{(report as any)[col] || '—'}</span>
+    }
+  }
 
   return (
     <PlatformShell
@@ -1535,25 +1798,38 @@ function ReportsManagementInner() {
         {/* =========================================================================
             TOP HEADER CARD (Canonical Users Design Standard)
            ========================================================================= */}
-        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05)] flex flex-col gap-4">
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-3.5 sm:gap-4 transition-all">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
-                Custom Reports & Data Composition
-              </h1>
-              <p className="mt-0.5 text-[14px] leading-[20px] text-[#6f777f]">
-                Compose ad-hoc reports, schedule automated export deliveries, and build cross-module business intelligence.
-              </p>
-            </div>
+            <div className="flex items-start justify-between sm:block gap-2">
+              <div>
+                <h1 className="text-[20px] sm:text-[32px] font-bold leading-[28px] sm:leading-[40px] text-[#1f2327]">
+                  Custom Reports & Data Composition
+                </h1>
+                <p className={cn("mt-0.5 text-[13px] sm:text-[14px] leading-[18px] sm:leading-[20px] text-[#6f777f]", headerCollapsed && "hidden sm:block")}>
+                  Compose ad-hoc reports, schedule automated export deliveries, and build cross-module business intelligence.
+                </p>
+              </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+              {/* Mobile Collapse Toggle Button */}
               <button
                 type="button"
-                onClick={() => setActiveTab('templates')}
+                onClick={() => setHeaderCollapsed(!headerCollapsed)}
+                className="flex sm:hidden h-[30px] items-center gap-1.5 rounded-[6px] border border-[#d3d5d7] bg-[#f8f9fa] px-2.5 text-[11.5px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors shrink-0 cursor-pointer select-none"
+                aria-label={headerCollapsed ? 'Expand header details' : 'Collapse header details'}
+              >
+                <span>{headerCollapsed ? 'Stats & Links' : 'Collapse'}</span>
+                {headerCollapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
+              </button>
+            </div>
+
+            <div className={cn("flex flex-wrap items-center gap-2", headerCollapsed && "hidden sm:flex")}>
+              <button
+                type="button"
+                onClick={() => setActiveTab(activeTab === 'templates' ? 'all' : 'templates')}
                 className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn"
               >
                 <Sparkles className="size-4 text-[#00c2cb]" />
-                <span>Predefined Templates</span>
+                <span>{activeTab === 'templates' ? 'Back to Reports' : 'Predefined Templates'}</span>
               </button>
               <button
                 type="button"
@@ -1568,7 +1844,7 @@ function ReportsManagementInner() {
 
           {/* 5 Stat Metric Cards */}
           {activeTab !== 'builder' && activeTab !== 'details' && (
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 lg:gap-3">
+            <div className={cn("grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 lg:gap-3", headerCollapsed && "hidden sm:grid")}>
               <MetricCard
                 label="Total Reports"
                 value={reports.length}
@@ -1611,10 +1887,10 @@ function ReportsManagementInner() {
           )}
         </header>
 
-        {/* Main Tab Switcher (Design System Underline Tabs) */}
+        {/* Main Tab Switcher (Canonical Pill Tabs) */}
         {activeTab !== 'builder' && activeTab !== 'details' && (
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#d3d5d7] pt-1 pb-0">
-            <div className="flex items-center gap-6 overflow-x-auto no-scrollbar">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#d3d5d7] pb-3">
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none max-w-full py-0.5 select-none">
               {[
                 { id: 'all', label: 'All Reports', count: reports.length, icon: FileText },
                 { id: 'custom', label: 'Custom Reports', count: reports.filter((r) => !r.schedule).length, icon: SlidersHorizontal },
@@ -1624,40 +1900,36 @@ function ReportsManagementInner() {
                 const Icon = tab.icon
                 const isActive = activeTab === tab.id
                 return (
-                  <a
+                  <button
                     key={tab.id}
-                    href={`/custom-reports?tab=${tab.id}`}
-                    onClick={(e) => {
-                      if (e.ctrlKey || e.metaKey || e.button === 1) {
-                        return
-                      }
-                      e.preventDefault()
+                    type="button"
+                    onClick={() => {
                       setActiveTab(tab.id as typeof activeTab)
                       setCurrentPage(1)
                     }}
                     className={cn(
-                      'relative flex items-center gap-2 pb-3 pt-1 text-[14px] font-medium transition-colors cursor-pointer select-none no-underline shrink-0',
+                      'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap',
                       isActive
-                        ? 'text-[#1f2327] font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2.5px] after:rounded-full after:bg-[#00c2cb]'
-                        : 'text-[#6f777f] hover:text-[#1f2327]'
+                        ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
+                        : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                     )}
                   >
-                    <Icon className={cn('size-4', isActive ? 'text-[#00c2cb]' : 'text-[#6f777f]')} />
+                    <Icon className={cn('size-4', isActive ? 'text-white' : 'text-[#6f777f]')} />
                     <span>{tab.label}</span>
                     <span
                       className={cn(
-                        'rounded-full px-2 py-0.5 text-[11px] font-bold transition-colors',
-                        isActive ? 'bg-[#e5f6f7] text-[#00a4ac]' : 'bg-[#eff1f3] text-[#6f777f]'
+                        'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
+                        isActive ? 'bg-white/20 text-white' : 'bg-[#eff1f3] text-[#1f2327]'
                       )}
                     >
                       {tab.count}
                     </span>
-                  </a>
+                  </button>
                 )
               })}
             </div>
 
-            <div className="flex items-center gap-2 pb-2">
+            <div className="hidden sm:flex items-center gap-2">
               <span className="text-[12px] text-[#6f777f] flex items-center gap-1.5 bg-[#fcfcfc] px-2.5 py-1 rounded-[6px] border border-[#eff1f3]">
                 <Clock className="size-3.5 text-[#00c2cb]" /> Data freshness: <strong className="text-[#1f2327]">Real-time</strong>
               </span>
@@ -1749,10 +2021,12 @@ function ReportsManagementInner() {
             VIEW 2: REPORTS LIST & TABLE (OVERVIEW)
         ========================================== */}
         {(activeTab === 'all' || activeTab === 'custom' || activeTab === 'scheduled') && (
-            <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)]">
-              {/* Top Status Tabs & Actions Row */}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eff1f3] p-4 sm:p-5">
-                <div className="flex flex-wrap items-center gap-2">
+          <section className="overflow-visible rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">
+            {/* Top Tabs & Actions Header Bar */}
+            <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                {/* Filter Tabs List - Swipeable on mobile */}
+                <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none max-w-full py-1 -mx-1 px-1 sm:mx-0 sm:px-0 select-none">
                   {(
                     [
                       { id: 'All', label: 'All Reports', count: reports.length },
@@ -1768,9 +2042,12 @@ function ReportsManagementInner() {
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => setSelectedStatusFilter(item.id)}
+                        onClick={() => {
+                          setSelectedStatusFilter(item.id)
+                          setCurrentPage(1)
+                        }}
                         className={cn(
-                          'flex h-[34px] items-center gap-2 rounded-[8px] px-3 text-[13px] font-medium transition-all cursor-pointer select-none',
+                          'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap',
                           isActive
                             ? item.id === 'Ready' || item.id === 'Completed'
                               ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
@@ -1778,14 +2055,14 @@ function ReportsManagementInner() {
                               ? 'bg-[#f79009] text-white shadow-2xs font-semibold'
                               : item.id === 'Archived'
                               ? 'bg-[#6f777f] text-white shadow-2xs font-semibold'
-                              : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                              : 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                             : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                         )}
                       >
                         <span>{item.label}</span>
                         <span
                           className={cn(
-                            'rounded-full px-1.5 py-0.2 text-[11px] font-semibold',
+                            'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
                             isActive
                               ? 'bg-white/20 text-white'
                               : item.id === 'Ready' || item.id === 'Completed'
@@ -1802,12 +2079,21 @@ function ReportsManagementInner() {
                   })}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <MainButton
-                    variant="Secondary"
-                    size="sm"
-                    iconLeft={<Download className="size-3.5" />}
-                    label="Export CSV"
+                {/* Action Buttons: Customize Columns, Export CSV, New Report */}
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setColumnsOpen(true)}
+                    className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-2.5 sm:px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                    title="Customize Columns"
+                  >
+                    <Settings2 className="size-4 text-[#6f777f] shrink-0" />
+                    <span className="hidden sm:inline">Customize </span>
+                    <span>Columns</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => {
                       exportToCsv(
                         'duseat_custom_reports',
@@ -1815,283 +2101,220 @@ function ReportsManagementInner() {
                         filteredReports.map((r) => [r.id, r.name, r.dataSource, r.createdBy, r.lastUpdated, r.status, r.lastGenerated])
                       )
                     }}
-                  />
-                  <MainButton
-                    variant="Primary"
-                    size="sm"
-                    iconLeft={<Plus className="size-3.5" />}
-                    label="New Report"
-                    onClick={() => openNewReportBuilder()}
-                  />
-                </div>
-              </div>
+                    className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                  >
+                    <Download className="size-4 text-[#6f777f] shrink-0" />
+                    <span>Export CSV</span>
+                  </button>
 
-              {/* Horizontal Filters Toolbar */}
-              <div className="flex flex-wrap items-center gap-2.5 p-4 sm:p-5 pb-3">
-                {/* Search */}
-                <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
-                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9da4ae]" />
-                  <input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search reports by name, data source, or author..."
-                    className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-3 text-[14px] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9da4ae] hover:text-[#1f2327]"
-                    >
-                      <X className="size-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Data Source Filter */}
-                <select
-                  value={selectedSourceFilter}
-                  onChange={(e) => setSelectedSourceFilter(e.target.value)}
-                  className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-                >
-                  <option value="All">All Data Sources</option>
-                  <option value="Users">Users</option>
-                  <option value="Investors">Investors</option>
-                  <option value="Agents">Agents</option>
-                  <option value="Properties">Properties</option>
-                  <option value="Requests">Requests</option>
-                  <option value="Offers">Offers</option>
-                  <option value="Deals">Deals</option>
-                  <option value="Subscriptions">Subscriptions</option>
-                  <option value="Finance">Finance</option>
-                </select>
-
-                {/* Scheduling Filter */}
-                <select
-                  value={selectedScheduleFilter}
-                  onChange={(e) => setSelectedScheduleFilter(e.target.value)}
-                  className="h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] outline-none hover:border-[#a0a4a8] focus:border-[#00c2cb] cursor-pointer"
-                >
-                  <option value="All">All Schedules</option>
-                  <option value="Scheduled">Scheduled Only</option>
-                  <option value="Not Scheduled">Not Scheduled</option>
-                </select>
-
-                {/* Reset Filters Link */}
-                {(searchQuery || selectedSourceFilter !== 'All' || selectedStatusFilter !== 'All' || selectedScheduleFilter !== 'All') && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setSearchQuery('')
-                      setSelectedSourceFilter('All')
-                      setSelectedStatusFilter('All')
-                      setSelectedScheduleFilter('All')
-                    }}
-                    className="text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer ml-1"
+                    onClick={() => openNewReportBuilder()}
+                    className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3.5 text-[13px] sm:text-[14px] font-medium text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
                   >
-                    Reset filters
+                    <Plus className="size-4 shrink-0" />
+                    <span>New Report</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Horizontal Filters Toolbar */}
+            <div className="flex flex-wrap items-center gap-2.5 p-3.5 sm:p-4 pb-3">
+              {/* Search */}
+              <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9da4ae]" />
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search reports by name, data source, or author..."
+                  className="h-[38px] w-full rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-3 text-[14px] outline-none placeholder:text-[#9da4ae] focus:border-[#00c2cb] focus:ring-2 focus:ring-[#00c2cb]/20"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9da4ae] hover:text-[#1f2327]"
+                  >
+                    <X className="size-3.5" />
                   </button>
                 )}
               </div>
 
-              {/* Reports Data Table */}
-              <div className="overflow-x-auto table-scrollbar">
-                <table className="w-full text-left text-[14px] border-collapse font-sans">
-                  <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
-                    <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
-                      <th className="w-12 px-4 text-center">
-                        <TableCheckbox
-                          checked={
-                            paginatedReports.length > 0 &&
-                            paginatedReports.every((r) => selectedIds.includes(r.id))
-                          }
-                          onChange={(checked) => {
-                            if (checked) {
-                              setSelectedIds(Array.from(new Set([...selectedIds, ...paginatedReports.map((r) => r.id)])))
-                            } else {
-                              setSelectedIds(selectedIds.filter((id) => !paginatedReports.some((r) => r.id === id)))
-                            }
-                          }}
-                        />
-                      </th>
-                      <th className="px-4">Report Name & Details</th>
-                      <th className="px-4">Data Source</th>
-                      <th className="px-4">Created By</th>
-                      <th className="px-4">Schedule</th>
-                      <th className="px-4">Last Generated</th>
-                      <th className="px-4">Status</th>
-                      <th className="px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#d3d5d7]">
-                    {paginatedReports.length === 0 ? (
-                      <tr>
-                        <td colSpan={8} className="py-12 text-center text-[#6f777f]">
-                          <div className="flex flex-col items-center justify-center space-y-2">
-                            <FileText className="size-8 text-[#d3d5d7]" />
-                            <p className="text-[14px] font-semibold text-[#1f2327]">No reports found</p>
-                            <p className="text-[12px] text-[#6f777f]">Try adjusting your search or filters, or create a new report.</p>
-                            <MainButton
-                              variant="Primary"
-                              size="sm"
-                              label="+ Create Report"
-                              onClick={() => openNewReportBuilder()}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      paginatedReports.map((report) => {
-                        const isSelected = selectedIds.includes(report.id)
-                        const SourceIcon = DATA_SOURCES_CONFIG[report.dataSource]?.icon || FileText
-                        return (
-                          <tr
-                            key={report.id}
-                            className={cn(
-                              'h-[64px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa]',
-                              isSelected && 'bg-[#e5f6f7]/40'
-                            )}
-                          >
-                            <td className="w-12 px-4 text-center">
-                              <TableCheckbox
-                                checked={isSelected}
-                                onChange={(checked) => {
-                                  if (checked) {
-                                    setSelectedIds([...selectedIds, report.id])
-                                  } else {
-                                    setSelectedIds(selectedIds.filter((id) => id !== report.id))
-                                  }
-                                }}
-                              />
-                            </td>
-                            <td className="px-4">
-                              <div className="space-y-0.5">
-                                <button
-                                  onClick={() => openReportDetails(report)}
-                                  className="text-left font-semibold text-[14px] text-[#1f2327] hover:text-[#00c2cb] transition-colors flex items-center gap-1.5"
-                                >
-                                  {report.name}
-                                </button>
-                                <p className="text-[12px] text-[#6f777f] line-clamp-1 max-w-md">
-                                  {report.description}
-                                </p>
-                              </div>
-                            </td>
-                            <td className="px-4">
-                              <div className="flex items-center gap-1.5">
-                                <SourceIcon className="size-3.5 text-[#00c2cb]" />
-                                <span className="font-semibold text-[#1f2327] text-[13px]">{report.dataSource}</span>
-                                {report.secondarySource && (
-                                  <span className="text-[11px] text-[#6f777f]">+{report.secondarySource}</span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="px-4 text-[#4b5563]">
-                              <div className="text-[13px] font-medium text-[#1f2327]">{report.createdBy}</div>
-                              <div className="text-[11px] text-[#9ca3af]">{report.lastUpdated}</div>
-                            </td>
-                            <td className="px-4">
-                              {report.schedule ? (
-                                <div className="space-y-0.5">
-                                  <span className="inline-flex items-center gap-1 rounded-[6px] bg-[#e6f9fa] px-2 py-0.5 text-[11px] font-bold text-[#008f95]">
-                                    <Clock className="size-3" /> {report.schedule.frequency}
-                                  </span>
-                                  <div className="text-[11px] text-[#6f777f]">{report.schedule.format} • {report.schedule.recipients.length} recp</div>
-                                </div>
-                              ) : (
-                                <span className="text-[12px] text-[#9ca3af]">On demand</span>
-                              )}
-                            </td>
-                            <td className="px-4 text-[#4b5563]">
-                              <span className="text-[13px]">{report.lastGenerated}</span>
-                            </td>
-                            <td className="px-4">
-                              <FigmaStatusBadge
-                                status={
-                                  report.status === 'Ready' || report.status === 'Completed'
-                                    ? 'Completed'
-                                    : report.status === 'Scheduled'
-                                    ? 'In progress'
-                                    : report.status === 'Draft'
-                                    ? 'Pending'
-                                    : report.status === 'Failed'
-                                    ? 'Failed'
-                                    : 'Cancelled'
-                                }
-                              />
-                            </td>
-                            <td className="px-4 text-right">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <button
-                                      onClick={() => openReportDetails(report)}
-                                      className="rounded-[6px] p-1.5 text-[#6f777f] hover:bg-[#eef0f2] hover:text-[#1f2327]"
-                                      title="View Report Details"
-                                    >
-                                      <Eye className="size-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => openEditReport(report)}
-                                      className="rounded-[6px] p-1.5 text-[#6f777f] hover:bg-[#eef0f2] hover:text-[#1f2327]"
-                                      title="Edit Report"
-                                    >
-                                      <Edit className="size-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => setExportModalReport(report)}
-                                      className="rounded-[6px] p-1.5 text-[#6f777f] hover:bg-[#eef0f2] hover:text-[#1f2327]"
-                                      title="Export Report"
-                                    >
-                                      <Download className="size-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => setScheduleModalReport(report)}
-                                      className="rounded-[6px] p-1.5 text-[#6f777f] hover:bg-[#eef0f2] hover:text-[#1f2327]"
-                                      title="Configure Schedule"
-                                    >
-                                      <Clock className="size-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDuplicate(report)}
-                                      className="rounded-[6px] p-1.5 text-[#6f777f] hover:bg-[#eef0f2] hover:text-[#1f2327]"
-                                      title="Duplicate"
-                                    >
-                                      <Copy className="size-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => setDeleteConfirmReport(report)}
-                                      className="rounded-[6px] p-1.5 text-[#dc2626] hover:bg-[#fef2f2]"
-                                      title="Delete"
-                                    >
-                                      <Trash2 className="size-4" />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            )
-                          })
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+              {/* Data Source Filter Dropdown */}
+              <Dropdown
+                align="start"
+                value={selectedSourceFilter}
+                onSelect={setSelectedSourceFilter}
+                ariaLabel="Filter by Data Source"
+                options={[
+                  { label: 'All Data Sources', value: 'All' },
+                  { label: 'Users', value: 'Users' },
+                  { label: 'Investors', value: 'Investors' },
+                  { label: 'Agents', value: 'Agents' },
+                  { label: 'Properties', value: 'Properties' },
+                  { label: 'Requests', value: 'Requests' },
+                  { label: 'Offers', value: 'Offers' },
+                  { label: 'Deals', value: 'Deals' },
+                  { label: 'Subscriptions', value: 'Subscriptions' },
+                  { label: 'Finance', value: 'Finance' },
+                ]}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                    <Layers className="size-4 text-[#6f777f]" />
+                    <span>{selectedSourceFilter === 'All' ? 'All Data Sources' : selectedSourceFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
+              />
 
-                  {/* Table Footer & Pagination */}
-                  <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#d3d5d7] px-4 py-3">
-                    <div className="text-[12px] text-[#6f777f]">
-                      Showing <strong className="text-[#1f2327]">{filteredReports.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1}</strong> to{' '}
-                      <strong className="text-[#1f2327]">{Math.min(currentPage * rowsPerPage, filteredReports.length)}</strong> of{' '}
-                      <strong className="text-[#1f2327]">{filteredReports.length}</strong> reports
-                    </div>
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      totalItems={filteredReports.length}
-                      rowsPerPage={rowsPerPage}
-                      onPageChange={setCurrentPage}
-                      onRowsPerPageChange={setRowsPerPage}
-                    />
-                  </div>
-                </section>
+              {/* Scheduling Filter Dropdown */}
+              <Dropdown
+                align="start"
+                value={selectedScheduleFilter}
+                onSelect={setSelectedScheduleFilter}
+                ariaLabel="Filter by Schedule"
+                options={[
+                  { label: 'All Schedules', value: 'All' },
+                  { label: 'Scheduled Only', value: 'Scheduled' },
+                  { label: 'Not Scheduled', value: 'Not Scheduled' },
+                ]}
+                trigger={
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] cursor-pointer transition-colors shadow-2xs">
+                    <Clock className="size-4 text-[#6f777f]" />
+                    <span>{selectedScheduleFilter === 'All' ? 'All Schedules' : selectedScheduleFilter}</span>
+                    <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                  </span>
+                }
+              />
+
+              {/* Reset Filters Link */}
+              {(searchQuery || selectedSourceFilter !== 'All' || selectedStatusFilter !== 'All' || selectedScheduleFilter !== 'All') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('')
+                    setSelectedSourceFilter('All')
+                    setSelectedStatusFilter('All')
+                    setSelectedScheduleFilter('All')
+                  }}
+                  className="text-[13px] font-semibold text-[#00c2cb] hover:underline cursor-pointer ml-1"
+                >
+                  Reset filters
+                </button>
               )}
+            </div>
+
+            {/* Reports Data Table */}
+            <div className="overflow-x-auto table-scrollbar">
+              <table className="w-full text-left text-[14px] border-collapse font-sans">
+                <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
+                  <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
+                    <th className="w-12 px-4 text-center">
+                      <TableCheckbox
+                        checked={
+                          paginatedReports.length > 0 &&
+                          paginatedReports.every((r) => selectedIds.includes(r.id))
+                        }
+                        onChange={(checked) => {
+                          if (checked) {
+                            setSelectedIds(Array.from(new Set([...selectedIds, ...paginatedReports.map((r) => r.id)])))
+                          } else {
+                            setSelectedIds(selectedIds.filter((id) => !paginatedReports.some((r) => r.id === id)))
+                          }
+                        }}
+                      />
+                    </th>
+                    {visibleColumns.map((col) => (
+                      <th
+                        key={col}
+                        className={cn(
+                          'px-4 text-[13px] font-semibold text-[#1f2327]',
+                          col === 'Actions' ? 'text-right' : 'text-left'
+                        )}
+                      >
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#d3d5d7]">
+                  {paginatedReports.length === 0 ? (
+                    <tr>
+                      <td colSpan={visibleColumns.length + 1} className="py-12 text-center text-[#6f777f]">
+                        <div className="flex flex-col items-center justify-center space-y-2">
+                          <FileText className="size-8 text-[#d3d5d7]" />
+                          <p className="text-[14px] font-semibold text-[#1f2327]">No reports found</p>
+                          <p className="text-[12px] text-[#6f777f]">Try adjusting your search or filters, or create a new report.</p>
+                          <MainButton
+                            variant="Primary"
+                            size="sm"
+                            label="+ Create Report"
+                            onClick={() => openNewReportBuilder()}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedReports.map((report) => {
+                      const isSelected = selectedIds.includes(report.id)
+                      return (
+                        <tr
+                          key={report.id}
+                          className={cn(
+                            'h-[64px] whitespace-nowrap font-sans transition-colors hover:bg-[#f8f9fa]',
+                            isSelected && 'bg-[#e5f6f7]/40'
+                          )}
+                        >
+                          <td className="w-12 px-4 text-center">
+                            <TableCheckbox
+                              checked={isSelected}
+                              onChange={(checked) => {
+                                if (checked) {
+                                  setSelectedIds([...selectedIds, report.id])
+                                } else {
+                                  setSelectedIds(selectedIds.filter((id) => id !== report.id))
+                                }
+                              }}
+                            />
+                          </td>
+                          {visibleColumns.map((col) => (
+                            <td
+                              key={col}
+                              className={cn(
+                                'px-4',
+                                col === 'Actions' ? 'text-right' : 'text-left'
+                              )}
+                            >
+                              {renderReportCell(report, col)}
+                            </td>
+                          ))}
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Table Footer & Pagination */}
+            <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#d3d5d7] px-4 py-3">
+              <div className="text-[12px] text-[#6f777f]">
+                Showing <strong className="text-[#1f2327]">{filteredReports.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1}</strong> to{' '}
+                <strong className="text-[#1f2327]">{Math.min(currentPage * rowsPerPage, filteredReports.length)}</strong> of{' '}
+                <strong className="text-[#1f2327]">{filteredReports.length}</strong> reports
+              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredReports.length}
+                rowsPerPage={rowsPerPage}
+                onPageChange={setCurrentPage}
+                onRowsPerPageChange={setRowsPerPage}
+              />
+            </div>
+          </section>
+        )}
 
         {/* ==========================================
             VIEW 3: 3-COLUMN REPORT BUILDER WORKSPACE
@@ -3044,6 +3267,26 @@ function ReportsManagementInner() {
             </div>
           </div>
         )}
+
+        {/* Customize Table Dialog */}
+        <CustomizeTableDialog
+          isOpen={columnsOpen}
+          visibleColumns={visibleColumns}
+          activePresetId={activePresetId}
+          presets={presets}
+          storageKeyPrefix="custom_reports"
+          onPresetsChange={(newPresets) => setPresets(newPresets)}
+          onApply={(cols, presetId) => {
+            setVisibleColumns(cols)
+            if (presetId) setActivePresetId(presetId)
+            toast({
+              variant: 'success',
+              title: 'Table customized',
+              description: `${cols.length} visible columns applied.`,
+            })
+          }}
+          onClose={() => setColumnsOpen(false)}
+        />
       </div>
     </PlatformShell>
   )

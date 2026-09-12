@@ -9,6 +9,8 @@ import {
   Plus,
   ArrowUpDown,
   ChevronDown,
+  ChevronUp,
+  Bookmark,
   Download,
   Eye,
   Trash2,
@@ -311,6 +313,7 @@ export function DealsManagementInner() {
   const [cancelModalDeal, setCancelModalDeal] = React.useState<PlatformDeal | null>(null)
   const [assignManagerDealId, setAssignManagerDealId] = React.useState<string | null>(null)
   const [scheduleExportOpen, setScheduleExportOpen] = React.useState(false)
+  const [headerCollapsed, setHeaderCollapsed] = React.useState(false)
 
   React.useEffect(() => {
     let currentDeals = initialPlatformDeals
@@ -578,18 +581,31 @@ export function DealsManagementInner() {
         {/* =========================================================================
             1. TOP HEADER CARD (Clean, No Kicker)
            ========================================================================= */}
-        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
-                Deals & Transactions
-              </h1>
-              <p className="mt-0.5 text-[14px] leading-[20px] text-[#6f777f]">
-                Track active transactions, escrow security, legal conveyance, and commission disbursements across the marketplace.
-              </p>
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-3.5 sm:gap-4 transition-all">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start justify-between sm:block gap-2">
+              <div>
+                <h1 className="text-[20px] sm:text-[32px] font-bold leading-[28px] sm:leading-[40px] text-[#1f2327]">
+                  Deals & Transactions
+                </h1>
+                <p className={cn("mt-0.5 text-[13px] sm:text-[14px] leading-[18px] sm:leading-[20px] text-[#6f777f]", headerCollapsed && "hidden sm:block")}>
+                  Track active transactions, escrow security, legal conveyance, and commission disbursements across the marketplace.
+                </p>
+              </div>
+
+              {/* Mobile Collapse Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setHeaderCollapsed(!headerCollapsed)}
+                className="flex sm:hidden h-[30px] items-center gap-1.5 rounded-[6px] border border-[#d3d5d7] bg-[#f8f9fa] px-2.5 text-[11.5px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors shrink-0 cursor-pointer select-none"
+                aria-label={headerCollapsed ? 'Expand header details' : 'Collapse header details'}
+              >
+                <span>{headerCollapsed ? 'Stats & Tools' : 'Collapse'}</span>
+                {headerCollapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
+              </button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className={cn("flex flex-wrap items-center gap-2 sm:gap-2.5", headerCollapsed && "hidden sm:flex")}>
               {/* View Switchers */}
               <div className="flex items-center rounded-[8px] border border-[#d3d5d7] bg-[#fcfcfc] p-1 shadow-2xs">
                 <button
@@ -597,7 +613,7 @@ export function DealsManagementInner() {
                   onClick={() => setViewMode('table')}
                   className={cn(
                     'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-medium transition-all cursor-pointer',
-                    viewMode === 'table' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
+                    viewMode === 'table' ? 'bg-[#1f2327] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
                   )}
                 >
                   <List className="size-3.5" />
@@ -608,7 +624,7 @@ export function DealsManagementInner() {
                   onClick={() => setViewMode('grid')}
                   className={cn(
                     'flex h-[30px] items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-medium transition-all cursor-pointer',
-                    viewMode === 'grid' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
+                    viewMode === 'grid' ? 'bg-[#1f2327] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
                   )}
                 >
                   <LayoutGrid className="size-3.5" />
@@ -620,17 +636,17 @@ export function DealsManagementInner() {
               <button
                 type="button"
                 onClick={() => setScheduleExportOpen(true)}
-                className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer"
+                className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer"
               >
                 <Clock className="size-4 text-[#6f777f]" />
-                <span>Schedule Export</span>
+                <span className="hidden sm:inline">Schedule </span><span>Export</span>
               </button>
 
               {/* Export CSV */}
               <button
                 type="button"
                 onClick={handleExportCSV}
-                className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3.5 text-[14px] font-medium text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn"
+                className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#1f2327] px-3 sm:px-3.5 text-[13px] sm:text-[14px] font-medium text-white shadow-2xs hover:bg-[#2e3338] transition-colors cursor-pointer ant-wave-btn"
               >
                 <Download className="size-4" />
                 <span>Export Deals</span>
@@ -639,7 +655,7 @@ export function DealsManagementInner() {
           </div>
 
           {/* 6 Stat Metric Cards */}
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-3">
+          <div className={cn("grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-3", headerCollapsed && "hidden sm:grid")}>
             <MetricCard
               label="Total Deals"
               value={totalDealsCount}
@@ -694,8 +710,8 @@ export function DealsManagementInner() {
           {/* Top Tabs & Actions Header Bar */}
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-              {/* Left Status Tabs */}
-              <div className="flex flex-wrap items-center gap-2 py-0.5 max-w-full">
+              {/* Left Status Tabs - Swipeable / Scrollable horizontally */}
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none max-w-full py-1 -mx-1 px-1 sm:mx-0 sm:px-0 select-none">
                 {(
                   [
                     { id: 'All', label: 'All deals', count: statusCounts.All },
@@ -724,7 +740,7 @@ export function DealsManagementInner() {
                             ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
                             : item.id === 'Cancelled' || item.id === 'Failed'
                             ? 'bg-[#d92d20] text-white shadow-2xs font-semibold'
-                            : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                            : 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                           : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                       )}
                     >
@@ -748,8 +764,8 @@ export function DealsManagementInner() {
                 })}
               </div>
 
-              {/* Right Controls: Sort, Switcher, Export */}
-              <div className="flex items-center gap-2 shrink-0">
+              {/* Right Controls: Sort, Switcher, Presets, Customize Columns, Export */}
+              <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-between sm:justify-end pt-2 lg:pt-0 border-t border-[#f2f4f7] lg:border-t-0">
                 <Dropdown
                   align="end"
                   value={sortOption}
@@ -781,7 +797,7 @@ export function DealsManagementInner() {
                     onClick={() => setViewMode('table')}
                     className={cn(
                       'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 text-[12.5px] font-medium transition-all cursor-pointer whitespace-nowrap',
-                      viewMode === 'table' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
+                      viewMode === 'table' ? 'bg-[#1f2327] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
                     )}
                   >
                     <List className="size-3.5" />
@@ -792,7 +808,7 @@ export function DealsManagementInner() {
                     onClick={() => setViewMode('grid')}
                     className={cn(
                       'flex h-[30px] items-center gap-1.5 rounded-[6px] px-2.5 text-[12.5px] font-medium transition-all cursor-pointer whitespace-nowrap',
-                      viewMode === 'grid' ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
+                      viewMode === 'grid' ? 'bg-[#1f2327] text-white shadow-2xs font-semibold' : 'text-[#6f777f] hover:text-[#1f2327]'
                     )}
                   >
                     <LayoutGrid className="size-3.5" />
@@ -800,51 +816,50 @@ export function DealsManagementInner() {
                   </button>
                 </div>
 
-                <div className="hidden sm:flex items-center gap-2">
-                  <Dropdown
-                    align="end"
-                    floating
-                    options={presets.map((p) => ({ label: p.name, value: p.id }))}
-                    onSelect={(val) => {
-                      const preset = presets.find((p) => p.id === val)
-                      if (preset) {
-                        setActivePresetId(preset.id)
-                        setVisibleColumns(preset.columns)
-                        notify('View Applied', `Switched view template to "${preset.name}".`)
-                      }
-                    }}
-                    trigger={
-                      <button
-                        type="button"
-                        className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
-                      >
-                        <SlidersHorizontal className="size-4 text-[#6f777f]" />
-                        <span className="max-w-[130px] truncate text-left">
-                          {presets.find((p) => p.id === activePresetId)?.name || 'Custom View'}
-                        </span>
-                        <ChevronDown className="size-3.5 text-[#9da4ae]" />
-                      </button>
+                <Dropdown
+                  align="end"
+                  floating
+                  options={presets.map((p) => ({ label: p.name, value: p.id }))}
+                  onSelect={(val) => {
+                    const preset = presets.find((p) => p.id === val)
+                    if (preset) {
+                      setActivePresetId(preset.id)
+                      setVisibleColumns(preset.columns)
+                      notify('View Applied', `Switched view template to "${preset.name}".`)
                     }
-                    ariaLabel="Select table template view"
-                  />
+                  }}
+                  trigger={
+                    <button
+                      type="button"
+                      className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                    >
+                      <SlidersHorizontal className="size-4 text-[#6f777f]" />
+                      <span className="max-w-[90px] sm:max-w-[130px] truncate text-left">
+                        {presets.find((p) => p.id === activePresetId)?.name || 'Custom View'}
+                      </span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </button>
+                  }
+                  ariaLabel="Select table template view"
+                />
 
-                  <button
-                    type="button"
-                    onClick={() => setColumnsOpen(true)}
-                    className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
-                  >
-                    <Settings2 className="size-4 text-[#6f777f]" />
-                    <span className="whitespace-nowrap">Customize columns</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setColumnsOpen(true)}
+                  className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 sm:px-3.5 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                >
+                  <Settings2 className="size-4 text-[#6f777f]" />
+                  <span className="hidden sm:inline">Customize </span>
+                  <span>Columns</span>
+                </button>
 
                 <button
                   type="button"
                   onClick={handleExportCSV}
-                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
+                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 sm:px-3.5 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap"
                 >
                   <Download className="size-4 text-[#6f777f]" />
-                  <span className="whitespace-nowrap">Export CSV</span>
+                  <span className="whitespace-nowrap">Export</span>
                 </button>
               </div>
             </div>

@@ -18,6 +18,7 @@ import {
   MessageSquare,
   ExternalLink,
   ChevronDown,
+  ChevronUp,
   ChevronRight,
   Download,
   RotateCcw,
@@ -52,11 +53,14 @@ import {
   HelpCircle,
   Printer,
   FileSpreadsheet,
+  Settings2,
+  Bookmark,
 } from 'lucide-react'
 import { PlatformShell } from './platform-shell'
 import { useToast } from '@/components/dashboard/toast'
 import { FigmaStatusBadge, AgentPlanBadge } from '@/components/ui/figma-badges'
 import { TableCheckbox } from '@/components/ui/table-checkbox'
+import { CustomizeTableDialog, type TableViewPreset, type ColumnCategory } from './customize-table-dialog'
 
 import { Dropdown } from '@/components/dashboard/menu'
 import { TableAvatar } from '@/components/ui/table-avatar'
@@ -95,6 +99,304 @@ const MODERATORS_LIST = [
   { id: 'MOD-103', name: 'Khalid Al-Nuaimi', role: 'Head of Trust & Safety', email: 'khalid.nuaimi@duseat.ae' },
 ]
 
+const REPORT_DEFAULT_COLUMNS = [
+  'Report ID',
+  'Reporter',
+  'Reported User',
+  'Category',
+  'Related Request',
+  'Assigned Moderator',
+  'Status',
+  'Created At',
+]
+
+const defaultReportPresets: TableViewPreset[] = [
+  {
+    id: 'default',
+    name: 'Default Overview',
+    columns: REPORT_DEFAULT_COLUMNS,
+    isBuiltIn: true,
+  },
+  {
+    id: 'investigator',
+    name: 'Investigator View',
+    columns: [
+      'Report ID',
+      'Reported User',
+      'Category',
+      'Related Request',
+      'Related Chat',
+      'Assigned Moderator',
+      'Status',
+    ],
+    isBuiltIn: true,
+  },
+  {
+    id: 'audit-governance',
+    name: 'Audit & Governance',
+    columns: [
+      'Report ID',
+      'Reporter',
+      'Reported User',
+      'Category',
+      'Priority',
+      'Assigned Moderator',
+      'Status',
+      'Created At',
+    ],
+    isBuiltIn: true,
+  },
+]
+
+const REPORT_COLUMN_CATEGORIES: ColumnCategory[] = [
+  {
+    id: 'general',
+    name: 'Identification & Status',
+    items: [
+      { id: 'Report ID', label: 'Report ID' },
+      { id: 'Category', label: 'Category' },
+      { id: 'Priority', label: 'Priority' },
+      { id: 'Status', label: 'Status' },
+      { id: 'Created At', label: 'Created At' },
+      { id: 'Last Updated', label: 'Last Updated' },
+    ],
+  },
+  {
+    id: 'actors',
+    name: 'Users & Moderators',
+    items: [
+      { id: 'Reporter', label: 'Reporter' },
+      { id: 'Reported User', label: 'Reported User' },
+      { id: 'Assigned Moderator', label: 'Assigned Moderator' },
+    ],
+  },
+  {
+    id: 'relations',
+    name: 'Context & Relations',
+    items: [
+      { id: 'Related Request', label: 'Related Request' },
+      { id: 'Related Chat', label: 'Related Chat' },
+      { id: 'Evidence Count', label: 'Evidence Count' },
+    ],
+  },
+]
+
+function renderReportCell(
+  column: string,
+  report: ReportItem,
+  handleCopyId: (id: string, e: React.MouseEvent) => void,
+  copiedId: string | null,
+  setAssignModalReport: (r: ReportItem) => void
+) {
+  switch (column) {
+    case 'Report ID':
+      return (
+        <div className="flex items-center gap-1.5 whitespace-nowrap">
+          <button
+            type="button"
+            onClick={(e) => handleCopyId(report.id, e)}
+            className="font-mono text-[13px] font-bold text-[#00c2cb] hover:underline flex items-center gap-1 cursor-pointer"
+            title="Click to copy Report ID"
+          >
+            <span>{report.id}</span>
+            {copiedId === report.id ? <Check className="size-2.5 text-[#17b26a]" /> : <Copy className="size-2.5" />}
+          </button>
+          {report.priority === 'critical' && (
+            <span className="size-2 rounded-full bg-[#d92d20]" title="Critical Priority" />
+          )}
+        </div>
+      )
+
+    case 'Reporter':
+      return (
+        <div className="flex items-center gap-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+          <Link
+            href={report.reporter.userType === 'Agent' ? `/agents/${report.reporter.id || 'AG-1046'}` : `/investors/${report.reporter.id || 'IN-2048'}`}
+          >
+            <TableAvatar
+              src={report.reporter.avatar}
+              name={report.reporter.name}
+              size="md"
+              variant="subtle"
+            />
+          </Link>
+          <div className="min-w-0">
+            <Link
+              href={report.reporter.userType === 'Agent' ? `/agents/${report.reporter.id || 'AG-1046'}` : `/investors/${report.reporter.id || 'IN-2048'}`}
+              className="font-semibold text-[14px] leading-[20px] text-[#1f2327] hover:text-[#00c2cb] hover:underline transition-colors block truncate"
+            >
+              {report.reporter.name}
+            </Link>
+            <span className="text-[12px] leading-[16px] text-[#6f777f] block truncate">{report.reporter.userType}</span>
+          </div>
+        </div>
+      )
+
+    case 'Reported User':
+      return (
+        <div className="flex items-center gap-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+          <Link
+            href={report.reportedUser.userType === 'Agent' ? `/agents/${report.reportedUser.id || 'AG-1046'}` : `/investors/${report.reportedUser.id || 'IN-2048'}`}
+          >
+            <TableAvatar
+              src={report.reportedUser.avatar}
+              name={report.reportedUser.name}
+              size="md"
+              variant="brand"
+            />
+          </Link>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <Link
+                href={report.reportedUser.userType === 'Agent' ? `/agents/${report.reportedUser.id || 'AG-1046'}` : `/investors/${report.reportedUser.id || 'IN-2048'}`}
+                className="font-semibold text-[14px] leading-[20px] text-[#1f2327] hover:text-[#00c2cb] hover:underline transition-colors truncate"
+              >
+                {report.reportedUser.name}
+              </Link>
+              {report.reportedUser.id && (
+                <span className="font-mono text-[11px] font-semibold text-[#00c2cb] bg-[#00c2cb]/10 px-1.5 py-0.2 rounded-[4px] shrink-0">
+                  {report.reportedUser.id}
+                </span>
+              )}
+              {report.reportedUser.verified && (
+                <CheckCircle2 className="size-3.5 text-[#00c2cb] shrink-0" />
+              )}
+            </div>
+            <div className="flex items-center gap-1 text-[12px] leading-[16px] text-[#6f777f]">
+              <span>{report.reportedUser.userType}</span>
+              {report.reportedUser.previousStrikes > 0 && (
+                <span className="text-[#d92d20] font-semibold">({report.reportedUser.previousStrikes} strikes)</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )
+
+    case 'Category':
+      return (
+        <span className="inline-flex items-center gap-1 rounded-[6px] border border-[#d3d5d7] bg-[#fcfcfc] px-2 py-0.5 text-[12px] font-medium text-[#1f2327] whitespace-nowrap">
+          <span>{report.category}</span>
+        </span>
+      )
+
+    case 'Priority':
+      return (
+        <span className={cn(
+          "inline-flex items-center rounded-full px-2 py-0.5 text-[11.5px] font-semibold whitespace-nowrap",
+          report.priority === 'critical'
+            ? "bg-[#fef3f2] text-[#d92d20]"
+            : report.priority === 'high'
+            ? "bg-[#fff5e5] text-[#f79009]"
+            : "bg-[#eff1f3] text-[#1f2327]"
+        )}>
+          {report.priority.toUpperCase()}
+        </span>
+      )
+
+    case 'Related Request':
+      return (
+        <div onClick={(e) => e.stopPropagation()} className="whitespace-nowrap">
+          {report.relatedRequest ? (
+            <Link
+              href={`/requests?id=${report.relatedRequest.id}`}
+              className="font-mono text-[12px] text-[#00c2cb] hover:underline flex items-center gap-1 font-semibold"
+              title={`Open Request ${report.relatedRequest.id}`}
+            >
+              <span>{report.relatedRequest.id}</span>
+              <ExternalLink className="size-3" />
+            </Link>
+          ) : (
+            <span className="text-[#9da4ae] text-[12px]">—</span>
+          )}
+        </div>
+      )
+
+    case 'Related Chat':
+      return (
+        <div onClick={(e) => e.stopPropagation()} className="whitespace-nowrap">
+          {report.relatedConversation ? (
+            <Link
+              href={`/chats/${report.relatedConversation.id}`}
+              className="font-mono text-[12px] text-[#00c2cb] hover:underline flex items-center gap-1 font-semibold"
+            >
+              <span>{report.relatedConversation.id}</span>
+              <ExternalLink className="size-3" />
+            </Link>
+          ) : (
+            <span className="text-[#9da4ae] text-[12px]">—</span>
+          )}
+        </div>
+      )
+
+    case 'Evidence Count':
+      return (
+        <span className="inline-flex items-center gap-1 rounded-[6px] border border-[#d3d5d7] bg-[#eff1f3] px-2 py-0.5 text-[12px] font-medium text-[#1f2327] whitespace-nowrap">
+          <Paperclip className="size-3 text-[#6f777f]" />
+          {report.evidence?.length || 0} files
+        </span>
+      )
+
+    case 'Assigned Moderator':
+      return (
+        <div className="whitespace-nowrap">
+          {report.assignedModerator ? (
+            <div className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-[#17b26a]" />
+              <span className="text-[13px] font-medium text-[#1f2327]">{report.assignedModerator.name}</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setAssignModalReport(report)
+              }}
+              className="rounded-[6px] bg-[#eff1f3] px-2 py-0.5 text-[12px] font-medium text-[#00c2cb] hover:bg-[#d3d5d7] cursor-pointer"
+            >
+              + Assign
+            </button>
+          )}
+        </div>
+      )
+
+    case 'Status':
+      return (
+        <div className="whitespace-nowrap">
+          <FigmaStatusBadge
+            status={
+              report.status === 'resolved'
+                ? 'Verified'
+                : report.status === 'under_review'
+                ? 'Active'
+                : report.status === 'pending' || report.status === 'waiting_user'
+                ? 'Pending'
+                : report.status === 'escalated'
+                ? 'Rejected'
+                : 'Suspended'
+            }
+          />
+        </div>
+      )
+
+    case 'Created At':
+      return (
+        <span className="text-[12px] font-sans text-[#6f777f] whitespace-nowrap">
+          {report.createdAt}
+        </span>
+      )
+
+    case 'Last Updated':
+      return (
+        <span className="text-[12px] font-sans text-[#6f777f] whitespace-nowrap">
+          {report.lastActivity || report.createdAt}
+        </span>
+      )
+
+    default:
+      return <span className="text-xs text-[#6f777f] whitespace-nowrap">{(report as any)[column] || '—'}</span>
+  }
+}
+
 function ReportsManagementInner() {
   const { toast } = useToast()
   const router = useRouter()
@@ -116,6 +418,12 @@ function ReportsManagementInner() {
   const [reportedUserFilter, setReportedUserFilter] = React.useState('All')
   const [dateFilter, setDateFilter] = React.useState('All Time')
 
+  // Table Customization State
+  const [columnsOpen, setColumnsOpen] = React.useState(false)
+  const [visibleColumns, setVisibleColumns] = React.useState<string[]>(REPORT_DEFAULT_COLUMNS)
+  const [activePresetId, setActivePresetId] = React.useState('default')
+  const [presets, setPresets] = React.useState<TableViewPreset[]>(defaultReportPresets)
+
   // Pagination
   const [currentPage, setCurrentPage] = React.useState(1)
   const [rowsPerPage, setRowsPerPage] = React.useState(10)
@@ -136,6 +444,7 @@ function ReportsManagementInner() {
   const [copiedId, setCopiedId] = React.useState<string | null>(null)
   const [showExportMenu, setShowExportMenu] = React.useState(false)
   const [showFilters, setShowFilters] = React.useState(true)
+  const [headerCollapsed, setHeaderCollapsed] = React.useState(false)
 
   // Drawer Tabs: 'overview' | 'evidence' | 'timeline' | 'notes' | 'reply'
   const [drawerTab, setDrawerTab] = React.useState<'overview' | 'evidence' | 'timeline' | 'notes' | 'reply'>('overview')
@@ -620,18 +929,31 @@ function ReportsManagementInner() {
         {/* =========================================================================
             1. TOP HEADER (Canonical Users Design Standard)
            ========================================================================= */}
-        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-3.5 sm:gap-4 transition-all">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
-                Reports & Moderation
-              </h1>
-              <p className="mt-0.5 text-[14px] leading-[20px] text-[#6f777f]">
-                Review user reports, investigate evidence, and take moderation actions.
-              </p>
+            <div className="flex items-start justify-between sm:block gap-2">
+              <div>
+                <h1 className="text-[20px] sm:text-[32px] font-bold leading-[28px] sm:leading-[40px] text-[#1f2327]">
+                  Reports & Moderation
+                </h1>
+                <p className={cn("mt-0.5 text-[13px] sm:text-[14px] leading-[18px] sm:leading-[20px] text-[#6f777f]", headerCollapsed && "hidden sm:block")}>
+                  Review user reports, investigate evidence, and take moderation actions.
+                </p>
+              </div>
+
+              {/* Mobile Collapse Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setHeaderCollapsed(!headerCollapsed)}
+                className="flex sm:hidden h-[30px] items-center gap-1.5 rounded-[6px] border border-[#d3d5d7] bg-[#f8f9fa] px-2.5 text-[11.5px] font-semibold text-[#1f2327] hover:bg-[#eff1f3] transition-colors shrink-0 cursor-pointer select-none"
+                aria-label={headerCollapsed ? 'Expand header details' : 'Collapse header details'}
+              >
+                <span>{headerCollapsed ? 'Stats & Tools' : 'Collapse'}</span>
+                {headerCollapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
+              </button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 relative">
+            <div className={cn("flex flex-wrap items-center gap-2 relative", headerCollapsed && "hidden sm:flex")}>
               {/* Export Dropdown */}
               <Dropdown
                 align="end"
@@ -646,7 +968,7 @@ function ReportsManagementInner() {
                 trigger={
                   <button
                     type="button"
-                    className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer shadow-2xs ant-wave-btn"
+                    className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer shadow-2xs ant-wave-btn"
                   >
                     <Download className="size-4 text-[#6f777f]" />
                     <span>Export</span>
@@ -661,7 +983,7 @@ function ReportsManagementInner() {
                 type="button"
                 onClick={handleRefreshQueue}
                 disabled={isRefreshing}
-                className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer shadow-2xs ant-wave-btn"
+                className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer shadow-2xs ant-wave-btn"
                 title="Synchronize queue"
               >
                 <RotateCcw className={cn('size-4 text-[#6f777f]', isRefreshing && 'animate-spin text-[#00c2cb]')} />
@@ -671,7 +993,7 @@ function ReportsManagementInner() {
           </div>
 
           {/* 8 Stat Metric Cards */}
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8 lg:gap-3">
+          <div className={cn("grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8 lg:gap-3", headerCollapsed && "hidden sm:grid")}>
             <MetricCard
               label="Total Reports"
               value={totalCount}
@@ -737,7 +1059,8 @@ function ReportsManagementInner() {
           {/* Top Status Tabs & Horizontal Filters Toolbar */}
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2 py-0.5 max-w-full">
+              {/* Swipeable Tabs */}
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none max-w-full py-1 -mx-1 px-1 sm:mx-0 sm:px-0 select-none">
                 {(
                   [
                     { id: 'All', label: 'All reports', count: totalCount },
@@ -764,7 +1087,7 @@ function ReportsManagementInner() {
                             ? 'bg-[#f79009] text-white shadow-2xs font-semibold'
                             : item.id === 'escalated' || item.id === 'rejected'
                             ? 'bg-[#d92d20] text-white shadow-2xs font-semibold'
-                            : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                            : 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                           : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                       )}
                     >
@@ -790,11 +1113,48 @@ function ReportsManagementInner() {
                 })}
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-between sm:justify-end pt-2 lg:pt-0 border-t border-[#f2f4f7] lg:border-t-0">
+                <Dropdown
+                  align="end"
+                  floating
+                  options={presets.map((p) => ({ label: p.name, value: p.id }))}
+                  onSelect={(val) => {
+                    const preset = presets.find((p) => p.id === val)
+                    if (preset) {
+                      setActivePresetId(preset.id)
+                      setVisibleColumns(preset.columns)
+                      toast({ variant: 'info', title: 'View Applied', description: `Switched view template to "${preset.name}".` })
+                    }
+                  }}
+                  trigger={
+                    <button
+                      type="button"
+                      className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap shadow-2xs"
+                    >
+                      <SlidersHorizontal className="size-4 text-[#6f777f]" />
+                      <span className="max-w-[90px] sm:max-w-[130px] truncate text-left">
+                        {presets.find((p) => p.id === activePresetId)?.name || 'Custom View'}
+                      </span>
+                      <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                    </button>
+                  }
+                  ariaLabel="Select table template view"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setColumnsOpen(true)}
+                  className="flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 sm:px-3.5 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap shadow-2xs"
+                >
+                  <Settings2 className="size-4 text-[#6f777f]" />
+                  <span className="hidden sm:inline">Customize </span>
+                  <span>Columns</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={handleExportCSV}
-                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer whitespace-nowrap"
+                  className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer whitespace-nowrap"
                 >
                   <Download className="size-4 text-[#6f777f]" />
                   <span>Export CSV</span>
@@ -949,22 +1309,18 @@ function ReportsManagementInner() {
                       onChange={handleSelectAll}
                     />
                   </th>
-                  <th className="px-4">Report ID</th>
-                  <th className="px-4">Reporter</th>
-                  <th className="px-4">Reported User</th>
-                  <th className="px-4">Category</th>
-                  <th className="px-4 hidden md:table-cell">Related Request</th>
-                  <th className="px-4 hidden lg:table-cell">Related Chat</th>
-                  <th className="px-4">Assigned Moderator</th>
-                  <th className="px-4">Status</th>
-                  <th className="px-4 hidden sm:table-cell">Created At</th>
+                  {visibleColumns.map((col) => (
+                    <th key={col} className="px-4 whitespace-nowrap">
+                      {col}
+                    </th>
+                  ))}
                   <th className="px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#d3d5d7]">
                 {paginatedReports.length === 0 ? (
                   <tr>
-                    <td colSpan={11} className="py-12 text-center text-[#6f777f]">
+                    <td colSpan={visibleColumns.length + 2} className="py-12 text-center text-[#6f777f]">
                       <div className="mx-auto max-w-sm space-y-2">
                         <ShieldAlert className="size-8 mx-auto text-[#9da4ae]" />
                         <p className="font-bold text-[14px] text-[#1f2327]">No moderation reports found</p>
@@ -998,164 +1354,12 @@ function ReportsManagementInner() {
                           />
                         </td>
 
-                        {/* Report ID */}
-                        <td className="px-4 whitespace-nowrap">
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={(e) => handleCopyId(report.id, e)}
-                              className="font-mono text-[13px] font-bold text-[#00c2cb] hover:underline flex items-center gap-1"
-                              title="Click to copy Report ID"
-                            >
-                              <span>{report.id}</span>
-                              {copiedId === report.id ? <Check className="size-2.5 text-[#17b26a]" /> : <Copy className="size-2.5" />}
-                            </button>
-                            {report.priority === 'critical' && (
-                              <span className="size-2 rounded-full bg-[#d92d20]" title="Critical Priority" />
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Reporter */}
-                        <td className="px-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center gap-3">
-                            <Link
-                              href={report.reporter.userType === 'Agent' ? `/agents/${report.reporter.id || 'AG-1046'}` : `/investors/${report.reporter.id || 'IN-2048'}`}
-                            >
-                              <TableAvatar
-                                src={report.reporter.avatar}
-                                name={report.reporter.name}
-                                size="md"
-                                variant="subtle"
-                              />
-                            </Link>
-                            <div className="min-w-0">
-                              <Link
-                                href={report.reporter.userType === 'Agent' ? `/agents/${report.reporter.id || 'AG-1046'}` : `/investors/${report.reporter.id || 'IN-2048'}`}
-                                className="font-semibold text-[14px] leading-[20px] text-[#1f2327] hover:text-[#00c2cb] hover:underline transition-colors block truncate"
-                              >
-                                {report.reporter.name}
-                              </Link>
-                              <span className="text-[12px] leading-[16px] text-[#6f777f] block truncate">{report.reporter.userType}</span>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Reported User */}
-                        <td className="px-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center gap-3">
-                            <Link
-                              href={report.reportedUser.userType === 'Agent' ? `/agents/${report.reportedUser.id || 'AG-1046'}` : `/investors/${report.reportedUser.id || 'IN-2048'}`}
-                            >
-                              <TableAvatar
-                                src={report.reportedUser.avatar}
-                                name={report.reportedUser.name}
-                                size="md"
-                                variant="brand"
-                              />
-                            </Link>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <Link
-                                  href={report.reportedUser.userType === 'Agent' ? `/agents/${report.reportedUser.id || 'AG-1046'}` : `/investors/${report.reportedUser.id || 'IN-2048'}`}
-                                  className="font-semibold text-[14px] leading-[20px] text-[#1f2327] hover:text-[#00c2cb] hover:underline transition-colors truncate"
-                                >
-                                  {report.reportedUser.name}
-                                </Link>
-                                {report.reportedUser.verified && (
-                                  <CheckCircle2 className="size-3.5 text-[#00c2cb] shrink-0" />
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1 text-[12px] leading-[16px] text-[#6f777f]">
-                                <span>{report.reportedUser.userType}</span>
-                                {report.reportedUser.previousStrikes > 0 && (
-                                  <span className="text-[#d92d20] font-semibold">({report.reportedUser.previousStrikes} strikes)</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Category */}
-                        <td className="px-4 whitespace-nowrap">
-                          <span className="inline-flex items-center gap-1 rounded-[6px] border border-[#d3d5d7] bg-[#fcfcfc] px-2 py-0.5 text-[12px] font-medium text-[#1f2327]">
-                            <span>{report.category}</span>
-                          </span>
-                        </td>
-
-                        {/* Related Request */}
-                        <td className="px-4 whitespace-nowrap hidden md:table-cell" onClick={(e) => e.stopPropagation()}>
-                          {report.relatedRequest ? (
-                            <Link
-                              href={`/requests?id=${report.relatedRequest.id}`}
-                              className="font-mono text-[12px] text-[#00c2cb] hover:underline flex items-center gap-1 font-semibold"
-                              title={`Open Request ${report.relatedRequest.id}`}
-                            >
-                              <span>{report.relatedRequest.id}</span>
-                              <ExternalLink className="size-3" />
-                            </Link>
-                          ) : (
-                            <span className="text-[#9da4ae] text-[12px]">—</span>
-                          )}
-                        </td>
-
-                        {/* Related Chat */}
-                        <td className="px-4 whitespace-nowrap hidden lg:table-cell" onClick={(e) => e.stopPropagation()}>
-                          {report.relatedConversation ? (
-                            <Link
-                              href={`/chats/${report.relatedConversation.id}`}
-                              className="font-mono text-[12px] text-[#00c2cb] hover:underline flex items-center gap-1 font-semibold"
-                            >
-                              <span>{report.relatedConversation.id}</span>
-                              <ExternalLink className="size-3" />
-                            </Link>
-                          ) : (
-                            <span className="text-[#9da4ae] text-[12px]">—</span>
-                          )}
-                        </td>
-
-                        {/* Assigned Moderator */}
-                        <td className="px-4 whitespace-nowrap">
-                          {report.assignedModerator ? (
-                            <div className="flex items-center gap-1.5">
-                              <span className="size-2 rounded-full bg-[#17b26a]" />
-                              <span className="text-[13px] font-medium text-[#1f2327]">{report.assignedModerator.name}</span>
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setAssignModalReport(report)
-                              }}
-                              className="rounded-[6px] bg-[#eff1f3] px-2 py-0.5 text-[12px] font-medium text-[#00c2cb] hover:bg-[#d3d5d7] cursor-pointer"
-                            >
-                              + Assign
-                            </button>
-                          )}
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-4 whitespace-nowrap">
-                          <FigmaStatusBadge
-                            status={
-                              report.status === 'resolved'
-                                ? 'Verified'
-                                : report.status === 'under_review'
-                                ? 'Active'
-                                : report.status === 'pending' || report.status === 'waiting_user'
-                                ? 'Pending'
-                                : report.status === 'escalated'
-                                ? 'Rejected'
-                                : 'Suspended'
-                            }
-                          />
-                        </td>
-
-                        {/* Created At */}
-                        <td className="px-4 whitespace-nowrap hidden sm:table-cell text-[12px] font-sans text-[#6f777f]">
-                          {report.createdAt}
-                        </td>
+                        {/* Dynamic Columns */}
+                        {visibleColumns.map((col) => (
+                          <td key={col} className="px-4 whitespace-nowrap font-sans">
+                            {renderReportCell(col, report, handleCopyId, copiedId, setAssignModalReport)}
+                          </td>
+                        ))}
 
                         {/* Actions */}
                         <td className="px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
@@ -1299,7 +1503,7 @@ function ReportsManagementInner() {
                                 ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
                                 : st === 'escalated'
                                 ? 'bg-[#f04438] text-white shadow-2xs font-semibold'
-                                : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+                                : 'bg-[#1f2327] text-white shadow-2xs font-semibold'
                               : 'bg-white border border-[#d3d5d7] text-[#6f777f] hover:bg-[#eff1f3]'
                           )}
                         >
@@ -1991,6 +2195,23 @@ function ReportsManagementInner() {
             <img src={lightboxImage} alt="" className="max-h-[85vh] max-w-[85vw] rounded-[8px] object-contain shadow-2xl" />
           </div>
         )}
+
+        {/* CUSTOMIZE TABLE DIALOG */}
+        <CustomizeTableDialog
+          isOpen={columnsOpen}
+          visibleColumns={visibleColumns}
+          activePresetId={activePresetId}
+          presets={presets}
+          categories={REPORT_COLUMN_CATEGORIES}
+          storageKeyPrefix="reports"
+          onPresetsChange={(newPresets) => setPresets(newPresets)}
+          onApply={(cols, presetId) => {
+            setVisibleColumns(cols)
+            if (presetId) setActivePresetId(presetId)
+            toast({ variant: 'success', title: 'Table customized', description: `${cols.length} visible columns applied.` })
+          }}
+          onClose={() => setColumnsOpen(false)}
+        />
       </div>
     </PlatformShell>
   )

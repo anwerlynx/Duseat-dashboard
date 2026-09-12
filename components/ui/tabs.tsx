@@ -94,7 +94,7 @@ export function getTabActiveClasses(
     case 'brand':
     case 'neutral':
     default:
-      return 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+      return 'bg-[#1f2327] text-white shadow-2xs font-semibold'
   }
 }
 

@@ -336,8 +336,9 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                 </div>
 
                 <div className="text-[14px] leading-[20px] text-[#6f777f] flex flex-wrap items-center gap-2 sm:gap-2.5">
-                  <span>
-                    ID : <strong className="font-medium text-[#1f2327]">{agent.id}</strong>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="text-[#6f777f]">Agent ID:</span>
+                    <strong className="font-mono text-[13px] font-bold text-[#00c2cb] bg-[#00c2cb]/10 px-2 py-0.5 rounded-[6px]">{agent.id}</strong>
                   </span>
                   <span className="text-[#d3d5d7]">•</span>
                   <span className="inline-flex items-center gap-1.5">

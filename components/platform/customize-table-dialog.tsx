@@ -35,6 +35,7 @@ export const defaultTablePresets: TableViewPreset[] = [
     id: 'default',
     name: 'Default Overview',
     columns: [
+      'Agent ID',
       'Name',
       'Agency',
       'RERA Number',
@@ -52,6 +53,7 @@ export const defaultTablePresets: TableViewPreset[] = [
     id: 'compliance',
     name: 'Compliance & RERA',
     columns: [
+      'Agent ID',
       'Name',
       'Agency',
       'RERA Number',
@@ -67,6 +69,7 @@ export const defaultTablePresets: TableViewPreset[] = [
     id: 'deals-performance',
     name: 'Deals & Performance',
     columns: [
+      'Agent ID',
       'Name',
       'Agency',
       'Total Deals',
@@ -83,6 +86,7 @@ export const defaultTablePresets: TableViewPreset[] = [
     id: 'contact-location',
     name: 'Contact & Location',
     columns: [
+      'Agent ID',
       'Name',
       'Email',
       'Phone',
@@ -99,15 +103,15 @@ export const defaultTablePresets: TableViewPreset[] = [
     id: 'financials-engagement',
     name: 'Financials & Engagement',
     columns: [
+      'Agent ID',
       'Name',
       'Agency',
-      'Subscription',
       'Revenue',
-      'Total Deals',
-      'Total Requests',
-      'Active Conversations',
-      'Response Rate',
-      'Average Response Time',
+      'Subscription',
+      'Offers',
+      'Accepted Offers',
+      'Rating',
+      'Last Login',
     ],
     isBuiltIn: true,
   },
@@ -118,6 +122,7 @@ export const defaultColumnCategories: ColumnCategory[] = [
     id: 'general',
     name: 'General',
     items: [
+      { id: 'Agent ID', label: 'Agent ID' },
       { id: 'ID', label: 'ID' },
       { id: 'Name', label: 'Name' },
       { id: 'Email', label: 'Email' },
@@ -263,11 +268,33 @@ export function CustomizeTableDialog({
     setCollapsedCategories((prev) => ({ ...prev, [catId]: !prev[catId] }))
   }
 
-  const handleToggleColumn = (colName: string) => {
+  const handleToggleColumn = (colName: string, colLabel?: string) => {
     setSelectedColumns((prev) => {
-      const next = prev.includes(colName) ? prev.filter((c) => c !== colName) : [...prev, colName]
+      const match = prev.find((c) => c === colName || (colLabel && c === colLabel))
+      let next: string[]
+      if (match) {
+        next = prev.filter((c) => c !== match)
+      } else {
+        next = [...prev, colName]
+      }
       setCurrentPresetId('custom')
       return next
+    })
+  }
+
+  const handleSelectCategory = (cat: ColumnCategory) => {
+    setSelectedColumns((prev) => {
+      const idsToAdd = cat.items.map((i) => i.id).filter((id) => !prev.includes(id))
+      setCurrentPresetId('custom')
+      return [...prev, ...idsToAdd]
+    })
+  }
+
+  const handleDeselectCategory = (cat: ColumnCategory) => {
+    setSelectedColumns((prev) => {
+      const idsToRemove = new Set(cat.items.flatMap((i) => [i.id, i.label]))
+      setCurrentPresetId('custom')
+      return prev.filter((c) => !idsToRemove.has(c))
     })
   }
 
@@ -377,26 +404,26 @@ export function CustomizeTableDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs font-sans animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2.5 sm:p-4 backdrop-blur-xs font-sans animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
       aria-labelledby="customize-table-title"
     >
-      <div className="relative w-full max-w-[960px] h-[86vh] max-h-[720px] min-h-[520px] rounded-[12px] border border-[#d3d5d7] bg-white p-6 shadow-2xl flex flex-col gap-3.5 font-sans">
+      <div className="relative w-full max-w-[960px] h-[92vh] sm:h-[86vh] max-h-[720px] rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-6 shadow-2xl flex flex-col gap-3 sm:gap-3.5 font-sans overflow-hidden">
         {/* Modal Header */}
-        <div className="shrink-0 flex items-start justify-between">
+        <div className="shrink-0 flex items-start justify-between gap-2">
           <div className="space-y-0.5">
-            <h2 id="customize-table-title" className="text-[20px] font-semibold text-[#1f2327]">
+            <h2 id="customize-table-title" className="text-[18px] sm:text-[20px] font-semibold text-[#1f2327]">
               Customize Table
             </h2>
-            <p className="text-[14px] text-[#6f777f]">
+            <p className="text-[13px] sm:text-[14px] text-[#6f777f]">
               Choose which columns appear in the table, switch between saved templates, or save your custom view.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-[6px] p-1.5 text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+            className="rounded-[6px] p-1.5 text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer shrink-0"
             aria-label="Close dialog"
           >
             <X className="size-5" />
@@ -463,11 +490,11 @@ export function CustomizeTableDialog({
         )}
 
         {/* Content Body: Two Columns (Left Categories, Right Order) */}
-        <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-5 overflow-hidden">
+        <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5 overflow-y-auto md:overflow-hidden pr-0.5">
           {/* Left Panel: 7 Cols */}
-          <div className="md:col-span-7 flex flex-col min-h-0 h-full">
+          <div className="md:col-span-7 flex flex-col min-h-[280px] md:min-h-0 md:h-full">
             {/* Search Bar & Collapse Button */}
-            <div className="shrink-0 flex items-center gap-2.5 pb-3">
+            <div className="shrink-0 flex items-center gap-2 pb-3">
               <div className="relative flex-1 flex items-center">
                 <Search className="absolute left-3 size-4 text-[#9da4ae] pointer-events-none" />
                 <input
@@ -475,13 +502,13 @@ export function CustomizeTableDialog({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search columns..."
-                  className="w-full h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-3 text-[14px] text-[#1f2327] placeholder:text-[#9da4ae] outline-none focus:border-[#00c2cb] focus:ring-1 focus:ring-[#00c2cb]"
+                  className="w-full h-[36px] sm:h-[38px] rounded-[8px] border border-[#d3d5d7] bg-white pl-9 pr-3 text-[13px] sm:text-[14px] text-[#1f2327] placeholder:text-[#9da4ae] outline-none focus:border-[#00c2cb] focus:ring-1 focus:ring-[#00c2cb]"
                 />
               </div>
               <button
                 type="button"
                 onClick={toggleCollapseAll}
-                className="h-[38px] px-3 rounded-[6px] border border-[#d3d5d7] bg-white text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 ant-wave-btn"
+                className="h-[36px] sm:h-[38px] px-2.5 sm:px-3 rounded-[6px] border border-[#d3d5d7] bg-white text-[12.5px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 ant-wave-btn"
               >
                 {allCollapsed ? <Maximize2 className="size-3.5 text-[#6f777f]" /> : <Minimize2 className="size-3.5 text-[#6f777f]" />}
                 <span>{allCollapsed ? 'Expand All' : 'Collapse All'}</span>
@@ -489,7 +516,7 @@ export function CustomizeTableDialog({
             </div>
 
             {/* Accordion Categories */}
-            <div className="flex-1 min-h-0 overflow-y-auto pr-2 pb-6 space-y-3 modal-scrollbar">
+            <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-2 pb-4 sm:pb-6 space-y-3 modal-scrollbar">
               {filteredCategories.map((category) => {
                 const isCollapsed = !!collapsedCategories[category.id]
                 const selectedInCat = category.items.filter((i) => selectedColumns.includes(i.id)).length
@@ -498,7 +525,7 @@ export function CustomizeTableDialog({
                 return (
                   <div
                     key={category.id}
-                    className="rounded-[9px] bg-[#e5f6f7] p-3 space-y-2.5 border border-[#c7ecee]"
+                    className="rounded-[9px] bg-[#e5f6f7] p-2.5 sm:p-3 space-y-2.5 border border-[#c7ecee]"
                   >
                     {/* Category Header */}
                     <div
@@ -506,46 +533,80 @@ export function CustomizeTableDialog({
                       className="flex items-center justify-between cursor-pointer select-none"
                     >
                       <div>
-                        <p className="text-[16px] leading-[24px] font-semibold text-[#1f2327]">{category.name}</p>
-                        <p className="text-[12px] leading-[16px] text-[#6f777f]">
+                        <p className="text-[15px] sm:text-[16px] leading-[22px] sm:leading-[24px] font-semibold text-[#1f2327]">{category.name}</p>
+                        <p className="text-[11.5px] sm:text-[12px] leading-[16px] text-[#6f777f]">
                           {selectedInCat} / {totalInCat} Selected
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        className="rounded p-1 text-[#1f2327] hover:bg-[#c7ecee]/50 transition-colors"
-                        aria-label={`Toggle ${category.name}`}
-                      >
-                        {isCollapsed ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {selectedInCat === totalInCat ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeselectCategory(category)
+                            }}
+                            className="text-[11.5px] sm:text-[12px] font-semibold text-[#f04438] hover:underline px-1.5 py-0.5 rounded cursor-pointer"
+                          >
+                            Deselect All
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleSelectCategory(category)
+                            }}
+                            className="text-[11.5px] sm:text-[12px] font-semibold text-[#00c2cb] hover:underline px-1.5 py-0.5 rounded cursor-pointer"
+                          >
+                            Select All
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="rounded p-1 text-[#1f2327] hover:bg-[#c7ecee]/50 transition-colors"
+                          aria-label={`Toggle ${category.name}`}
+                        >
+                          {isCollapsed ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
+                        </button>
+                      </div>
                     </div>
 
                     {/* Category Checkboxes Grid (White card) */}
                     {!isCollapsed && (
-                      <div className="rounded-[8px] bg-white p-3 grid grid-cols-2 gap-x-4 gap-y-2.5 border border-[#d3d5d7]/50 animate-in fade-in duration-150">
+                      <div className="rounded-[8px] bg-white p-2 sm:p-2.5 grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5 border border-[#d3d5d7]/50 animate-in fade-in duration-150">
                         {category.items.map((item) => {
-                          const isChecked = selectedColumns.includes(item.id)
+                          const isChecked = selectedColumns.includes(item.id) || selectedColumns.includes(item.label)
                           return (
-                            <label
+                            <div
                               key={item.id}
-                              className="flex items-center gap-2.5 cursor-pointer select-none text-[14px] text-[#1f2327] hover:text-[#00c2cb] transition-colors"
+                              onClick={() => handleToggleColumn(item.id, item.label)}
+                              role="checkbox"
+                              aria-checked={isChecked}
+                              tabIndex={0}
+                              onKeyDown={(e) => {
+                                if (e.key === ' ' || e.key === 'Enter') {
+                                  e.preventDefault()
+                                  handleToggleColumn(item.id, item.label)
+                                }
+                              }}
+                              className={cn(
+                                "flex items-center gap-2.5 cursor-pointer select-none text-[13px] sm:text-[14px] text-[#1f2327] transition-all p-1.5 rounded-[6px] group",
+                                isChecked ? "bg-[#e5f6f7]/60 hover:bg-[#e5f6f7]" : "hover:bg-[#f8f9fa]"
+                              )}
                             >
                               <div
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  handleToggleColumn(item.id)
-                                }}
                                 className={cn(
                                   'flex size-5 items-center justify-center rounded-[4px] border transition-colors shrink-0',
                                   isChecked
                                     ? 'bg-[#00c2cb] border-[#00c2cb] text-white'
-                                    : 'border-[#90969c] bg-white hover:border-[#00c2cb]'
+                                    : 'border-[#90969c] bg-white group-hover:border-[#00c2cb]'
                                 )}
                               >
                                 {isChecked && <Check className="size-3.5 stroke-[3]" />}
                               </div>
-                              <span className="truncate">{item.label}</span>
-                            </label>
+                              <span className="truncate font-medium">{item.label}</span>
+                            </div>
                           )
                         })}
                       </div>
@@ -563,7 +624,7 @@ export function CustomizeTableDialog({
           </div>
 
           {/* Right Panel: 5 Cols (Column Order) */}
-          <div className="md:col-span-5 flex flex-col min-h-0 h-full border-t md:border-t-0 md:border-l border-[#d3d5d7] pt-4 md:pt-0 md:pl-5">
+          <div className="md:col-span-5 flex flex-col min-h-[260px] md:min-h-0 md:h-full border-t md:border-t-0 md:border-l border-[#d3d5d7] pt-4 md:pt-0 md:pl-5">
             <div className="shrink-0 space-y-1 pb-3">
               <h3 className="text-[18px] font-semibold text-[#1f2327]">Column Order</h3>
               <p className="text-[14px] font-medium text-[#1f2327]">{selectedColumns.length} columns selected</p>
@@ -670,13 +731,13 @@ export function CustomizeTableDialog({
             </div>
           </div>
         ) : (
-          <div className="shrink-0 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#d3d5d7] bg-white">
+          <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 pt-2.5 sm:pt-3 border-t border-[#d3d5d7] bg-white">
             {/* Bottom Left Buttons: Reset & Save as Template */}
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleReset}
-                className="h-[36px] px-3.5 rounded-[8px] border border-[#d3d5d7] bg-white text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn flex items-center gap-1.5"
+                className="h-[36px] px-3 sm:px-3.5 rounded-[8px] border border-[#d3d5d7] bg-white text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn flex items-center gap-1.5"
               >
                 <RotateCcw className="size-3.5 text-[#6f777f]" />
                 <span>Reset</span>
@@ -684,19 +745,19 @@ export function CustomizeTableDialog({
               <button
                 type="button"
                 onClick={() => setIsCreating(true)}
-                className="h-[36px] px-3.5 rounded-[8px] border border-[#d3d5d7] bg-white text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn flex items-center gap-1.5"
+                className="h-[36px] px-3 sm:px-3.5 rounded-[8px] border border-[#d3d5d7] bg-white text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn flex items-center gap-1.5"
               >
                 <Bookmark className="size-3.5 text-[#00c2cb]" />
-                <span>Save as Template</span>
+                <span className="hidden sm:inline">Save as </span><span>Template</span>
               </button>
             </div>
 
             {/* Bottom Right Buttons: Cancel & Apply */}
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="h-[36px] px-4 rounded-[8px] border border-[#d3d5d7] bg-white text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn"
+                className="h-[36px] px-3.5 sm:px-4 rounded-[8px] border border-[#d3d5d7] bg-white text-[13px] sm:text-[14px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn"
               >
                 Cancel
               </button>
@@ -706,7 +767,7 @@ export function CustomizeTableDialog({
                   onApply(selectedColumns, currentPresetId)
                   onClose()
                 }}
-                className="h-[36px] px-5 rounded-[8px] bg-[#00c2cb] text-[14px] font-bold text-white hover:opacity-90 transition-opacity cursor-pointer ant-wave-btn shadow-2xs"
+                className="h-[36px] px-4 sm:px-5 rounded-[8px] bg-[#00c2cb] text-[13px] sm:text-[14px] font-bold text-white hover:opacity-90 transition-opacity cursor-pointer ant-wave-btn shadow-2xs"
               >
                 Apply
               </button>
