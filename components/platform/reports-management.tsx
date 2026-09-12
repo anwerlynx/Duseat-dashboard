@@ -737,7 +737,7 @@ function ReportsManagementInner() {
           {/* Top Status Tabs & Horizontal Filters Toolbar */}
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+              <div className="flex flex-wrap items-center gap-2 py-0.5 max-w-full">
                 {(
                   [
                     { id: 'All', label: 'All reports', count: totalCount },
@@ -760,8 +760,10 @@ function ReportsManagementInner() {
                         isActive
                           ? item.id === 'resolved'
                             ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
-                            : item.id === 'escalated'
-                            ? 'bg-[#f04438] text-white shadow-2xs font-semibold'
+                            : item.id === 'pending' || item.id === 'under_review' || item.id === 'waiting_user'
+                            ? 'bg-[#f79009] text-white shadow-2xs font-semibold'
+                            : item.id === 'escalated' || item.id === 'rejected'
+                            ? 'bg-[#d92d20] text-white shadow-2xs font-semibold'
                             : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                           : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                       )}
@@ -770,10 +772,14 @@ function ReportsManagementInner() {
                       <span
                         className={cn(
                           'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
-                          item.id === 'escalated'
-                            ? 'bg-[#f04438] text-white'
-                            : isActive
+                          isActive
                             ? 'bg-white/20 text-white'
+                            : item.id === 'escalated' || item.id === 'rejected'
+                            ? 'bg-[#fef3f2] text-[#d92d20]'
+                            : item.id === 'pending' || item.id === 'under_review' || item.id === 'waiting_user'
+                            ? 'bg-[#fff5e5] text-[#f79009]'
+                            : item.id === 'resolved'
+                            ? 'bg-[#edfcf2] text-[#17b26a]'
                             : 'bg-[#eff1f3] text-[#1f2327]'
                         )}
                       >

@@ -29,6 +29,75 @@ function resolveTabHref(id: string, customHref?: string, paramName: string = 'ta
   return `?${paramName}=${encodeURIComponent(id)}`
 }
 
+export function getTabSemanticTone(
+  id: string,
+  optTone?: string
+): 'neutral' | 'brand' | 'success' | 'warning' | 'destructive' | 'info' {
+  if (optTone && ['neutral', 'brand', 'success', 'warning', 'destructive', 'info'].includes(optTone)) {
+    return optTone as any
+  }
+  const norm = id.toLowerCase()
+  if (
+    norm.includes('verified') ||
+    norm.includes('approved') ||
+    norm.includes('accepted') ||
+    norm.includes('completed') ||
+    norm.includes('active') ||
+    norm.includes('grace') ||
+    norm.includes('resolved') ||
+    norm.includes('delivered') ||
+    norm.includes('success')
+  ) {
+    return 'success'
+  }
+  if (
+    norm.includes('pending') ||
+    norm.includes('review') ||
+    norm.includes('open') ||
+    norm.includes('urgent') ||
+    norm.includes('scheduled') ||
+    norm.includes('draft') ||
+    norm.includes('queue') ||
+    norm.includes('trial')
+  ) {
+    return 'warning'
+  }
+  if (
+    norm.includes('reject') ||
+    norm.includes('suspend') ||
+    norm.includes('ban') ||
+    norm.includes('flag') ||
+    norm.includes('expired') ||
+    norm.includes('archive') ||
+    norm.includes('failed') ||
+    norm.includes('cancelled') ||
+    norm.includes('permanent') ||
+    norm.includes('escalated')
+  ) {
+    return 'destructive'
+  }
+  return 'neutral'
+}
+
+export function getTabActiveClasses(
+  tone: 'neutral' | 'brand' | 'success' | 'warning' | 'destructive' | 'info'
+): string {
+  switch (tone) {
+    case 'success':
+      return 'bg-[#17b26a] text-white shadow-2xs font-semibold'
+    case 'warning':
+      return 'bg-[#f79009] text-white shadow-2xs font-semibold'
+    case 'destructive':
+      return 'bg-[#d92d20] text-white shadow-2xs font-semibold'
+    case 'info':
+      return 'bg-[#1570ef] text-white shadow-2xs font-semibold'
+    case 'brand':
+    case 'neutral':
+    default:
+      return 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
+  }
+}
+
 /* ========================================================================== */
 /* VARIANT 1: FILTER TABS WITH COUNT BADGES (For datasets, tables, queues)     */
 /* ========================================================================== */
@@ -155,10 +224,11 @@ export function FilterTabs({
 
   // Default: Pills layout
   return (
-    <div className={cn('flex flex-wrap items-center gap-2', className)}>
+    <div className={cn('flex flex-wrap items-center gap-2 max-w-full py-0.5', className)}>
       {tabs.map((tab) => {
         const Icon = tab.icon
         const isActive = currentTab === tab.id
+        const tone = getTabSemanticTone(tab.id, (tab.countTone as any) || tab.badgeVariant)
         const href = resolveTabHref(tab.id, tab.href, paramName)
         return (
           <a
@@ -176,11 +246,11 @@ export function FilterTabs({
               onChange(tab.id)
             }}
             className={cn(
-              'flex items-center gap-2 rounded-[8px] px-3.5 font-medium transition-colors cursor-pointer select-none ant-wave-btn no-underline',
+              'flex items-center gap-2 rounded-[8px] px-3.5 font-medium transition-colors cursor-pointer select-none ant-wave-btn no-underline shrink-0 whitespace-nowrap',
               tab.disabled && 'opacity-40 cursor-not-allowed pointer-events-none',
               size === 'sm' ? 'h-[32px] text-[13px]' : 'h-[36px] text-[14px]',
               isActive
-                ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
+                ? getTabActiveClasses(tone)
                 : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
             )}
           >
@@ -189,7 +259,7 @@ export function FilterTabs({
             {tab.count !== undefined && (
               <CountBadge
                 count={tab.count}
-                variant={isActive ? 'active' : (tab.countTone as any) || (tab.badgeVariant as any) || 'neutral'}
+                variant={isActive ? 'active' : (tone as any)}
                 size={size === 'sm' ? 'sm' : 'md'}
               />
             )}
@@ -221,10 +291,11 @@ export function NavigationTabs({
   paramName = 'tab',
 }: NavigationTabsProps) {
   return (
-    <div className={cn('flex flex-wrap items-center gap-2', className)}>
+    <div className={cn('flex flex-wrap items-center gap-2 max-w-full py-0.5', className)}>
       {tabs.map((tab) => {
         const Icon = tab.icon
         const isActive = activeTab === tab.id
+        const tone = getTabSemanticTone(tab.id, (tab.countTone as any) || tab.badgeVariant)
         const href = resolveTabHref(tab.id, tab.href, paramName)
         return (
           <a
@@ -242,7 +313,7 @@ export function NavigationTabs({
               onChange(tab.id)
             }}
             className={cn(
-              'flex items-center gap-2 rounded-[8px] px-3.5 font-medium transition-colors cursor-pointer select-none ant-wave-btn no-underline',
+              'flex items-center gap-2 rounded-[8px] px-3.5 font-medium transition-colors cursor-pointer select-none ant-wave-btn no-underline shrink-0 whitespace-nowrap',
               tab.disabled && 'opacity-40 cursor-not-allowed pointer-events-none',
               size === 'sm'
                 ? 'h-[32px] text-[13px]'
@@ -250,7 +321,7 @@ export function NavigationTabs({
                 ? 'h-[40px] text-[15px]'
                 : 'h-[36px] text-[14px]',
               isActive
-                ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
+                ? getTabActiveClasses(tone)
                 : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
             )}
           >
@@ -259,7 +330,7 @@ export function NavigationTabs({
             {tab.count !== undefined && (
               <CountBadge
                 count={tab.count}
-                variant={isActive ? 'active' : 'neutral'}
+                variant={isActive ? 'active' : (tone as any)}
                 size="sm"
               />
             )}
@@ -320,20 +391,11 @@ export function StatusFilterTabs({
     return []
   }, [options, tabs, counts])
 
-  const getSemanticTone = (id: string, optTone?: string) => {
-    if (optTone) return optTone
-    const norm = id.toLowerCase()
-    if (norm.includes('verified') || norm.includes('approved') || norm.includes('accepted') || norm.includes('active')) return 'success'
-    if (norm.includes('pending') || norm.includes('review') || norm.includes('open')) return 'warning'
-    if (norm.includes('reject') || norm.includes('suspend') || norm.includes('ban') || norm.includes('flag') || norm.includes('expired') || norm.includes('archive') || norm.includes('failed') || norm.includes('cancelled')) return 'destructive'
-    return 'neutral'
-  }
-
   return (
-    <div className={cn('flex flex-wrap items-center gap-2', className)}>
+    <div className={cn('flex flex-wrap items-center gap-2 max-w-full py-0.5', className)}>
       {items.map((opt) => {
         const isActive = currentActive.toLowerCase() === opt.id.toLowerCase()
-        const tone = getSemanticTone(opt.id, (opt as any).countTone)
+        const tone = getTabSemanticTone(opt.id, (opt as any).countTone)
         const href = resolveTabHref(opt.id, (opt as any).href, paramName)
 
         return (
@@ -348,10 +410,10 @@ export function StatusFilterTabs({
               onChange(opt.id)
             }}
             className={cn(
-              'flex items-center gap-2 rounded-[8px] px-3.5 font-medium transition-colors cursor-pointer select-none ant-wave-btn no-underline',
+              'flex items-center gap-2 rounded-[8px] px-3.5 font-medium transition-colors cursor-pointer select-none ant-wave-btn no-underline shrink-0 whitespace-nowrap',
               size === 'sm' ? 'h-[32px] text-[13px]' : 'h-[36px] text-[14px]',
               isActive
-                ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
+                ? getTabActiveClasses(tone)
                 : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
             )}
           >

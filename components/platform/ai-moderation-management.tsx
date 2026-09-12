@@ -443,7 +443,7 @@ export function AiModerationManagement() {
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
               {/* Category Pill Tabs */}
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+              <div className="flex flex-wrap items-center gap-2 py-0.5 max-w-full">
                 {categories.map((c) => {
                   const count = c === 'All' ? incidents.length : incidents.filter((i) => i.type === c).length
                   const isActive = activeCategory === c
@@ -458,7 +458,7 @@ export function AiModerationManagement() {
                       className={cn(
                         'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap',
                         isActive
-                          ? 'bg-[#1f2327] text-white shadow-2xs'
+                          ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                           : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                       )}
                     >
@@ -466,7 +466,7 @@ export function AiModerationManagement() {
                       <span
                         className={cn(
                           'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
-                          isActive ? 'bg-white/20 text-white' : 'bg-[#eff1f3] text-[#1f2327]'
+                          isActive ? 'bg-white/25 text-white' : 'bg-[#eff1f3] text-[#1f2327]'
                         )}
                       >
                         {count}

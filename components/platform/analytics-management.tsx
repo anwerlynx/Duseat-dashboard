@@ -586,7 +586,7 @@ function AnalyticsManagementInner() {
                   className={cn(
                     'inline-flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-all cursor-pointer select-none',
                     active
-                      ? 'bg-[#1f2327] text-white shadow-2xs'
+                      ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                       : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                   )}
                 >

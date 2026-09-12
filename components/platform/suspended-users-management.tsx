@@ -305,7 +305,7 @@ export function SuspendedUsersManagement() {
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
               {/* Type Tabs */}
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+              <div className="flex flex-wrap items-center gap-2 py-0.5 max-w-full">
                 {(['All', 'Agent', 'Investor'] as const).map((t) => {
                   const count = t === 'All' ? users.length : users.filter((u) => u.type === t).length
                   const isSelected = typeFilter === t

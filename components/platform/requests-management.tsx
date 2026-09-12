@@ -800,7 +800,7 @@ export function RequestsManagementInner() {
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
               {/* Filter Tabs List */}
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+              <div className="flex flex-wrap items-center gap-2 py-0.5 max-w-full">
                 {(
                   [
                     { id: 'All', label: 'All Requests', count: stats.total },
@@ -839,10 +839,12 @@ export function RequestsManagementInner() {
                       <span
                         className={cn(
                           'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
-                          item.id === 'Urgent'
-                            ? 'bg-[#f79009] text-white'
-                            : isActive
+                          isActive
                             ? 'bg-white/20 text-white'
+                            : item.id === 'Urgent'
+                            ? 'bg-[#fff5e5] text-[#f79009]'
+                            : item.id === 'Matched'
+                            ? 'bg-[#edfcf2] text-[#17b26a]'
                             : 'bg-[#eff1f3] text-[#1f2327]'
                         )}
                       >

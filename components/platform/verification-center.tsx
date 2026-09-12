@@ -748,7 +748,7 @@ export function VerificationCenterInner() {
           {/* Top Tabs Bar */}
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 max-w-full py-0.5">
                 {[
                   { label: 'Verification Queue', value: 'queue', count: cases.length },
                   { label: 'Expired Documents', value: 'expired', count: expiredDocsList.length },
@@ -766,10 +766,10 @@ export function VerificationCenterInner() {
                       setActiveTab(item.value as MainTab)
                     }}
                     className={cn(
-                      'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn no-underline',
+                      'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] leading-[20px] font-medium transition-colors cursor-pointer ant-wave-btn no-underline shrink-0 whitespace-nowrap',
                       activeTab === item.value
                         ? item.value === 'expired'
-                          ? 'bg-[#f04438] text-white shadow-2xs font-semibold'
+                          ? 'bg-[#d92d20] text-white shadow-2xs font-semibold'
                           : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                         : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                     )}
@@ -778,10 +778,10 @@ export function VerificationCenterInner() {
                     <span
                       className={cn(
                         'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
-                        item.value === 'expired'
-                          ? 'bg-[#f04438] text-white'
-                          : activeTab === item.value
+                        activeTab === item.value
                           ? 'bg-white/20 text-white'
+                          : item.value === 'expired'
+                          ? 'bg-[#fef3f2] text-[#d92d20]'
                           : 'bg-[#eff1f3] text-[#1f2327]'
                       )}
                     >

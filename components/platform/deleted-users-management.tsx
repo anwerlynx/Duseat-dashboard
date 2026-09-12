@@ -265,7 +265,7 @@ export function DeletedUsersManagement() {
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
               {/* Role Tabs */}
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+              <div className="flex flex-wrap items-center gap-2 py-0.5 max-w-full">
                 {(['All', 'Investor', 'Agent', 'In Grace Period'] as const).map((t) => {
                   const count =
                     t === 'All'
@@ -299,7 +299,11 @@ export function DeletedUsersManagement() {
                       <span
                         className={cn(
                           'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
-                          isSelected ? 'bg-white/25 text-white' : 'bg-[#eff1f3] text-[#1f2327]'
+                          isSelected
+                            ? 'bg-white/25 text-white'
+                            : t === 'In Grace Period'
+                            ? 'bg-[#edfcf2] text-[#17b26a]'
+                            : 'bg-[#eff1f3] text-[#1f2327]'
                         )}
                       >
                         {count}

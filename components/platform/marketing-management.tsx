@@ -1017,7 +1017,7 @@ function MarketingManagementInner() {
                     className={cn(
                       'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[13px] sm:text-[14px] leading-[20px] font-medium transition-colors cursor-pointer shrink-0 whitespace-nowrap',
                       isActive
-                        ? 'bg-[#1f2327] text-white shadow-2xs font-semibold'
+                        ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                         : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                     )}
                   >
@@ -1027,7 +1027,7 @@ function MarketingManagementInner() {
                       <span
                         className={cn(
                           'rounded-full px-1.5 py-0.2 text-[11px] font-semibold',
-                          isActive ? 'bg-white/20 text-white' : 'bg-[#eff1f3] text-[#1f2327]'
+                          isActive ? 'bg-white/25 text-white' : 'bg-[#eff1f3] text-[#1f2327]'
                         )}
                       >
                         {tab.count}

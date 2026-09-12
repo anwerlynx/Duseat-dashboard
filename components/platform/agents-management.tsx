@@ -442,7 +442,7 @@ function AgentsInner() {
           {/* Top Tabs Bar */}
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+              <div className="flex flex-wrap items-center gap-2 py-0.5 max-w-full">
                 {(['All agents', 'Verified', 'Pending verification', 'Expired license'] as const).map((item) => {
                   const count =
                     item === 'All agents'
@@ -463,8 +463,10 @@ function AgentsInner() {
                         tab === item
                           ? item === 'Verified'
                             ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
-                            : item === 'Expired license'
+                            : item === 'Pending verification'
                             ? 'bg-[#f79009] text-white shadow-2xs font-semibold'
+                            : item === 'Expired license'
+                            ? 'bg-[#d92d20] text-white shadow-2xs font-semibold'
                             : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                           : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                       )}
@@ -473,10 +475,14 @@ function AgentsInner() {
                       <span
                         className={cn(
                           'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
-                          item === 'Expired license' && tab !== item
-                            ? 'bg-[#fff5e5] text-[#f79009]'
-                            : tab === item
+                          tab === item
                             ? 'bg-white/25 text-white'
+                            : item === 'Expired license'
+                            ? 'bg-[#fef3f2] text-[#d92d20]'
+                            : item === 'Pending verification'
+                            ? 'bg-[#fff5e5] text-[#f79009]'
+                            : item === 'Verified'
+                            ? 'bg-[#edfcf2] text-[#17b26a]'
                             : 'bg-[#eff1f3] text-[#1f2327]'
                         )}
                       >

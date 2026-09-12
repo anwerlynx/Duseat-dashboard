@@ -695,7 +695,7 @@ export function DealsManagementInner() {
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
               {/* Left Status Tabs */}
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+              <div className="flex flex-wrap items-center gap-2 py-0.5 max-w-full">
                 {(
                   [
                     { id: 'All', label: 'All deals', count: statusCounts.All },
@@ -722,6 +722,8 @@ export function DealsManagementInner() {
                         isActive
                           ? item.id === 'Completed'
                             ? 'bg-[#17b26a] text-white shadow-2xs font-semibold'
+                            : item.id === 'Cancelled' || item.id === 'Failed'
+                            ? 'bg-[#d92d20] text-white shadow-2xs font-semibold'
                             : 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                           : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                       )}
@@ -730,7 +732,13 @@ export function DealsManagementInner() {
                       <span
                         className={cn(
                           'rounded-full px-1.5 py-0.2 text-[12px] leading-[16px] font-semibold',
-                          isActive ? 'bg-white/20 text-white' : 'bg-[#eff1f3] text-[#1f2327]'
+                          isActive
+                            ? 'bg-white/20 text-white'
+                            : item.id === 'Cancelled' || item.id === 'Failed'
+                            ? 'bg-[#fef3f2] text-[#d92d20]'
+                            : item.id === 'Completed'
+                            ? 'bg-[#edfcf2] text-[#17b26a]'
+                            : 'bg-[#eff1f3] text-[#1f2327]'
                         )}
                       >
                         {item.count}

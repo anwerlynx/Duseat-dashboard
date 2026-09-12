@@ -377,7 +377,7 @@ export function SupportManagement() {
           <div className="flex flex-col gap-3 border-b border-[#d3d5d7] p-3.5 sm:p-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
               {/* Category Pill Tabs */}
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+              <div className="flex flex-wrap items-center gap-2 py-0.5 max-w-full">
                 {categories.map((cat) => {
                   const count = cat === 'All' ? tickets.length : tickets.filter((t) => t.category === cat).length
                   const isSelected = activeTab === cat
