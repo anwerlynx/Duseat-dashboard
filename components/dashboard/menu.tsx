@@ -150,20 +150,28 @@ export function Dropdown({
   return (
     <div className={cn('relative inline-flex', className)}>
       {trigger ? (
-        <button
-          type="button"
+        <div
+          role="button"
+          tabIndex={0}
           aria-label={ariaLabel}
-          ref={triggerRef}
+          ref={triggerRef as any}
           aria-haspopup="menu"
           aria-expanded={open}
           onClick={(e) => {
             e.stopPropagation()
             setOpen((o) => !o)
           }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              e.stopPropagation()
+              setOpen((o) => !o)
+            }
+          }}
           className="inline-flex items-center outline-none cursor-pointer"
         >
           {trigger}
-        </button>
+        </div>
       ) : (
         <button
           type="button"

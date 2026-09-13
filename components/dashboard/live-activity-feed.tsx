@@ -106,9 +106,9 @@ export function LiveActivityFeed({ onViewAll }: { onViewAll?: () => void }) {
                     <Icon className="size-3.5" />
                   </div>
 
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <p className="font-semibold text-[13px] text-[#1f2327] group-hover:text-[#00c2cb] transition-colors truncate">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="font-semibold text-[13px] text-[#1f2327] group-hover:text-[#00c2cb] transition-colors break-words">
                         {item.title}
                       </p>
                       {item.badge && (
@@ -117,7 +117,7 @@ export function LiveActivityFeed({ onViewAll }: { onViewAll?: () => void }) {
                         </span>
                       )}
                     </div>
-                    <p className="text-[11.5px] text-[#6f777f] mt-0.5 line-clamp-1 leading-snug">
+                    <p className="text-[11.5px] text-[#6f777f] mt-0.5 leading-snug break-words">
                       {item.detail}
                     </p>
                     <p className="text-[10.5px] text-[#9da4ae] mt-0.5 font-mono">

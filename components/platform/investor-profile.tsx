@@ -32,6 +32,7 @@ import {
   FileSpreadsheet,
   TrendingUp,
   AlertCircle,
+  Ban,
   Building2,
   Check,
   Search,
@@ -309,19 +310,19 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
 
   return (
     <PlatformShell title={investor.name} eyebrow="investor">
-      <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5">
+      <div className="flex w-full min-w-0 flex-col gap-4 px-3 sm:px-6 lg:px-8 py-4 sm:py-5">
         {/* 1. Header Card with Investor Summary & Quick Actions */}
-        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4 font-sans">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4 font-sans w-full min-w-0 max-w-full">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between w-full min-w-0">
             {/* Left: Avatar + Identity + Status Badges */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center min-w-0 flex-1">
               <AvatarFlagOverlay code={getCountryCode(investor.country || 'United Arab Emirates')}>
                 <div
                   onClick={() => setAvatarModalOpen(true)}
                   role="button"
                   tabIndex={0}
                   title="Click to view and download photo"
-                  className="size-[72px] sm:size-[80px] rounded-[12px] overflow-hidden bg-gradient-to-br from-amber-500 to-rose-600 flex items-center justify-center shadow-xs cursor-pointer hover:ring-2 hover:ring-[#00c2cb] hover:scale-105 active:scale-95 transition-all select-none"
+                  className="size-[72px] sm:size-[80px] rounded-[12px] overflow-hidden bg-gradient-to-br from-amber-500 to-rose-600 flex items-center justify-center shadow-xs cursor-pointer hover:ring-2 hover:ring-[#00c2cb] hover:scale-105 active:scale-95 transition-all select-none shrink-0"
                 >
                   {investor.avatar ? (
                     <img src={investor.avatar} alt={investor.name} className="size-full object-cover" />
@@ -348,33 +349,33 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                 />
               )}
 
-              <div className="space-y-1 font-sans">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
+              <div className="space-y-1 font-sans min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 min-w-0">
+                  <h1 className="text-[22px] sm:text-[32px] font-bold leading-[28px] sm:leading-[40px] text-[#1f2327] break-words">
                     {investor.name}
                   </h1>
                   <FigmaStatusBadge status={investor.verification} />
                 </div>
 
-                <div className="text-[14px] leading-[20px] text-[#6f777f] flex flex-wrap items-center gap-2 sm:gap-2.5">
+                <div className="text-[13px] sm:text-[14px] leading-[20px] text-[#6f777f] flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
                   <span>
                     ID : <strong className="font-medium text-[#1f2327]">{investor.id}</strong>
                   </span>
-                  <span className="text-[#d3d5d7]">•</span>
+                  <span className="text-[#d3d5d7] hidden sm:inline">•</span>
                   <span className="inline-flex items-center gap-1.5">
                     <span>{investor.country}</span>
                   </span>
-                  <span className="text-[#d3d5d7]">•</span>
-                  <span>{investor.email}</span>
-                  <span className="text-[#d3d5d7]">•</span>
+                  <span className="text-[#d3d5d7] hidden sm:inline">•</span>
+                  <span className="break-words">{investor.email}</span>
+                  <span className="text-[#d3d5d7] hidden sm:inline">•</span>
                   <span>{investor.phone}</span>
                 </div>
 
-                <div className="text-[12px] leading-[16px] text-[#6f777f] flex flex-wrap items-center gap-2 pt-0.5">
+                <div className="text-[12px] leading-[16px] text-[#6f777f] flex flex-wrap items-center gap-x-2 gap-y-1 pt-0.5 min-w-0">
                   <span>
                     Member since <strong className="font-medium text-[#1f2327]">{investor.joined}</strong>
                   </span>
-                  <span className="text-[#d3d5d7]">•</span>
+                  <span className="text-[#d3d5d7] hidden sm:inline">•</span>
                   <span>
                     Last active <strong className="font-medium text-[#1f2327]">{investor.lastLogin}</strong>
                   </span>
@@ -396,9 +397,10 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
               <button
                 type="button"
                 onClick={() => handleAction('login')}
-                className="flex-1 sm:flex-initial flex h-[38px] sm:h-[40px] items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[13px] sm:text-[14px] leading-[20px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs whitespace-nowrap"
+                className="flex-1 sm:flex-initial flex h-[38px] sm:h-[40px] items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white px-3 sm:px-3.5 text-[13px] sm:text-[14px] leading-[20px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs whitespace-nowrap"
               >
-                <span>Login as investor</span>
+                <span className="sm:hidden">Login</span>
+                <span className="hidden sm:inline">Login as investor</span>
               </button>
 
               <Dropdown
@@ -418,14 +420,12 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                   { label: 'Edit Full Profile Details', value: 'edit-profile', icon: <Pencil className="size-4 text-[#00c2cb]" /> },
                   { label: 'Send Notification', value: 'notification', icon: <Mail className="size-4 text-[#00c2cb]" /> },
                   ...(investor.verification !== 'Verified'
-                    ? [{ label: 'Verify Account', value: 'verify', icon: <UserCheck className="size-4 text-emerald-600" /> }]
+                    ? [{ label: 'Verify KYC Profile', value: 'verify', icon: <ShieldCheck className="size-4 text-emerald-600" /> }]
                     : []),
                   { label: 'Reset Password', value: 'reset', icon: <KeyRound className="size-4 text-[#6f777f]" /> },
-                  ...(investor.status !== 'Suspended'
-                    ? [{ label: 'Suspend Account', value: 'suspend', icon: <UserX className="size-4 text-amber-600" />, destructive: true }]
-                    : []),
-                  { label: 'Ban Account', value: 'ban', icon: <AlertCircle className="size-4 text-destructive" />, destructive: true },
-                  { label: 'Delete Investor', value: 'delete', icon: <Trash2 className="size-4 text-destructive" />, destructive: true },
+                  { label: 'Suspend Investor', value: 'suspend', icon: <UserX className="size-4 text-amber-600" />, destructive: true },
+                  { label: 'Ban Account', value: 'ban', icon: <Ban className="size-4 text-rose-600" />, destructive: true },
+                  { label: 'Delete Account Archive', value: 'delete', icon: <Trash2 className="size-4 text-rose-600" />, destructive: true },
                 ]}
                 trigger={
                   <span className="flex size-[38px] sm:size-[40px] shrink-0 items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs">
@@ -443,58 +443,58 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
               onClick={() => setActiveTab('requests')}
               className="rounded-[12px] border border-[#d3d5d7] bg-white p-3 sm:px-4 sm:py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer min-w-0"
             >
-              <p className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] font-normal text-[#6f777f] truncate">Requests</p>
-              <p className="mt-0.5 text-[20px] sm:text-[24px] leading-[28px] sm:leading-[32px] font-bold text-[#1f2327] truncate">{investor.requestsList.length}</p>
+              <p className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] font-normal text-[#6f777f] break-words">Requests</p>
+              <p className="mt-0.5 text-[20px] sm:text-[24px] leading-[28px] sm:leading-[32px] font-bold text-[#1f2327] break-words">{investor.requestsList.length}</p>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('offers')}
               className="rounded-[12px] border border-[#d3d5d7] bg-white p-3 sm:px-4 sm:py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer min-w-0"
             >
-              <p className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] font-normal text-[#6f777f] truncate">Offers received</p>
-              <p className="mt-0.5 text-[20px] sm:text-[24px] leading-[28px] sm:leading-[32px] font-bold text-[#1f2327] truncate">{investor.offersReceived.length || 12}</p>
+              <p className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] font-normal text-[#6f777f] break-words">Offers received</p>
+              <p className="mt-0.5 text-[20px] sm:text-[24px] leading-[28px] sm:leading-[32px] font-bold text-[#1f2327] break-words">{investor.offersReceived.length || 12}</p>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('deals')}
               className="rounded-[12px] border border-[#d3d5d7] bg-white p-3 sm:px-4 sm:py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer min-w-0"
             >
-              <p className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] font-normal text-[#6f777f] truncate">Deals completed</p>
-              <p className="mt-0.5 text-[20px] sm:text-[24px] leading-[28px] sm:leading-[32px] font-bold text-[#1f2327] truncate">{investor.dealList.length || 1}</p>
+              <p className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] font-normal text-[#6f777f] break-words">Deals completed</p>
+              <p className="mt-0.5 text-[20px] sm:text-[24px] leading-[28px] sm:leading-[32px] font-bold text-[#1f2327] break-words">{investor.dealList.length || 1}</p>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('activity-score')}
               className="rounded-[12px] border border-[#d3d5d7] bg-white p-3 sm:px-4 sm:py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer min-w-0"
             >
-              <p className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] font-normal text-[#6f777f] truncate">Total score</p>
-              <p className="mt-0.5 text-[20px] sm:text-[24px] leading-[28px] sm:leading-[32px] font-bold text-[#1f2327] truncate">{investor.score || 92}</p>
+              <p className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] font-normal text-[#6f777f] break-words">Total score</p>
+              <p className="mt-0.5 text-[20px] sm:text-[24px] leading-[28px] sm:leading-[32px] font-bold text-[#1f2327] break-words">{investor.score || 92}</p>
             </button>
           </div>
         </header>
 
         {/* 3. Navigation Bar: Complete 15 Investor Details Sections */}
-        <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] font-sans space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#d3d5d7] pb-3">
-            <div className="flex items-center gap-2.5">
-              <span className="text-[16px] sm:text-[18px] font-semibold text-[#1f2327]">
+        <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] font-sans space-y-4 w-full min-w-0 max-w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#d3d5d7] pb-3 w-full min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="text-[15px] sm:text-[18px] font-semibold text-[#1f2327] break-words">
                 Investor Details Directory ({allSections.length} Sections)
               </span>
             </div>
 
             {/* View All & Category Filter Pills */}
-            <div className="flex items-center gap-1.5 sm:gap-2 text-[13px] sm:text-[14px] overflow-x-auto no-scrollbar flex-nowrap sm:flex-wrap pb-1 sm:pb-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[13px] sm:text-[14px] overflow-x-auto no-scrollbar flex-nowrap sm:flex-wrap pb-1 sm:pb-0 w-full sm:w-auto min-w-0">
               <button
                 type="button"
                 onClick={() => setViewAllMode(!viewAllMode)}
                 className={cn(
-                  'h-[34px] px-3 sm:px-3.5 rounded-[8px] font-medium transition-colors cursor-pointer ant-wave-btn flex items-center gap-1.5 shrink-0',
+                  'h-[34px] px-3 sm:px-3.5 rounded-[8px] font-medium transition-colors cursor-pointer ant-wave-btn flex items-center gap-1.5 shrink-0 whitespace-nowrap',
                   viewAllMode
                     ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                     : 'border border-[#d3d5d7] bg-white text-[#1f2327] hover:bg-[#eff1f3]'
                 )}
               >
-                <Eye className="size-4" />
+                <Eye className="size-4 shrink-0" />
                 <span>{viewAllMode ? 'Tabbed Mode' : 'View All / عرض الكل'}</span>
               </button>
 
@@ -520,7 +520,7 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
           </div>
 
           {/* Tab Buttons Strip */}
-          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth flex-nowrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth flex-nowrap w-full min-w-0">
             {filteredTabs.map((tab) => {
               const isActive = activeTab === tab.id
               const count = getSectionCount(tab)
@@ -556,63 +556,64 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
         </div>
 
         {/* 4. Tab Content: 15 Distinct Section Renderers */}
-        <div className="space-y-6 font-sans">
+        <div className="space-y-6 font-sans w-full min-w-0">
           {/* =========================================================================
               1. PROFILE / OVERVIEW
              ========================================================================= */}
           {activeTab === 'overview' && (
-            <div className="space-y-6">
-              <div className="grid gap-6 xl:grid-cols-12">
+            <div className="space-y-6 w-full min-w-0">
+              <div className="grid gap-6 xl:grid-cols-12 w-full min-w-0">
                 {/* Left Column (approx 68%) */}
-                <div className="space-y-6 xl:col-span-8">
+                <div className="space-y-6 xl:col-span-8 w-full min-w-0">
                   {/* Active Property Requests */}
-                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-6 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] flex flex-col gap-4 sm:gap-6">
-                    <div className="flex flex-col gap-2.5">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2.5">
-                          <h3 className="text-[18px] sm:text-[22px] font-bold text-[#1f2327]">Active Property Requests</h3>
-                          <span className="inline-flex items-center rounded-full bg-[#e5f6f7] px-2.5 py-0.5 text-[12px] font-bold text-[#00848b]">
+                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-6 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] flex flex-col gap-4 sm:gap-6 w-full min-w-0 max-w-full">
+                    <div className="flex flex-col gap-2.5 w-full min-w-0">
+                      <div className="flex items-center justify-between gap-2 w-full min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <h3 className="text-[17px] sm:text-[22px] font-bold text-[#1f2327] truncate">Active Property Requests</h3>
+                          <span className="inline-flex items-center rounded-full bg-[#e5f6f7] px-2 py-0.5 text-[11px] sm:text-[12px] font-bold text-[#00848b] shrink-0">
                             {investor.requestsList.length} Total
                           </span>
                         </div>
                         <button
                           type="button"
                           onClick={() => setActiveTab('requests')}
-                          className="flex items-center gap-1 text-[13px] sm:text-[15px] font-semibold text-[#00c2cb] hover:underline cursor-pointer"
+                          className="flex items-center gap-1 text-[13px] sm:text-[15px] font-semibold text-[#00c2cb] hover:underline cursor-pointer shrink-0 whitespace-nowrap"
                         >
                           <span>View all ({investor.requestsList.length})</span>
                           <span aria-hidden="true">→</span>
                         </button>
                       </div>
-                      <div className="flex flex-wrap items-center justify-between gap-2 text-[12px] sm:text-[13px] text-[#6f777f]">
-                        <p>
-                          Showing latest <strong className="font-semibold text-[#1f2327]">2</strong> of <strong className="font-semibold text-[#1f2327]">{investor.requestsList.length}</strong> requirements published on Duseat UAE network
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[12px] sm:text-[13px] text-[#6f777f] w-full min-w-0">
+                        <p className="truncate min-w-0 flex-1">
+                          Showing latest <strong className="font-semibold text-[#1f2327]">2</strong> of <strong className="font-semibold text-[#1f2327]">{investor.requestsList.length}</strong> requirements
                         </p>
-                        <span className="text-[11px] sm:text-[12px] font-medium text-[#6f777f] bg-[#f8f9fa] px-2 py-0.5 rounded-[6px] border border-[#e5e7eb]">
+                        <span className="hidden sm:inline-block text-[11px] sm:text-[12px] font-medium text-[#6f777f] bg-[#f8f9fa] px-2 py-0.5 rounded-[6px] border border-[#e5e7eb] shrink-0">
                           Showing 2 of {investor.requestsList.length}
                         </span>
                       </div>
                     </div>
 
-                    <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2">
+                    <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 w-full min-w-0">
                       {investor.requestsList.slice(0, 2).map((req) => (
-                        <RequestCard
-                          key={req.id}
-                          request={req}
-                          onViewDetails={() => setSelectedRequest(req)}
-                        />
+                        <div key={req.id} className="w-full min-w-0">
+                          <RequestCard
+                            request={req}
+                            onViewDetails={() => setSelectedRequest(req)}
+                          />
+                        </div>
                       ))}
                     </div>
 
                     {investor.requestsList.length > 2 && (
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#f0f2f5] text-[12px] sm:text-[13px]">
-                        <span className="text-[#6f777f]">
-                          + {investor.requestsList.length - 2} more requests published by {investor.name.split(' ')[0]}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#f0f2f5] text-[12px] sm:text-[13px] w-full min-w-0">
+                        <span className="text-[#6f777f] truncate">
+                          + {investor.requestsList.length - 2} more requests published
                         </span>
                         <button
                           type="button"
                           onClick={() => setActiveTab('requests')}
-                          className="font-semibold text-[#00c2cb] hover:underline cursor-pointer flex items-center gap-1"
+                          className="font-semibold text-[#00c2cb] hover:underline cursor-pointer flex items-center gap-1 shrink-0 whitespace-nowrap"
                         >
                           <span>Browse all {investor.requestsList.length} requests</span>
                           <span>→</span>
@@ -622,7 +623,7 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                   </div>
 
                   {/* Recent Activity */}
-                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-6 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4 sm:gap-5">
+                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-6 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4 sm:gap-5">
                     <div className="flex items-center justify-between gap-2">
                       <h3 className="text-[18px] sm:text-[24px] font-bold text-[#1f2327]">Recent Activity</h3>
                       <button
@@ -634,26 +635,26 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                       </button>
                     </div>
 
-                    <div className="flex flex-col gap-3 font-sans">
+                    <div className="flex flex-col gap-2.5 sm:gap-3 font-sans">
                       {investor.timeline.slice(0, 3).map((event) => (
                         <div
                           key={event.id}
-                          className="border border-[#d3d5d7] rounded-[12px] min-h-[66px] px-3.5 py-2.5 flex items-center justify-between gap-3 transition-colors hover:bg-[#fcfcfc]"
+                          className="border border-[#d3d5d7] rounded-[12px] min-h-[66px] px-3 sm:px-3.5 py-2.5 flex items-center justify-between gap-2 sm:gap-3 transition-colors hover:bg-[#fcfcfc]"
                         >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="size-[42px] rounded-[8px] bg-[#f2f2f2] flex items-center justify-center shrink-0 text-[#1f2327]">
-                              <Activity className="size-5" />
+                          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                            <div className="size-[38px] sm:size-[42px] rounded-[8px] bg-[#f2f2f2] flex items-center justify-center shrink-0 text-[#1f2327]">
+                              <Activity className="size-4 sm:size-5" />
                             </div>
-                            <div className="flex flex-col gap-0.5 min-w-0">
-                              <p className="text-[16px] sm:text-[18px] font-medium text-[#1f2327] truncate">
+                            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                              <p className="text-[14px] sm:text-[18px] font-medium text-[#1f2327] truncate">
                                 {event.title}
                               </p>
-                              <p className="text-[13px] sm:text-[14px] text-[#6f777f] truncate">
+                              <p className="text-[12px] sm:text-[14px] text-[#6f777f] truncate">
                                 {event.detail}
                               </p>
                             </div>
                           </div>
-                          <span className="text-[14px] sm:text-[16px] text-[#6f777f] shrink-0 text-right">
+                          <span className="text-[11.5px] sm:text-[15px] font-medium text-[#6f777f] shrink-0 text-right whitespace-nowrap pl-1">
                             {event.date}
                           </span>
                         </div>
@@ -663,15 +664,15 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                 </div>
 
                 {/* Right Column (approx 32%) */}
-                <div className="space-y-6 xl:col-span-4">
+                <div className="space-y-6 xl:col-span-4 w-full min-w-0">
                   {/* Personal Information */}
-                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-6 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4 sm:gap-6">
-                    <div className="flex items-center justify-between gap-2">
+                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-6 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4 sm:gap-6 w-full min-w-0 max-w-full">
+                    <div className="flex items-center justify-between gap-2 w-full min-w-0">
                       <h3 className="text-[18px] sm:text-[22px] font-bold text-[#1f2327]">Personal information</h3>
-                      <span className="text-[13px] sm:text-[15px] text-[#6f777f]">Investor record</span>
+                      <span className="text-[13px] sm:text-[15px] text-[#6f777f] shrink-0">Investor record</span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3.5 sm:gap-y-4 font-sans">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3.5 sm:gap-y-4 font-sans w-full min-w-0">
                       <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0">
                         <p className="text-[13px] sm:text-[14px] text-[#6f777f]">Email</p>
                         <p className="text-[14px] sm:text-[16px] font-medium text-[#1f2327] truncate break-all">
@@ -721,16 +722,16 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                         </p>
                       </div>
 
-                      <div className="col-span-1 sm:col-span-2 flex flex-col gap-2 pt-1 sm:pt-2">
+                      <div className="col-span-1 sm:col-span-2 flex flex-col gap-2 pt-1 sm:pt-2 w-full min-w-0">
                         <p className="text-[13px] sm:text-[14px] text-[#6f777f]">Preferred areas</p>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 w-full min-w-0">
                           {(investor.personalInfo.preferredAreas?.length ? investor.personalInfo.preferredAreas : ['Downtown Dubai', 'Dubai Marina', 'Business Bay']).map((area) => (
                             <div
                               key={area}
-                              className="border border-[#d3d5d7] rounded-[8px] h-[38px] sm:h-[42px] px-3 py-1.5 flex items-center gap-1.5 text-[13px] sm:text-[15px] text-[#1f2327] font-medium bg-white"
+                              className="border border-[#d3d5d7] rounded-[8px] h-[38px] sm:h-[42px] px-3 py-1.5 flex items-center gap-1.5 text-[13px] sm:text-[15px] text-[#1f2327] font-medium bg-white max-w-full truncate"
                             >
                               <ExternalLink className="size-3.5 sm:size-4 text-[#1f2327] shrink-0" />
-                              <span>{area}</span>
+                              <span className="truncate">{area}</span>
                             </div>
                           ))}
                         </div>
@@ -739,7 +740,7 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                   </div>
 
                   {/* Notes Card */}
-                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-6 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4 sm:gap-5">
+                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-6 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4 sm:gap-5 w-full min-w-0 max-w-full">
                     <div className="flex items-center justify-between gap-2">
                       <h3 className="text-[18px] sm:text-[22px] font-bold text-[#1f2327]">Notes</h3>
                       <button

@@ -33,14 +33,14 @@ export function KpiCard({ card, compact = false, index = 0, onOpen, onAction }: 
       className="group animate-fade-up relative flex cursor-pointer flex-col rounded-xl border border-border bg-card p-4 shadow-sm outline-none transition-all duration-200 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring"
     >
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors group-hover:bg-brand/10 group-hover:text-brand">
+      <div className="flex items-start gap-2">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors group-hover:bg-brand/10 group-hover:text-brand mt-0.5">
           <Icon className="size-[18px]" />
         </span>
-        <Tooltip content={`${card.title} — ${card.growth} vs last period`}>
-          <span className="text-[14px] leading-[20px] font-medium text-muted-foreground">{card.title}</span>
-        </Tooltip>
-        <div className="ml-auto flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        <div className="min-w-0 flex-1">
+          <span className="text-[14px] leading-[20px] font-medium text-muted-foreground block break-words">{card.title}</span>
+        </div>
+        <div className="ml-auto flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
           <ArrowUpRight className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
           <Dropdown
             align="end"
@@ -62,12 +62,12 @@ export function KpiCard({ card, compact = false, index = 0, onOpen, onAction }: 
       </div>
 
       {/* Value */}
-      <div className="mt-3 flex items-end justify-between gap-2">
-        <div>
-          <AnimatedNumber value={card.value} className="text-[24px] leading-[32px] font-bold text-foreground" />
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <AnimatedNumber value={card.value} className="text-[22px] sm:text-[24px] leading-[30px] font-bold text-foreground break-words tabular-nums" />
           <p className="mt-1 text-[12px] leading-[16px] text-muted-foreground">vs last month</p>
         </div>
-        <div className="flex flex-col items-end gap-1.5">
+        <div className="flex flex-col items-end gap-1.5 shrink-0">
           <Delta value={card.growth.replace(/[+-]/, '')} trend={card.trend} pill />
           <Sparkline data={card.spark} trend={card.trend} />
         </div>
@@ -76,10 +76,10 @@ export function KpiCard({ card, compact = false, index = 0, onOpen, onAction }: 
       {/* Supporting metrics */}
       <div className={cn('mt-4 space-y-2 border-t border-border pt-3', compact && 'space-y-1.5')}>
         {card.supporting.map((m) => (
-          <div key={m.label} className="flex items-center justify-between gap-2 text-[14px] leading-[20px]">
-            <span className="truncate font-normal text-muted-foreground">{m.label}</span>
-            <span className="flex items-center gap-2">
-              <span className="font-medium tabular-nums text-foreground">{m.value}</span>
+          <div key={m.label} className="flex items-start justify-between gap-2 text-[13px] sm:text-[14px] leading-[18px] sm:leading-[20px]">
+            <span className="font-normal text-muted-foreground break-words flex-1 min-w-0">{m.label}</span>
+            <span className="flex items-center gap-1.5 shrink-0">
+              <span className="font-semibold tabular-nums text-foreground">{m.value}</span>
               {m.delta && <Delta value={m.delta} trend={m.trend || 'up'} />}
             </span>
           </div>

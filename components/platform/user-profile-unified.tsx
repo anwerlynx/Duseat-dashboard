@@ -103,57 +103,60 @@ export function UserProfileUnifiedInner({ id }: UserProfileUnifiedProps) {
   }
 
   return (
-    <PlatformShell title={`User Profile / ${userName}`} eyebrow="Directory & KYC Profile">
-      <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
+    <PlatformShell title={userName} eyebrow="User Profile">
+      <div className="flex w-full min-w-0 flex-col gap-4 px-3 sm:px-6 lg:px-8 py-4 sm:py-5 font-sans">
         {/* Breadcrumbs & Navigation */}
-        <div className="flex items-center justify-between gap-3 text-[13px]">
-          <div className="flex items-center gap-2 text-[#6f777f]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-[13px]">
+          <div className="flex flex-wrap items-center gap-1.5 text-[#6f777f]">
             <button
               type="button"
               onClick={handleBackToVerification}
-              className="flex items-center gap-1.5 font-semibold text-[#1f2327] hover:text-[#00c2cb] transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 font-semibold text-[#1f2327] hover:text-[#00c2cb] transition-colors cursor-pointer shrink-0"
             >
-              <ArrowLeft className="size-4" />
-              <span>Back to Verification</span>
+              <ArrowLeft className="size-4 shrink-0" />
+              <span className="sm:hidden">Back</span>
+              <span className="hidden sm:inline">Back to Verification</span>
             </button>
             <span>/</span>
-            <span>User Directory</span>
+            <Link href="/directory" className="hover:text-[#1f2327] transition-colors shrink-0">
+              User Directory
+            </Link>
             <span>/</span>
-            <span className="font-bold text-[#1f2327]">{userName}</span>
+            <span className="font-bold text-[#1f2327] truncate max-w-[160px] sm:max-w-none">{userName}</span>
           </div>
 
           {matchedCase && (
             <Link
               href={`/verification/${matchedCase.id}`}
-              className="flex items-center gap-1.5 rounded-[8px] bg-[#00c2cb] px-3.5 py-1.5 text-[13px] font-bold text-white shadow-2xs hover:bg-[#00a8b0] transition-colors cursor-pointer ant-wave-btn"
+              className="flex items-center justify-center gap-1.5 rounded-[8px] bg-[#00c2cb] px-3.5 py-2 sm:py-1.5 text-[13px] font-bold text-white shadow-2xs hover:bg-[#00a8b0] transition-colors cursor-pointer ant-wave-btn w-full sm:w-auto shrink-0"
             >
-              <ShieldCheck className="size-4" />
+              <ShieldCheck className="size-4 shrink-0" />
               <span>Review Verification ({matchedCase.id})</span>
             </Link>
           )}
         </div>
 
         {/* Top Profile Header */}
-        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-5 shadow-[0px_1px_3px_rgba(16,24,40,0.05)] flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="relative">
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-5 shadow-[0px_1px_3px_rgba(16,24,40,0.05)] flex flex-col gap-4 w-full min-w-0 max-w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full min-w-0">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+              <div className="relative shrink-0">
                 <img
                   src={userAvatar}
                   alt={userName}
-                  className="size-16 rounded-[12px] object-cover border border-[#d3d5d7]"
+                  className="size-14 sm:size-16 rounded-[12px] object-cover border border-[#d3d5d7]"
                 />
-                <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full bg-white border border-[#d3d5d7] shadow-2xs">
-                  <Flag code={countryCode} className="size-4 rounded-xs" />
+                <span className="absolute -bottom-1 -right-1 flex size-5 sm:size-6 items-center justify-center rounded-full bg-white border border-[#d3d5d7] shadow-2xs">
+                  <Flag code={countryCode} className="size-3.5 sm:size-4 rounded-xs" />
                 </span>
               </div>
 
-              <div>
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <h1 className="text-[22px] sm:text-[26px] font-bold text-[#1f2327]">{userName}</h1>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 min-w-0">
+                  <h1 className="text-[20px] sm:text-[26px] font-bold text-[#1f2327] truncate leading-tight">{userName}</h1>
                   <span
                     className={cn(
-                      'rounded-[6px] px-2.5 py-0.5 text-[12px] font-bold uppercase tracking-wider',
+                      'rounded-[6px] px-2.5 py-0.5 text-[11px] sm:text-[12px] font-bold uppercase tracking-wider shrink-0',
                       isAgent ? 'bg-[#eaf2ff] text-[#3366ff]' : 'bg-[#e5f6f7] text-[#00c2cb]'
                     )}
                   >
@@ -161,50 +164,50 @@ export function UserProfileUnifiedInner({ id }: UserProfileUnifiedProps) {
                   </span>
                   <FigmaStatusBadge status={matchedCase?.status || 'Approved'} />
                 </div>
-                <p className="text-[13px] text-[#6f777f] flex flex-wrap items-center gap-3 mt-1">
+                <p className="text-[12.5px] sm:text-[13px] text-[#6f777f] flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 min-w-0">
                   <span>User ID: <strong className="font-mono text-[#1f2327]">{id}</strong></span>
-                  <span>•</span>
-                  <span>{userEmail}</span>
-                  <span>•</span>
+                  <span className="text-[#d3d5d7] hidden sm:inline">•</span>
+                  <span className="truncate max-w-[180px] sm:max-w-none">{userEmail}</span>
+                  <span className="text-[#d3d5d7] hidden sm:inline">•</span>
                   <span>{userPhone}</span>
-                  <span>•</span>
+                  <span className="text-[#d3d5d7] hidden sm:inline">•</span>
                   <span>{userCountry}</span>
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center rounded-[6px] bg-[#dfefe8] px-3 py-1 text-[12px] font-bold text-[#17b26a] gap-1.5">
-                <Award className="size-4" />
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="inline-flex items-center rounded-[6px] bg-[#dfefe8] px-3 py-1 text-[12px] font-bold text-[#17b26a] gap-1.5 whitespace-nowrap">
+                <Award className="size-4 shrink-0" />
                 {isAgent ? 'RERA Pro Agent' : 'KYC Tier 2 Verified'}
               </span>
             </div>
           </div>
 
           {/* Quick Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-[#d3d5d7]/70 text-[13px]">
-            <div className="bg-[#fcfcfc] p-2.5 rounded-[8px] border border-[#d3d5d7]/60">
-              <span className="text-[#6f777f] text-[11px] font-semibold uppercase block">KYC Status</span>
-              <span className="font-bold text-[#17b26a]">{matchedCase?.status || 'Approved'}</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 pt-3 border-t border-[#d3d5d7]/70 text-[13px] w-full min-w-0">
+            <div className="bg-[#fcfcfc] p-2.5 rounded-[8px] border border-[#d3d5d7]/60 min-w-0">
+              <span className="text-[#6f777f] text-[11px] font-semibold uppercase block break-words">KYC Status</span>
+              <span className="font-bold text-[#17b26a] break-words block">{matchedCase?.status || 'Approved'}</span>
             </div>
-            <div className="bg-[#fcfcfc] p-2.5 rounded-[8px] border border-[#d3d5d7]/60">
-              <span className="text-[#6f777f] text-[11px] font-semibold uppercase block">Verified Documents</span>
-              <span className="font-bold text-[#1f2327]">{matchedCase?.documents.length || 4} Uploaded</span>
+            <div className="bg-[#fcfcfc] p-2.5 rounded-[8px] border border-[#d3d5d7]/60 min-w-0">
+              <span className="text-[#6f777f] text-[11px] font-semibold uppercase block break-words">Verified Docs</span>
+              <span className="font-bold text-[#1f2327] break-words block">{matchedCase?.documents.length || 4} Uploaded</span>
             </div>
-            <div className="bg-[#fcfcfc] p-2.5 rounded-[8px] border border-[#d3d5d7]/60">
-              <span className="text-[#6f777f] text-[11px] font-semibold uppercase block">Risk Score</span>
-              <span className="font-bold text-[#17b26a]">{matchedCase?.riskScore || 96}% (Low)</span>
+            <div className="bg-[#fcfcfc] p-2.5 rounded-[8px] border border-[#d3d5d7]/60 min-w-0">
+              <span className="text-[#6f777f] text-[11px] font-semibold uppercase block break-words">Risk Score</span>
+              <span className="font-bold text-[#17b26a] break-words block">{matchedCase?.riskScore || 96}% (Low)</span>
             </div>
-            <div className="bg-[#fcfcfc] p-2.5 rounded-[8px] border border-[#d3d5d7]/60">
-              <span className="text-[#6f777f] text-[11px] font-semibold uppercase block">Assigned Reviewer</span>
-              <span className="font-bold text-[#1f2327]">{matchedCase?.assignedReviewer?.name || 'Compliance Team'}</span>
+            <div className="bg-[#fcfcfc] p-2.5 rounded-[8px] border border-[#d3d5d7]/60 min-w-0">
+              <span className="text-[#6f777f] text-[11px] font-semibold uppercase block break-words">Reviewer</span>
+              <span className="font-bold text-[#1f2327] break-words block">{matchedCase?.assignedReviewer?.name || 'Compliance Team'}</span>
             </div>
           </div>
         </header>
 
         {/* Master User Tabs */}
-        <section className="rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)]">
-          <div className="flex items-center gap-1.5 sm:gap-2 border-b border-[#d3d5d7] p-2.5 sm:p-4 overflow-x-auto no-scrollbar flex-nowrap">
+        <section className="rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)] w-full min-w-0 max-w-full">
+          <div className="flex items-center gap-1.5 sm:gap-2 border-b border-[#d3d5d7] p-2.5 sm:p-4 overflow-x-auto no-scrollbar flex-nowrap w-full min-w-0">
             {[
               { id: 'overview', label: 'Personal & Contact Info', icon: User },
               { id: 'verification', label: 'Verification & KYC', icon: ShieldCheck },

@@ -50,18 +50,18 @@ export function RequestCard({ request, onViewDetails, className }: RequestCardPr
   return (
     <div
       className={cn(
-        'bg-white border border-[#E5E7EB] rounded-[18px] sm:rounded-[24px] p-4 sm:p-6 shadow-[0px_2px_8px_rgba(0,0,0,0.03)] flex flex-col justify-between gap-3.5 sm:gap-4 font-sans text-left transition-all duration-200 hover:border-[#00C2CB] hover:shadow-md w-full',
+        'bg-white border border-[#E5E7EB] rounded-[18px] sm:rounded-[24px] p-3 sm:p-5 lg:p-6 shadow-[0px_2px_8px_rgba(0,0,0,0.03)] flex flex-col justify-between gap-3.5 sm:gap-4 font-sans text-left transition-all duration-200 hover:border-[#00C2CB] hover:shadow-md w-full min-w-0 max-w-full box-border',
         className
       )}
     >
-      <div className="flex flex-col gap-3.5 w-full">
+      <div className="flex flex-col gap-3.5 w-full min-w-0">
         {/* Top Row: User Avatar with Flag, Name + Verification, Online Status & Time */}
-        <div className="flex w-full items-start justify-between gap-2">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="flex w-full items-start justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
             {/* Avatar with Flag */}
             <div className="relative shrink-0">
               <MiniFlagBadge flag={request.countryFlag} />
-              <div className="size-[40px] sm:size-[44px] rounded-full overflow-hidden border border-[#E5E7EB] bg-[#F3F4F6] flex items-center justify-center">
+              <div className="size-[38px] sm:size-[44px] rounded-full overflow-hidden border border-[#E5E7EB] bg-[#F3F4F6] flex items-center justify-center">
                 <img
                   src={
                     request.investorAvatar ||
@@ -78,9 +78,9 @@ export function RequestCard({ request, onViewDetails, className }: RequestCardPr
             </div>
 
             {/* Name + Verified Badge & Online Status */}
-            <div className="flex flex-col gap-0.5 min-w-0">
+            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-[14px] sm:text-[16px] font-bold text-[#111827] truncate leading-tight">
+                <span className="text-[14px] sm:text-[16px] font-bold text-[#111827] break-words leading-tight">
                   {request.investorName}
                 </span>
                 <FigmaVerifiedCheckBadge className="size-3.5 sm:size-4 shrink-0" />
@@ -88,76 +88,76 @@ export function RequestCard({ request, onViewDetails, className }: RequestCardPr
 
               <div className="flex items-center gap-1.5 text-[11px] sm:text-[12px] text-[#8A939D] leading-none">
                 <span className="size-1.5 sm:size-2 rounded-full bg-[#10B981] shrink-0" />
-                <span className="truncate">{request.onlineStatus || 'Online (Avg 10m)'}</span>
+                <span className="break-words">{request.onlineStatus || 'Online (Avg 10m)'}</span>
               </div>
             </div>
           </div>
 
           {/* Time Ago (Top Right) */}
-          <div className="flex items-center gap-1 text-[11px] sm:text-[12px] text-[#9CA3AF] shrink-0 font-medium pt-0.5">
-            <Clock className="size-3 sm:size-3.5 text-[#9CA3AF]" />
+          <div className="flex items-center gap-1 text-[11px] sm:text-[12px] text-[#9CA3AF] shrink-0 font-medium pt-0.5 whitespace-nowrap">
+            <Clock className="size-3 sm:size-3.5 text-[#9CA3AF] shrink-0" />
             <span>{request.timeAgo || '4 min ago'}</span>
           </div>
         </div>
 
         {/* Description / Requirement Text */}
-        <p className="text-[13.5px] sm:text-[15px] leading-[20px] sm:leading-[22px] font-medium text-[#111827] line-clamp-3">
+        <p className="text-[13.5px] sm:text-[15px] leading-[20px] sm:leading-[22px] font-medium text-[#111827] break-words min-w-0">
           {request.title}
         </p>
 
         {/* Note Row */}
-        <div className="flex items-start gap-1.5 text-[11.5px] sm:text-[12.5px] leading-[17px] sm:leading-[18px]">
+        <div className="flex items-start gap-1.5 text-[11.5px] sm:text-[12.5px] leading-[17px] sm:leading-[18px] min-w-0 w-full">
           <div className="flex items-center gap-1 shrink-0 text-[#9CA3AF] pt-0.5">
             <FileText className="size-3 sm:size-3.5 text-[#9CA3AF]" />
             <span className="font-medium text-[#8A939D]">Note:</span>
           </div>
-          <p className="text-[#6B7280] line-clamp-2 flex-1">
+          <p className="text-[#6B7280] flex-1 min-w-0 break-words">
             {request.note || 'Family-friendly community with schools and parks nearby.'}
           </p>
         </div>
 
-        {/* 3 Meta Info Cards: Budget, Type, Method */}
-        <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 w-full pt-0.5">
+        {/* 3 Meta Info Cards: Budget, Type, Status */}
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 w-full pt-0.5 min-w-0">
           {/* Budget */}
-          <div className="bg-[#F8F9FA] rounded-[10px] sm:rounded-[14px] p-2 sm:p-2.5 flex flex-col gap-0.5 sm:gap-1 min-w-0">
-            <div className="flex items-center gap-1 text-[10.5px] sm:text-[11.5px] font-medium text-[#8A939D]">
-              <svg viewBox="0 0 24 24" className="size-3 sm:size-3.5 text-[#8A939D] shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <div className="bg-[#F8F9FA] rounded-[8px] sm:rounded-[14px] p-1.5 sm:p-2.5 flex flex-col gap-0.5 sm:gap-1 min-w-0">
+            <div className="flex items-center gap-1 text-[10px] sm:text-[11.5px] font-medium text-[#8A939D]">
+              <svg viewBox="0 0 24 24" className="size-3 sm:size-3.5 text-[#8A939D] shrink-0 hidden sm:block" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path d="M19 7V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v2" />
                 <path d="M5 7h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" />
                 <circle cx="12" cy="14" r="2.5" />
                 <path d="M12 12.5v3" />
               </svg>
-              <span className="truncate">Budget</span>
+              <span className="break-words">Budget</span>
             </div>
-            <p className="text-[12px] sm:text-[14px] font-bold text-[#111827] truncate">
+            <p className="text-[11.5px] sm:text-[14px] font-bold text-[#111827] break-words">
               {request.budget}
             </p>
           </div>
 
           {/* Type */}
-          <div className="bg-[#F8F9FA] rounded-[10px] sm:rounded-[14px] p-2 sm:p-2.5 flex flex-col gap-0.5 sm:gap-1 min-w-0">
-            <div className="flex items-center gap-1 text-[10.5px] sm:text-[11.5px] font-medium text-[#8A939D]">
-              <svg viewBox="0 0 24 24" className="size-3 sm:size-3.5 text-[#8A939D] shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <div className="bg-[#F8F9FA] rounded-[8px] sm:rounded-[14px] p-1.5 sm:p-2.5 flex flex-col gap-0.5 sm:gap-1 min-w-0">
+            <div className="flex items-center gap-1 text-[10px] sm:text-[11.5px] font-medium text-[#8A939D]">
+              <svg viewBox="0 0 24 24" className="size-3 sm:size-3.5 text-[#8A939D] shrink-0 hidden sm:block" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
-              <span className="truncate">Type</span>
+              <span className="break-words">Type</span>
             </div>
-            <p className="text-[12px] sm:text-[14px] font-bold text-[#111827] truncate">
+            <p className="text-[11.5px] sm:text-[14px] font-bold text-[#111827] break-words">
               {request.purpose || 'Living'}
             </p>
           </div>
 
-          {/* Method */}
-          <div className="bg-[#F8F9FA] rounded-[10px] sm:rounded-[14px] p-2 sm:p-2.5 flex flex-col gap-0.5 sm:gap-1 min-w-0">
-            <div className="flex items-center gap-1 text-[10.5px] sm:text-[11.5px] font-medium text-[#8A939D]">
-              <svg viewBox="0 0 24 24" className="size-3 sm:size-3.5 text-[#8A939D] shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8">
+          {/* Status */}
+          <div className="bg-[#F8F9FA] rounded-[8px] sm:rounded-[14px] p-1.5 sm:p-2.5 flex flex-col gap-0.5 sm:gap-1 min-w-0">
+            <div className="flex items-center gap-1 text-[10px] sm:text-[11.5px] font-medium text-[#8A939D]">
+              <svg viewBox="0 0 24 24" className="size-3 sm:size-3.5 text-[#8A939D] shrink-0 hidden sm:block" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <rect width="20" height="14" x="2" y="5" rx="2" />
                 <circle cx="12" cy="12" r="2.5" />
               </svg>
-              <span className="truncate">Method</span>
+              <span className="break-words">Status</span>
             </div>
-            <p className="text-[12px] sm:text-[14px] font-bold text-[#111827] truncate">
+            <p className="text-[11.5px] sm:text-[14px] font-bold text-[#111827] break-words">
               {request.unitStatus || 'Ready'}
             </p>
           </div>

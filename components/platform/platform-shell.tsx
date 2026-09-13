@@ -122,13 +122,13 @@ export function PlatformShell({
                   <ChevronRight className="size-3 text-[#8A939D] shrink-0" />
                   <span className="text-[#202428] font-semibold truncate">{title}</span>
                 </div>
-                <div className="flex items-center gap-1.5 min-w-0">
+                <div className="flex flex-col justify-center min-w-0">
                   {eyebrow && (
-                    <span className="text-[10px] font-bold text-[#00c2cb] uppercase tracking-wider block sm:hidden shrink-0 bg-[#00c2cb]/10 px-1.5 py-0.5 rounded-[4px]">
+                    <span className="text-[9.5px] font-bold text-[#00c2cb] uppercase tracking-wider block sm:hidden truncate leading-tight mb-0.5">
                       {eyebrow}
                     </span>
                   )}
-                  <h1 className="truncate text-[15px] sm:text-[22px] font-bold leading-[22px] sm:leading-[28px] text-[#202428] font-sans tracking-tight">
+                  <h1 className="truncate text-[16px] sm:text-[22px] font-bold leading-[20px] sm:leading-[28px] text-[#202428] font-sans tracking-tight">
                     {title}
                   </h1>
                 </div>
@@ -180,10 +180,7 @@ export function PlatformShell({
                     }
                   }}
                   trigger={
-                    <button
-                      type="button"
-                      className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#202428] px-3 text-[13px] sm:text-[14px] font-medium text-white shadow-xs hover:bg-[#2e3338] transition-colors cursor-pointer font-sans"
-                    >
+                    <span className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#202428] px-3 text-[13px] sm:text-[14px] font-medium text-white shadow-xs hover:bg-[#2e3338] transition-colors cursor-pointer font-sans">
                       <svg className="size-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                         <polyline points="7 10 12 15 17 10" />
@@ -191,7 +188,7 @@ export function PlatformShell({
                       </svg>
                       <span>Export</span>
                       <ChevronRight className="size-3.5 rotate-90 opacity-70" />
-                    </button>
+                    </span>
                   }
                   ariaLabel="Export Options"
                 />

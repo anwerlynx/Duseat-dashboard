@@ -287,19 +287,19 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
 
   return (
     <PlatformShell title={agent.name} eyebrow="agent">
-      <div className="flex w-full min-w-0 flex-col gap-4 px-4 sm:px-6 lg:px-8 py-5 font-sans">
+      <div className="flex w-full min-w-0 flex-col gap-4 px-3 sm:px-6 lg:px-8 py-4 sm:py-5 font-sans">
         {/* 1. Header Card with Agent Summary & Quick Actions */}
-        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <header className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4 w-full min-w-0 max-w-full">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between w-full min-w-0">
             {/* Left: Avatar + Identity + Status Badges */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center min-w-0 flex-1">
               <AvatarFlagOverlay code={getCountryCode(agent.country || 'Egypt')}>
                 <div
                   onClick={() => setAvatarModalOpen(true)}
                   role="button"
                   tabIndex={0}
                   title="Click to view and download photo"
-                  className="size-[72px] sm:size-[80px] rounded-[12px] overflow-hidden bg-gradient-to-br from-[#00c2cb] to-[#0a8288] flex items-center justify-center shadow-xs cursor-pointer hover:ring-2 hover:ring-[#00c2cb] hover:scale-105 active:scale-95 transition-all select-none"
+                  className="size-[72px] sm:size-[80px] rounded-[12px] overflow-hidden bg-gradient-to-br from-[#00c2cb] to-[#0a8288] flex items-center justify-center shadow-xs cursor-pointer hover:ring-2 hover:ring-[#00c2cb] hover:scale-105 active:scale-95 transition-all select-none shrink-0"
                 >
                   {agent.avatar ? (
                     <img src={agent.avatar} alt={agent.name} className="size-full object-cover" />
@@ -326,41 +326,41 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                 />
               )}
 
-              <div className="space-y-1 font-sans">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <h1 className="text-[24px] sm:text-[32px] font-bold leading-[32px] sm:leading-[40px] text-[#1f2327]">
+              <div className="space-y-1 font-sans min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 min-w-0">
+                  <h1 className="text-[22px] sm:text-[32px] font-bold leading-[28px] sm:leading-[40px] text-[#1f2327] break-words">
                     {agent.name}
                   </h1>
                   <FigmaStatusBadge status={status} />
                   <AgentPlanBadge plan={subscription} />
                 </div>
 
-                <div className="text-[14px] leading-[20px] text-[#6f777f] flex flex-wrap items-center gap-2 sm:gap-2.5">
+                <div className="text-[13px] sm:text-[14px] leading-[20px] text-[#6f777f] flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
                   <span className="inline-flex items-center gap-1.5">
                     <span className="text-[#6f777f]">Agent ID:</span>
                     <strong className="font-mono text-[13px] font-bold text-[#00c2cb] bg-[#00c2cb]/10 px-2 py-0.5 rounded-[6px]">{agent.id}</strong>
                   </span>
-                  <span className="text-[#d3d5d7]">•</span>
+                  <span className="text-[#d3d5d7] hidden sm:inline">•</span>
                   <span className="inline-flex items-center gap-1.5">
                     <span>{agent.country || 'Egypt'}</span>
                   </span>
-                  <span className="text-[#d3d5d7]">•</span>
+                  <span className="text-[#d3d5d7] hidden sm:inline">•</span>
                   <span>
                     Agency: <strong className="font-medium text-[#1f2327]">{agent.agency}</strong>
                   </span>
-                  <span className="text-[#d3d5d7]">•</span>
+                  <span className="text-[#d3d5d7] hidden sm:inline">•</span>
                   <span>
                     RERA: <strong className="font-medium text-[#1f2327]">{agent.reraNumber || 'BRN-61284'}</strong>
                   </span>
-                  <span className="text-[#d3d5d7]">•</span>
-                  <span>{agent.email}</span>
+                  <span className="text-[#d3d5d7] hidden sm:inline">•</span>
+                  <span className="break-words">{agent.email}</span>
                 </div>
 
-                <div className="text-[12px] leading-[16px] text-[#6f777f] flex flex-wrap items-center gap-2 pt-0.5">
+                <div className="text-[12px] leading-[16px] text-[#6f777f] flex flex-wrap items-center gap-x-2 gap-y-1 pt-0.5 min-w-0">
                   <span>
                     Member since <strong className="font-medium text-[#1f2327]">{agent.joined}</strong>
                   </span>
-                  <span className="text-[#d3d5d7]">•</span>
+                  <span className="text-[#d3d5d7] hidden sm:inline">•</span>
                   <span>
                     Last active <strong className="font-medium text-[#1f2327]">{agent.lastLogin}</strong>
                   </span>
@@ -447,10 +447,10 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                 setFilterCategory('Activity & Deals')
                 setActiveTab('offers')
               }}
-              className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer"
+              className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer min-w-0"
             >
-              <p className="text-[14px] leading-[20px] text-[#6f777f]">Requests</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#1f2327]">{agent.requestsWon?.length || 8}</p>
+              <p className="text-[14px] leading-[20px] text-[#6f777f] break-words">Requests</p>
+              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#1f2327] break-words">{agent.requestsWon?.length || 8}</p>
             </button>
             <button
               type="button"
@@ -458,10 +458,10 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                 setFilterCategory('Activity & Deals')
                 setActiveTab('offers')
               }}
-              className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer"
+              className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer min-w-0"
             >
-              <p className="text-[14px] leading-[20px] text-[#6f777f]">Offers received</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#1f2327]">{agent.offers || 12}</p>
+              <p className="text-[14px] leading-[20px] text-[#6f777f] break-words">Offers received</p>
+              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#1f2327] break-words">{agent.offers || 12}</p>
             </button>
             <button
               type="button"
@@ -469,10 +469,10 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                 setFilterCategory('Activity & Deals')
                 setActiveTab('deals')
               }}
-              className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer"
+              className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer min-w-0"
             >
-              <p className="text-[14px] leading-[20px] text-[#6f777f]">Deals completed</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#17b26a]">{agent.accepted || 1}</p>
+              <p className="text-[14px] leading-[20px] text-[#6f777f] break-words">Deals completed</p>
+              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#17b26a] break-words">{agent.accepted || 1}</p>
             </button>
             <button
               type="button"
@@ -480,10 +480,10 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                 setFilterCategory('Activity & Deals')
                 setActiveTab('performance')
               }}
-              className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer"
+              className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer min-w-0"
             >
-              <p className="text-[14px] leading-[20px] text-[#6f777f]">Total score</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#00c2cb]">
+              <p className="text-[14px] leading-[20px] text-[#6f777f] break-words">Total score</p>
+              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#00c2cb] break-words">
                 {agent.rating ? Math.round(agent.rating * 10) + agent.accepted * 2 : 92}
               </p>
             </button>
@@ -491,27 +491,27 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
         </header>
 
         {/* 3. Navigation Bar: Category Filter & Sub-Tabs */}
-        <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] font-sans space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#d3d5d7] pb-3">
-            <div className="flex items-center gap-2.5">
-              <span className="text-[16px] sm:text-[18px] font-semibold text-[#1f2327]">
+        <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-3.5 sm:p-5 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] font-sans space-y-4 w-full min-w-0 max-w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#d3d5d7] pb-3 w-full min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="text-[15px] sm:text-[18px] font-semibold text-[#1f2327] break-words">
                 Agent Profile Directory ({allSections.length} Sections)
               </span>
             </div>
 
             {/* View All & Category Filter Pills */}
-            <div className="flex items-center gap-1.5 sm:gap-2 text-[13px] sm:text-[14px] overflow-x-auto no-scrollbar flex-nowrap sm:flex-wrap pb-1 sm:pb-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[13px] sm:text-[14px] overflow-x-auto no-scrollbar flex-nowrap sm:flex-wrap pb-1 sm:pb-0 w-full sm:w-auto min-w-0">
               <button
                 type="button"
                 onClick={() => setViewAllMode(!viewAllMode)}
                 className={cn(
-                  'h-[34px] px-3 sm:px-3.5 rounded-[8px] font-medium transition-colors cursor-pointer ant-wave-btn flex items-center gap-1.5 shrink-0',
+                  'h-[34px] px-3 sm:px-3.5 rounded-[8px] font-medium transition-colors cursor-pointer ant-wave-btn flex items-center gap-1.5 shrink-0 whitespace-nowrap',
                   viewAllMode
                     ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                     : 'border border-[#d3d5d7] bg-white text-[#1f2327] hover:bg-[#eff1f3]'
                 )}
               >
-                <Eye className="size-4" />
+                <Eye className="size-4 shrink-0" />
                 <span>{viewAllMode ? 'Tabbed Mode' : 'View All / عرض الكل'}</span>
               </button>
 

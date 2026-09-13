@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { TableScrollProvider } from '@/components/providers/table-scroll-provider'
+import { MobileDockNav } from '@/components/navigation/mobile-dock-nav'
 import './globals.css'
 
 const geistSans = Geist({
@@ -32,8 +33,11 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <TableScrollProvider>
           <Suspense fallback={null}>
-            {children}
+            <div className="min-h-dvh pb-20 lg:pb-0">
+              {children}
+            </div>
           </Suspense>
+          <MobileDockNav />
         </TableScrollProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

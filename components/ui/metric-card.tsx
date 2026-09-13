@@ -104,35 +104,35 @@ export function MetricCard({
       )}
     >
       {/* Header with Icon on the Left, Title, and subtle ArrowUpRight on the Right */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-start gap-2.5">
         {Icon && (
           <span
             className={cn(
-              'flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors',
+              'flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors mt-0.5',
               iconBgColors[tone]
             )}
           >
             <Icon className="size-[17px]" />
           </span>
         )}
-        <span className="text-[13.5px] font-medium text-[#6f777f] group-hover:text-[#1f2327] transition-colors truncate" title={label}>
+        <span className="text-[13.5px] font-medium text-[#6f777f] group-hover:text-[#1f2327] transition-colors break-words flex-1 min-w-0" title={label}>
           {label}
         </span>
         {onClick && (
-          <div className="ml-auto flex items-center">
+          <div className="ml-auto flex items-center shrink-0">
             <ArrowUpRight className="size-4 text-[#98a2b3] opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[#1f2327]" />
           </div>
         )}
       </div>
 
       {/* Value row with bold black numbers and trend pill badge */}
-      <div className="mt-2.5 flex items-end justify-between gap-2">
-        <div className="min-w-0">
-          <span className="text-[24px] sm:text-[26px] font-bold leading-tight tracking-tight text-[#1f2327] block truncate tabular-nums font-sans">
+      <div className="mt-2.5 flex flex-wrap items-end justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <span className="text-[22px] sm:text-[26px] font-bold leading-tight tracking-tight text-[#1f2327] block break-words tabular-nums font-sans">
             {displayCount}
           </span>
           {subtitle && (
-            <p className="mt-0.5 text-[12px] leading-[16px] text-[#6f777f] truncate">{subtitle}</p>
+            <p className="mt-1 text-[12px] leading-[16px] text-[#6f777f] break-words">{subtitle}</p>
           )}
         </div>
 
@@ -159,9 +159,9 @@ export function MetricCard({
       {supporting && supporting.length > 0 && (
         <div className="mt-3 space-y-1.5 border-t border-[#f2f4f7] pt-2.5">
           {supporting.map((m) => (
-            <div key={m.label} className="flex items-center justify-between gap-2 text-[12px] leading-[16px]">
-              <span className="truncate text-[#6f777f] font-normal">{m.label}</span>
-              <span className="flex items-center gap-1.5">
+            <div key={m.label} className="flex items-start justify-between gap-2 text-[12px] leading-[16px]">
+              <span className="text-[#6f777f] font-normal break-words flex-1 min-w-0">{m.label}</span>
+              <span className="flex items-center gap-1.5 shrink-0">
                 <span className="font-semibold tabular-nums text-[#1f2327]">{m.value}</span>
                 {m.delta && (
                   <span

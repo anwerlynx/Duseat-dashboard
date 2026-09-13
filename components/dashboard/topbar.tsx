@@ -82,13 +82,16 @@ export function Topbar({
 
           <div className="hidden h-8 w-[1px] bg-[#E2E5E8] sm:block" />
 
-          <div className="min-w-0 flex flex-col justify-center">
-            <div className="flex items-center gap-1 text-[11px] sm:text-[12px] leading-[16px] text-[#68727D] font-medium font-sans truncate">
+          <div className="min-w-0 flex flex-col justify-center flex-1">
+            <div className="hidden sm:flex items-center gap-1 text-[11px] sm:text-[12px] leading-[16px] text-[#68727D] font-medium font-sans truncate">
               <span className="cursor-pointer hover:text-[#202428] transition-colors shrink-0">Duseat</span>
               <ChevronDown className="size-3 -rotate-90 text-[#8A939D] shrink-0" />
               <span className="text-[#202428] font-semibold truncate">Dashboard</span>
             </div>
-            <h1 className="truncate text-[18px] sm:text-[22px] font-bold leading-[26px] sm:leading-[28px] text-[#202428] font-sans tracking-tight">
+            <span className="text-[9.5px] font-bold text-[#00c2cb] uppercase tracking-wider block sm:hidden truncate leading-tight mb-0.5">
+              Duseat Dashboard
+            </span>
+            <h1 className="truncate text-[16px] sm:text-[22px] font-bold leading-[20px] sm:leading-[28px] text-[#202428] font-sans tracking-tight">
               Executive Overview
             </h1>
           </div>
@@ -120,40 +123,44 @@ export function Topbar({
             )}
           </div>
 
-          {/* Date range */}
-          <Dropdown
-            value={range}
-            onSelect={(v) => onRangeChange(v as DateRange)}
-            align="end"
-            options={(Object.keys(rangeLabels) as DateRange[]).map((r) => ({
-              label: rangeLabels[r],
-              value: r,
-              icon: <Calendar className="size-4 text-[#6f777f]" />,
-            }))}
-            trigger={
-              <span className="inline-flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] shadow-2xs transition-colors hover:bg-[#eff1f3] cursor-pointer">
-                <Calendar className="size-4 text-[#6f777f]" />
-                <span className="hidden sm:inline">{rangeLabels[range]}</span>
-                <ChevronDown className="size-3.5 text-[#9da4ae]" />
-              </span>
-            }
-            ariaLabel="Select date range"
-          />
+          {/* Date range (hidden on mobile) */}
+          <div className="hidden sm:block">
+            <Dropdown
+              value={range}
+              onSelect={(v) => onRangeChange(v as DateRange)}
+              align="end"
+              options={(Object.keys(rangeLabels) as DateRange[]).map((r) => ({
+                label: rangeLabels[r],
+                value: r,
+                icon: <Calendar className="size-4 text-[#6f777f]" />,
+              }))}
+              trigger={
+                <span className="inline-flex h-[36px] items-center gap-2 rounded-[8px] border border-[#d3d5d7] bg-white px-3 text-[14px] font-medium text-[#1f2327] shadow-2xs transition-colors hover:bg-[#eff1f3] cursor-pointer">
+                  <Calendar className="size-4 text-[#6f777f]" />
+                  <span>{rangeLabels[range]}</span>
+                  <ChevronDown className="size-3.5 text-[#9da4ae]" />
+                </span>
+              }
+              ariaLabel="Select date range"
+            />
+          </div>
 
-          {/* Export full report */}
+          {/* Export full report (hidden on mobile) */}
           <button
             type="button"
             onClick={onExport}
             title="Export CSV Summary"
             aria-label="Export report"
-            className="flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#202428] px-3 text-[13px] sm:text-[14px] font-medium text-white shadow-xs hover:bg-[#2e3338] transition-colors cursor-pointer font-sans"
+            className="hidden sm:flex h-[36px] items-center gap-1.5 rounded-[8px] bg-[#202428] px-3 text-[13px] sm:text-[14px] font-medium text-white shadow-xs hover:bg-[#2e3338] transition-colors cursor-pointer font-sans"
           >
             <Download className="size-4 text-white" />
-            <span className="hidden sm:inline">Export</span>
+            <span>Export</span>
           </button>
 
-          {/* Messaging Panel */}
-          <MessagingPanel />
+          {/* Messaging Panel (hidden on mobile to prevent overflow) */}
+          <div className="hidden md:block">
+            <MessagingPanel />
+          </div>
 
           {/* Notifications Panel */}
           <NotificationsPanel />

@@ -99,17 +99,17 @@ export function AgentOfferCard({
   return (
     <div
       className={cn(
-        'bg-white border border-[#D0D5DD] rounded-[18px] sm:rounded-[20px] p-5 sm:p-6 drop-shadow-[0px_1px_2px_rgba(16,24,40,0.05)] flex flex-col justify-between gap-4 font-sans text-left transition-all duration-200 hover:border-[#00C2CB] hover:shadow-md w-full',
+        'bg-white border border-[#D0D5DD] rounded-[18px] sm:rounded-[20px] p-3.5 sm:p-6 drop-shadow-[0px_1px_2px_rgba(16,24,40,0.05)] flex flex-col justify-between gap-4 font-sans text-left transition-all duration-200 hover:border-[#00C2CB] hover:shadow-md w-full min-w-0 max-w-full box-border',
         className
       )}
     >
-      <div className="flex flex-col gap-3.5 w-full">
+      <div className="flex flex-col gap-3.5 w-full min-w-0">
         {/* Row 1: Request ID (left) + Status Badge (right) */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2 min-w-0 w-full">
           <button
             type="button"
             onClick={onRequestClick}
-            className="text-[15px] font-medium text-[#00C2CB] underline hover:opacity-80 transition-opacity cursor-pointer"
+            className="text-[15px] font-medium text-[#00C2CB] underline hover:opacity-80 transition-opacity cursor-pointer shrink-0 truncate"
           >
             {displayRequestId.startsWith('#') ? displayRequestId : `#${displayRequestId}`}
           </button>
@@ -144,10 +144,10 @@ export function AgentOfferCard({
         </div>
 
         {/* Row 2: User Avatar + Name + Badges + Subtitle + Time */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-start justify-between gap-2 sm:gap-3 min-w-0 w-full">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
             {/* Avatar */}
-            <div className="size-[44px] rounded-full overflow-hidden border border-[#E5E7EB] bg-[#F3F4F6] shrink-0">
+            <div className="size-[40px] sm:size-[44px] rounded-full overflow-hidden border border-[#E5E7EB] bg-[#F3F4F6] shrink-0">
               <img
                 src={displayAvatar}
                 alt={displayName}
@@ -156,38 +156,31 @@ export function AgentOfferCard({
             </div>
 
             {/* Name + Badges & Subtitle */}
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-bold text-[15px] text-[#101828] leading-tight truncate">
+            <div className="flex flex-col min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
+                <span className="font-bold text-[14px] sm:text-[15px] text-[#101828] leading-tight truncate">
                   {displayName}
                 </span>
 
                 {/* Plan Badge (cyan) */}
-                <span className="inline-flex items-center gap-1 rounded-[6px] bg-[#E0F7F8] border border-[#B3EEF0] px-1.5 py-0.5 text-[11px] font-semibold text-[#00A4AC] leading-none shrink-0">
+                <span className="inline-flex items-center gap-1 rounded-[6px] bg-[#E0F7F8] border border-[#B3EEF0] px-1.5 py-0.5 text-[10.5px] font-semibold text-[#00A4AC] leading-none shrink-0">
                   <span>{displayPlan}</span>
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="size-3 text-[#00A4AC]">
-                    <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1 14.5l-4-4 1.41-1.41L11 13.67l6.59-6.59L19 8.5l-8 8z" />
-                  </svg>
                 </span>
 
                 {/* Verified Badge (green) */}
-                <span className="inline-flex items-center gap-1 rounded-[6px] bg-[#E6F8EF] border border-[#A6F4C5] px-1.5 py-0.5 text-[11px] font-semibold text-[#079455] leading-none shrink-0">
+                <span className="inline-flex items-center gap-1 rounded-[6px] bg-[#E6F8EF] border border-[#A6F4C5] px-1.5 py-0.5 text-[10.5px] font-semibold text-[#079455] leading-none shrink-0">
                   <span>Verified</span>
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="size-3 text-[#079455]">
-                    <circle cx="12" cy="12" r="10" />
-                    <path fill="white" d="m9 12 2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
                 </span>
 
                 {/* Rating Badge (amber) */}
-                <span className="inline-flex items-center gap-1 rounded-[6px] bg-[#FEF7EB] border border-[#FEDF89] px-1.5 py-0.5 text-[11px] font-semibold text-[#F79009] leading-none shrink-0">
+                <span className="inline-flex items-center gap-1 rounded-[6px] bg-[#FEF7EB] border border-[#FEDF89] px-1.5 py-0.5 text-[10.5px] font-semibold text-[#F79009] leading-none shrink-0">
                   <Star className="size-3 fill-[#F79009] text-[#F79009]" />
                   <span>{displayRating}</span>
                 </span>
               </div>
 
               {/* Subtitle: ID • Deals */}
-              <div className="text-[13px] text-[#667085] mt-0.5">
+              <div className="text-[12px] sm:text-[13px] text-[#667085] mt-0.5 truncate">
                 <span>{displayId}</span>
                 <span className="mx-1.5">•</span>
                 <span>{displayDeals}</span>
@@ -196,31 +189,31 @@ export function AgentOfferCard({
           </div>
 
           {/* Timestamp on right */}
-          <div className="inline-flex items-center gap-1 text-[12px] text-[#98A2B3] font-normal shrink-0">
-            <Clock className="size-3.5 text-[#98A2B3]" />
+          <div className="inline-flex items-center gap-1 text-[11px] sm:text-[12px] text-[#98A2B3] font-normal shrink-0 whitespace-nowrap pt-0.5">
+            <Clock className="size-3.5 text-[#98A2B3] shrink-0" />
             <span>{displayTime}</span>
           </div>
         </div>
 
         {/* Row 3: Description Title & Note */}
-        <div className="space-y-1 pt-0.5">
-          <p className="text-[14.5px] sm:text-[15px] font-medium text-[#101828] leading-snug">
+        <div className="space-y-1 pt-0.5 min-w-0 w-full">
+          <p className="text-[13.5px] sm:text-[15px] font-medium text-[#101828] leading-snug break-words">
             {offer.proposalDescription}
           </p>
 
-          <div className="flex items-center gap-1.5 text-[12.5px] sm:text-[13px] text-[#667085]">
+          <div className="flex items-center gap-1.5 text-[12px] sm:text-[13px] text-[#667085] min-w-0">
             <FileText className="size-3.5 text-[#98A2B3] shrink-0" />
-            <span className="text-[#98A2B3] font-medium">Note:</span>
-            <span className="truncate">{displayNote}</span>
+            <span className="text-[#98A2B3] font-medium shrink-0">Note:</span>
+            <span className="truncate flex-1 min-w-0">{displayNote}</span>
           </div>
         </div>
 
         {/* Row 4: 4 Property Photos */}
-        <div className="grid grid-cols-4 gap-2.5 sm:gap-3 pt-1">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3 pt-1 min-w-0 w-full">
           {photos.map((photoUrl, idx) => (
             <div
               key={idx}
-              className="h-[74px] sm:h-[80px] rounded-[12px] sm:rounded-[14px] overflow-hidden border border-[#E5E7EB] bg-[#F2F4F7] relative group"
+              className="h-[68px] sm:h-[80px] rounded-[10px] sm:rounded-[14px] overflow-hidden border border-[#E5E7EB] bg-[#F2F4F7] relative group min-w-0"
             >
               <img
                 src={photoUrl}
@@ -231,17 +224,17 @@ export function AgentOfferCard({
           ))}
         </div>
 
-        {/* Row 5: Location & Brochure Pills (Equal Width Rounded Containers matching Figma 312:33680) */}
-        <div className="grid grid-cols-2 gap-3 pt-1">
+        {/* Row 5: Location & Brochure Pills */}
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-1 min-w-0 w-full">
           {/* Location Pill */}
-          <div className="h-[44px] rounded-[12px] border border-[#D0D5DD] bg-white flex items-center justify-center gap-2 px-3 text-[13.5px] font-medium text-[#344054] shadow-2xs hover:border-[#00C2CB] transition-colors">
-            <MapPin className="size-4 text-[#667085] shrink-0" />
+          <div className="h-[42px] sm:h-[44px] rounded-[12px] border border-[#D0D5DD] bg-white flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 text-[12.5px] sm:text-[13.5px] font-medium text-[#344054] shadow-2xs hover:border-[#00C2CB] transition-colors min-w-0">
+            <MapPin className="size-3.5 sm:size-4 text-[#667085] shrink-0" />
             <span className="truncate">{offer.location || 'Palm Jumeirah'}</span>
           </div>
 
           {/* Brochure Pill */}
-          <div className="h-[44px] rounded-[12px] border border-[#D0D5DD] bg-white flex items-center justify-center gap-2 px-3 text-[13.5px] font-medium text-[#344054] shadow-2xs hover:border-[#00C2CB] transition-colors">
-            <FileText className="size-4 text-[#667085] shrink-0" />
+          <div className="h-[42px] sm:h-[44px] rounded-[12px] border border-[#D0D5DD] bg-white flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 text-[12.5px] sm:text-[13.5px] font-medium text-[#344054] shadow-2xs hover:border-[#00C2CB] transition-colors min-w-0">
+            <FileText className="size-3.5 sm:size-4 text-[#667085] shrink-0" />
             <span className="truncate">{offer.brochureName || 'Brochure.pdf'}</span>
           </div>
         </div>

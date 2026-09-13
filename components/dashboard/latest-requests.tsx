@@ -113,8 +113,8 @@ export function LatestRequests({ query, onViewAll }: { query: string; onViewAll:
                           variant="subtle"
                         />
                         <div className="min-w-0">
-                          <p className="font-semibold text-[13px] text-[#1f2327] hover:text-[#00c2cb] transition-colors truncate max-w-[150px]">{req.property}</p>
-                          <p className="text-[11px] text-[#6f777f] truncate max-w-[150px]">
+                          <p className="font-semibold text-[13px] text-[#1f2327] hover:text-[#00c2cb] transition-colors whitespace-nowrap">{req.property}</p>
+                          <p className="text-[11px] text-[#6f777f] whitespace-nowrap">
                             {req.id} · {req.investor}
                           </p>
                         </div>

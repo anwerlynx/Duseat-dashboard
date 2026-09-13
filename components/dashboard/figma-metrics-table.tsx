@@ -366,7 +366,7 @@ export function FigmaMetricsTable() {
                     </td>
                     <td className="px-4 py-3.5">
                       <div className="font-bold text-slate-900">{row.metric}</div>
-                      <div className="text-[11px] text-slate-400 truncate max-w-xs">{row.metricSubtitle}</div>
+                      <div className="text-[11px] text-slate-400 break-words">{row.metricSubtitle}</div>
                     </td>
                     <td className="px-4 py-3.5">
                       <span className="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">

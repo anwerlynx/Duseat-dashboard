@@ -130,10 +130,10 @@ export function TopAgents({ query, onViewAll }: { query: string; onViewAll: () =
                       />
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className="truncate text-[13px] font-semibold text-[#1f2327] hover:text-[#00c2cb] transition-colors max-w-[130px]">{agent.name}</p>
+                          <p className="text-[13px] font-semibold text-[#1f2327] hover:text-[#00c2cb] transition-colors whitespace-nowrap">{agent.name}</p>
                           <AgentPlanBadge plan={getAgentPlan(idx)} compact />
                         </div>
-                        <p className="truncate text-[11px] text-[#6f777f] max-w-[140px]">{agent.region}</p>
+                        <p className="text-[11px] text-[#6f777f] whitespace-nowrap">{agent.region}</p>
                       </div>
                     </div>
                   </td>
