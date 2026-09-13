@@ -154,7 +154,7 @@ function DashboardInner() {
   })
 
   return (
-    <div className="flex min-h-dvh bg-background font-sans">
+    <div className="flex min-h-dvh bg-background font-sans w-full overflow-x-clip">
       <Sidebar
         collapsed={collapsed}
         active={active}
@@ -166,7 +166,7 @@ function DashboardInner() {
         onMobileClose={() => setMobileOpen(false)}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col w-full overflow-x-clip">
         <Topbar
           collapsed={collapsed}
           onToggleSidebar={() => setCollapsed((c) => !c)}
@@ -181,7 +181,7 @@ function DashboardInner() {
           onExport={handleExportFullReport}
         />
 
-        <main className="flex w-full min-w-0 flex-1 flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
+        <main className="flex w-full min-w-0 flex-1 flex-col gap-5 px-3 py-4 sm:px-6 lg:px-8 overflow-x-clip">
           {loading ? (
             <LoadingSkeleton />
           ) : (
@@ -204,7 +204,7 @@ function DashboardInner() {
                   </div>
 
                   {/* Filter Pills */}
-                  <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                  <div className="flex items-center gap-1.5 text-xs overflow-x-auto no-scrollbar flex-nowrap sm:flex-wrap pb-1 sm:pb-0">
                     {(
                       [
                         { id: 'primary', label: 'Primary (6)' },
@@ -219,7 +219,7 @@ function DashboardInner() {
                         type="button"
                         onClick={() => setKpiFilter(pill.id)}
                         className={cn(
-                          'px-3 py-1.5 rounded-[8px] font-semibold transition-all cursor-pointer',
+                          'px-3 py-1.5 rounded-[8px] font-semibold transition-all cursor-pointer shrink-0 whitespace-nowrap',
                           kpiFilter === pill.id
                             ? 'bg-[#06B6C9] text-white shadow-xs'
                             : 'bg-white border border-[#E2E5E8] text-[#68727D] hover:text-[#202428] hover:bg-[#F8F9FA]'

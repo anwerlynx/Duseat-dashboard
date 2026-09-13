@@ -602,7 +602,7 @@ export function AdminManagement() {
 
           {/* TAB: Permission Matrix */}
           {activeTab === 'Permission Matrix' ? (
-            <div className="hidden md:block overflow-x-auto table-scrollbar flex-1">
+            <div className="overflow-x-auto table-scrollbar flex-1">
               <table className="w-full min-w-[1000px] border-collapse text-left text-[14px] font-sans">
                 <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
                   <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">
@@ -645,7 +645,7 @@ export function AdminManagement() {
             </div>
           ) : (
             /* Staff List Table */
-            <div className="hidden md:block overflow-x-auto table-scrollbar flex-1">
+            <div className="overflow-x-auto table-scrollbar flex-1">
               <table className="w-full min-w-[1100px] border-collapse text-left text-[14px] font-sans">
                 <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
                   <tr className="h-12 text-[14px] font-semibold text-[#1f2327] whitespace-nowrap">

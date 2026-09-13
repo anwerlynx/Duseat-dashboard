@@ -439,7 +439,7 @@ export function MonitoringManagement() {
 
           {/* TAB 2: Job Queues & Workers */}
           {activeTab === 'Job Queues & Workers' && (
-            <div className="hidden md:block overflow-x-auto table-scrollbar flex-1">
+            <div className="overflow-x-auto table-scrollbar flex-1">
               <table className="w-full min-w-[1000px] border-collapse text-left text-[14px] font-sans">
                 <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
                   <tr className="h-12 whitespace-nowrap text-[14px] font-semibold text-[#1f2327]">
@@ -549,7 +549,7 @@ export function MonitoringManagement() {
           {/* TAB 5: Crash & Error Logs Table */}
           {activeTab === 'Crash & Error Logs' && (
             <>
-              <div className="hidden md:block overflow-x-auto table-scrollbar flex-1">
+              <div className="overflow-x-auto table-scrollbar flex-1">
                 <table className="w-full min-w-[1100px] border-collapse text-left text-[14px] font-sans">
                   <thead className="bg-[#fcfcfc] border-b border-[#d3d5d7]">
                     <tr className="h-12 whitespace-nowrap text-[14px] font-semibold text-[#1f2327]">

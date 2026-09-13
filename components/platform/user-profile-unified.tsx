@@ -204,7 +204,7 @@ export function UserProfileUnifiedInner({ id }: UserProfileUnifiedProps) {
 
         {/* Master User Tabs */}
         <section className="rounded-[12px] border border-[#d3d5d7] bg-white shadow-[0px_1px_3px_rgba(16,24,40,0.05)]">
-          <div className="flex items-center gap-2 border-b border-[#d3d5d7] p-3.5 sm:p-4">
+          <div className="flex items-center gap-1.5 sm:gap-2 border-b border-[#d3d5d7] p-2.5 sm:p-4 overflow-x-auto no-scrollbar flex-nowrap">
             {[
               { id: 'overview', label: 'Personal & Contact Info', icon: User },
               { id: 'verification', label: 'Verification & KYC', icon: ShieldCheck },
@@ -219,13 +219,13 @@ export function UserProfileUnifiedInner({ id }: UserProfileUnifiedProps) {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={cn(
-                    'flex h-[36px] items-center gap-2 rounded-[8px] px-3.5 text-[14px] font-medium transition-colors cursor-pointer ant-wave-btn',
+                    'flex h-[36px] items-center gap-1.5 sm:gap-2 rounded-[8px] px-3 sm:px-3.5 text-[13px] sm:text-[14px] font-medium transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap',
                     isCur
                       ? 'bg-[#1f2327] text-white shadow-2xs'
                       : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                   )}
                 >
-                  <Icon className="size-4" />
+                  <Icon className="size-4 shrink-0" />
                   <span>{tab.label}</span>
                 </button>
               )

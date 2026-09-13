@@ -342,7 +342,6 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                   </span>
                   <span className="text-[#d3d5d7]">•</span>
                   <span className="inline-flex items-center gap-1.5">
-                    <Flag code={getCountryCode(agent.country || 'Egypt')} size="s" />
                     <span>{agent.country || 'Egypt'}</span>
                   </span>
                   <span className="text-[#d3d5d7]">•</span>
@@ -370,13 +369,13 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
             </div>
 
             {/* Right: Quick Action Controls */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => setIsEditProfileOpen(true)}
-                className="flex h-[38px] sm:h-[40px] items-center gap-1.5 rounded-[8px] bg-[#00c2cb] px-3.5 text-[14px] leading-[20px] font-semibold text-white hover:bg-[#00a8b0] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                className="flex-1 sm:flex-initial flex h-[36px] sm:h-[40px] items-center justify-center gap-1.5 rounded-[8px] bg-[#00c2cb] px-3 sm:px-3.5 text-[13px] sm:text-[14px] leading-[20px] font-semibold text-white hover:bg-[#00a8b0] transition-colors cursor-pointer ant-wave-btn shadow-2xs whitespace-nowrap"
               >
-                <Pencil className="size-4" />
+                <Pencil className="size-3.5 sm:size-4 shrink-0" />
                 <span>Edit Profile</span>
               </button>
 
@@ -384,26 +383,26 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                 <button
                   type="button"
                   onClick={() => runAction('approve')}
-                  className="flex h-[38px] sm:h-[40px] items-center gap-1.5 rounded-[8px] bg-[#17b26a] px-3.5 text-[14px] leading-[20px] font-semibold text-white hover:bg-[#159a5c] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                  className="flex-1 sm:flex-initial flex h-[36px] sm:h-[40px] items-center justify-center gap-1.5 rounded-[8px] bg-[#17b26a] px-3 sm:px-3.5 text-[13px] sm:text-[14px] leading-[20px] font-semibold text-white hover:bg-[#159a5c] transition-colors cursor-pointer ant-wave-btn shadow-2xs whitespace-nowrap"
                 >
-                  <UserCheck className="size-4" />
-                  <span>Approve & Verify</span>
+                  <UserCheck className="size-3.5 sm:size-4 shrink-0" />
+                  <span>Approve</span>
                 </button>
               )}
 
               <button
                 type="button"
                 onClick={() => setIsEditBadgeOpen(true)}
-                className="flex h-[38px] sm:h-[40px] items-center gap-2 rounded-[8px] border border-[#00c2cb] bg-[#e5f6f7]/50 px-3.5 text-[14px] leading-[20px] font-semibold text-[#00a4ac] hover:bg-[#00c2cb] hover:text-white transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                className="flex-1 sm:flex-initial flex h-[36px] sm:h-[40px] items-center justify-center gap-1.5 rounded-[8px] border border-[#00c2cb] bg-[#e5f6f7]/50 px-2.5 sm:px-3.5 text-[13px] sm:text-[14px] leading-[20px] font-semibold text-[#00a4ac] hover:bg-[#00c2cb] hover:text-white transition-colors cursor-pointer ant-wave-btn shadow-2xs whitespace-nowrap"
               >
-                <Award className="size-4" />
-                <span>Edit Plan & Badge</span>
+                <Award className="size-3.5 sm:size-4 shrink-0" />
+                <span>Plan & Badge</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => runAction('login')}
-                className="flex h-[38px] sm:h-[40px] items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white px-4 text-[14px] leading-[20px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                className="flex-1 sm:flex-initial flex h-[36px] sm:h-[40px] items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white px-3 sm:px-4 text-[13px] sm:text-[14px] leading-[20px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs whitespace-nowrap"
               >
                 <span>Login as agent</span>
               </button>
@@ -432,7 +431,7 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                   { label: 'Reject Application', value: 'reject', icon: <AlertCircle className="size-4 text-destructive" />, destructive: true },
                 ]}
                 trigger={
-                  <span className="flex size-[38px] sm:size-[40px] items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs">
+                  <span className="flex size-[36px] sm:size-[40px] shrink-0 items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs">
                     <MoreHorizontal className="size-5" />
                   </span>
                 }
@@ -501,12 +500,12 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
             </div>
 
             {/* View All & Category Filter Pills */}
-            <div className="flex flex-wrap items-center gap-2 text-[14px]">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[13px] sm:text-[14px] overflow-x-auto no-scrollbar flex-nowrap sm:flex-wrap pb-1 sm:pb-0">
               <button
                 type="button"
                 onClick={() => setViewAllMode(!viewAllMode)}
                 className={cn(
-                  'h-[34px] px-3.5 rounded-[8px] font-medium transition-colors cursor-pointer ant-wave-btn flex items-center gap-1.5',
+                  'h-[34px] px-3 sm:px-3.5 rounded-[8px] font-medium transition-colors cursor-pointer ant-wave-btn flex items-center gap-1.5 shrink-0',
                   viewAllMode
                     ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                     : 'border border-[#d3d5d7] bg-white text-[#1f2327] hover:bg-[#eff1f3]'
@@ -528,7 +527,7 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                     else if (cat === 'Security & Compliance') setActiveTab('trade-license')
                   }}
                   className={cn(
-                    'h-[34px] px-3 rounded-[8px] font-medium transition-colors cursor-pointer ant-wave-btn',
+                    'h-[34px] px-3 rounded-[8px] font-medium transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap',
                     !viewAllMode && filterCategory === cat
                       ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                       : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
@@ -541,7 +540,7 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
           </div>
 
           {/* Tab Buttons Strip */}
-          <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth flex-nowrap">
             {filteredTabs.map((tab) => {
               const isActive = activeTab === tab.id
               return (
@@ -550,7 +549,7 @@ function AgentProfileInner({ agent: initialAgent }: { agent: PlatformAgent }) {
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    'flex h-[34px] items-center gap-2 whitespace-nowrap rounded-[8px] px-3.5 text-[14px] sm:text-[15px] font-medium transition-all cursor-pointer ant-wave-btn',
+                    'flex h-[34px] items-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-[8px] px-3 text-[13px] sm:text-[14px] font-medium transition-all cursor-pointer ant-wave-btn shrink-0',
                     isActive
                       ? 'bg-[#00c2cb] text-white shadow-xs font-semibold'
                       : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'

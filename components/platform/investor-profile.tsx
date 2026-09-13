@@ -362,7 +362,6 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                   </span>
                   <span className="text-[#d3d5d7]">•</span>
                   <span className="inline-flex items-center gap-1.5">
-                    <Flag code={getCountryCode(investor.country || 'United Arab Emirates')} size="s" />
                     <span>{investor.country}</span>
                   </span>
                   <span className="text-[#d3d5d7]">•</span>
@@ -384,20 +383,20 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
             </div>
 
             {/* Right: Quick Action Controls */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex w-full sm:w-auto items-center gap-2">
               <button
                 type="button"
                 onClick={() => setIsEditProfileOpen(true)}
-                className="flex h-[38px] sm:h-[40px] items-center gap-1.5 rounded-[8px] bg-[#00c2cb] px-3.5 text-[14px] leading-[20px] font-semibold text-white hover:bg-[#00a8b0] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                className="flex-1 sm:flex-initial flex h-[38px] sm:h-[40px] items-center justify-center gap-1.5 rounded-[8px] bg-[#00c2cb] px-3.5 text-[13px] sm:text-[14px] leading-[20px] font-semibold text-white hover:bg-[#00a8b0] transition-colors cursor-pointer ant-wave-btn shadow-2xs whitespace-nowrap"
               >
-                <Pencil className="size-4" />
+                <Pencil className="size-4 shrink-0" />
                 <span>Edit Profile</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleAction('login')}
-                className="flex h-[38px] sm:h-[40px] items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[14px] leading-[20px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs"
+                className="flex-1 sm:flex-initial flex h-[38px] sm:h-[40px] items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white px-3.5 text-[13px] sm:text-[14px] leading-[20px] font-medium text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs whitespace-nowrap"
               >
                 <span>Login as investor</span>
               </button>
@@ -429,7 +428,7 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                   { label: 'Delete Investor', value: 'delete', icon: <Trash2 className="size-4 text-destructive" />, destructive: true },
                 ]}
                 trigger={
-                  <span className="flex size-[38px] sm:size-[40px] items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs">
+                  <span className="flex size-[38px] sm:size-[40px] shrink-0 items-center justify-center rounded-[8px] border border-[#d3d5d7] bg-white text-[#1f2327] hover:bg-[#eff1f3] transition-colors cursor-pointer ant-wave-btn shadow-2xs">
                     <MoreHorizontal className="size-5" />
                   </span>
                 }
@@ -438,38 +437,38 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
           </div>
 
           {/* 2. Quick 4 KPI Cards Bar */}
-          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3 font-sans">
+          <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:grid-cols-4 lg:gap-3 font-sans">
             <button
               type="button"
               onClick={() => setActiveTab('requests')}
-              className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer"
+              className="rounded-[12px] border border-[#d3d5d7] bg-white p-3 sm:px-4 sm:py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer min-w-0"
             >
-              <p className="text-[14px] leading-[20px] font-normal text-[#6f777f]">Requests</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#1f2327]">{investor.requestsList.length}</p>
+              <p className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] font-normal text-[#6f777f] truncate">Requests</p>
+              <p className="mt-0.5 text-[20px] sm:text-[24px] leading-[28px] sm:leading-[32px] font-bold text-[#1f2327] truncate">{investor.requestsList.length}</p>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('offers')}
-              className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer"
+              className="rounded-[12px] border border-[#d3d5d7] bg-white p-3 sm:px-4 sm:py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer min-w-0"
             >
-              <p className="text-[14px] leading-[20px] font-normal text-[#6f777f]">Offers received</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#1f2327]">{investor.offersReceived.length || 12}</p>
+              <p className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] font-normal text-[#6f777f] truncate">Offers received</p>
+              <p className="mt-0.5 text-[20px] sm:text-[24px] leading-[28px] sm:leading-[32px] font-bold text-[#1f2327] truncate">{investor.offersReceived.length || 12}</p>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('deals')}
-              className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer"
+              className="rounded-[12px] border border-[#d3d5d7] bg-white p-3 sm:px-4 sm:py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer min-w-0"
             >
-              <p className="text-[14px] leading-[20px] font-normal text-[#6f777f]">Deals completed</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#1f2327]">{investor.dealList.length || 1}</p>
+              <p className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] font-normal text-[#6f777f] truncate">Deals completed</p>
+              <p className="mt-0.5 text-[20px] sm:text-[24px] leading-[28px] sm:leading-[32px] font-bold text-[#1f2327] truncate">{investor.dealList.length || 1}</p>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('activity-score')}
-              className="rounded-[12px] border border-[#d3d5d7] bg-white px-4 py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer"
+              className="rounded-[12px] border border-[#d3d5d7] bg-white p-3 sm:px-4 sm:py-2.5 text-left shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] hover:border-[#00c2cb]/50 transition-all cursor-pointer min-w-0"
             >
-              <p className="text-[14px] leading-[20px] font-normal text-[#6f777f]">Total score</p>
-              <p className="mt-0.5 text-[24px] leading-[32px] font-bold text-[#1f2327]">{investor.score || 92}</p>
+              <p className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] font-normal text-[#6f777f] truncate">Total score</p>
+              <p className="mt-0.5 text-[20px] sm:text-[24px] leading-[28px] sm:leading-[32px] font-bold text-[#1f2327] truncate">{investor.score || 92}</p>
             </button>
           </div>
         </header>
@@ -484,12 +483,12 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
             </div>
 
             {/* View All & Category Filter Pills */}
-            <div className="flex flex-wrap items-center gap-2 text-[14px]">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[13px] sm:text-[14px] overflow-x-auto no-scrollbar flex-nowrap sm:flex-wrap pb-1 sm:pb-0">
               <button
                 type="button"
                 onClick={() => setViewAllMode(!viewAllMode)}
                 className={cn(
-                  'h-[34px] px-3.5 rounded-[8px] font-medium transition-colors cursor-pointer ant-wave-btn flex items-center gap-1.5',
+                  'h-[34px] px-3 sm:px-3.5 rounded-[8px] font-medium transition-colors cursor-pointer ant-wave-btn flex items-center gap-1.5 shrink-0',
                   viewAllMode
                     ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                     : 'border border-[#d3d5d7] bg-white text-[#1f2327] hover:bg-[#eff1f3]'
@@ -508,7 +507,7 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                     setFilterCategory(cat)
                   }}
                   className={cn(
-                    'h-[34px] px-3 rounded-[8px] font-medium transition-colors cursor-pointer ant-wave-btn',
+                    'h-[34px] px-3 rounded-[8px] font-medium transition-colors cursor-pointer ant-wave-btn shrink-0 whitespace-nowrap',
                     !viewAllMode && filterCategory === cat
                       ? 'bg-[#00c2cb] text-white shadow-2xs font-semibold'
                       : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
@@ -521,7 +520,7 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
           </div>
 
           {/* Tab Buttons Strip */}
-          <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth flex-nowrap">
             {filteredTabs.map((tab) => {
               const isActive = activeTab === tab.id
               const count = getSectionCount(tab)
@@ -531,9 +530,9 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    'flex h-[36px] items-center gap-2 whitespace-nowrap rounded-[8px] px-3 text-[15px] sm:text-[16px] font-medium transition-all cursor-pointer ant-wave-btn',
+                    'flex h-[36px] items-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-[8px] px-3 text-[14px] sm:text-[15px] font-medium transition-all cursor-pointer ant-wave-btn shrink-0',
                     isActive
-                      ? 'bg-[#00c2cb] text-white shadow-xs'
+                      ? 'bg-[#00c2cb] text-white shadow-xs font-semibold'
                       : 'border border-[#d3d5d7] bg-white text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327]'
                   )}
                 >
@@ -567,11 +566,11 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                 {/* Left Column (approx 68%) */}
                 <div className="space-y-6 xl:col-span-8">
                   {/* Active Property Requests */}
-                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-6 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] flex flex-col gap-6">
+                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-6 shadow-[0px_1px_3px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)] flex flex-col gap-4 sm:gap-6">
                     <div className="flex flex-col gap-2.5">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2.5">
-                          <h3 className="text-[20px] sm:text-[22px] font-bold text-[#1f2327]">Active Property Requests</h3>
+                          <h3 className="text-[18px] sm:text-[22px] font-bold text-[#1f2327]">Active Property Requests</h3>
                           <span className="inline-flex items-center rounded-full bg-[#e5f6f7] px-2.5 py-0.5 text-[12px] font-bold text-[#00848b]">
                             {investor.requestsList.length} Total
                           </span>
@@ -579,23 +578,23 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                         <button
                           type="button"
                           onClick={() => setActiveTab('requests')}
-                          className="flex items-center gap-1 text-[14px] sm:text-[15px] font-semibold text-[#00c2cb] hover:underline cursor-pointer"
+                          className="flex items-center gap-1 text-[13px] sm:text-[15px] font-semibold text-[#00c2cb] hover:underline cursor-pointer"
                         >
                           <span>View all ({investor.requestsList.length})</span>
                           <span aria-hidden="true">→</span>
                         </button>
                       </div>
-                      <div className="flex flex-wrap items-center justify-between gap-2 text-[13px] text-[#6f777f]">
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[12px] sm:text-[13px] text-[#6f777f]">
                         <p>
                           Showing latest <strong className="font-semibold text-[#1f2327]">2</strong> of <strong className="font-semibold text-[#1f2327]">{investor.requestsList.length}</strong> requirements published on Duseat UAE network
                         </p>
-                        <span className="text-[12px] font-medium text-[#6f777f] bg-[#f8f9fa] px-2 py-0.5 rounded-[6px] border border-[#e5e7eb]">
+                        <span className="text-[11px] sm:text-[12px] font-medium text-[#6f777f] bg-[#f8f9fa] px-2 py-0.5 rounded-[6px] border border-[#e5e7eb]">
                           Showing 2 of {investor.requestsList.length}
                         </span>
                       </div>
                     </div>
 
-                    <div className="grid gap-5 grid-cols-1 sm:grid-cols-2">
+                    <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2">
                       {investor.requestsList.slice(0, 2).map((req) => (
                         <RequestCard
                           key={req.id}
@@ -606,7 +605,7 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                     </div>
 
                     {investor.requestsList.length > 2 && (
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#f0f2f5] text-[13px]">
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#f0f2f5] text-[12px] sm:text-[13px]">
                         <span className="text-[#6f777f]">
                           + {investor.requestsList.length - 2} more requests published by {investor.name.split(' ')[0]}
                         </span>
@@ -623,13 +622,13 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                   </div>
 
                   {/* Recent Activity */}
-                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-6 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-5">
+                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-6 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4 sm:gap-5">
                     <div className="flex items-center justify-between gap-2">
-                      <h3 className="text-[22px] sm:text-[24px] font-bold text-[#1f2327]">Recent Activity</h3>
+                      <h3 className="text-[18px] sm:text-[24px] font-bold text-[#1f2327]">Recent Activity</h3>
                       <button
                         type="button"
                         onClick={() => setActiveTab('timeline')}
-                        className="text-[18px] sm:text-[20px] font-normal text-[#00c2cb] underline cursor-pointer hover:opacity-80"
+                        className="text-[13px] sm:text-[15px] font-medium text-[#00c2cb] underline cursor-pointer hover:opacity-80"
                       >
                         View full timeline
                       </button>
@@ -666,71 +665,71 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                 {/* Right Column (approx 32%) */}
                 <div className="space-y-6 xl:col-span-4">
                   {/* Personal Information */}
-                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-6 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-6">
+                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-6 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4 sm:gap-6">
                     <div className="flex items-center justify-between gap-2">
-                      <h3 className="text-[22px] sm:text-[24px] font-bold text-[#1f2327]">Personal information</h3>
-                      <span className="text-[18px] sm:text-[20px] text-[#6f777f]">Investor record</span>
+                      <h3 className="text-[18px] sm:text-[22px] font-bold text-[#1f2327]">Personal information</h3>
+                      <span className="text-[13px] sm:text-[15px] text-[#6f777f]">Investor record</span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-5 font-sans">
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <p className="text-[16px] sm:text-[18px] text-[#6f777f]">Email</p>
-                        <p className="text-[16px] sm:text-[18px] font-medium text-[#1f2327] truncate">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3.5 sm:gap-y-4 font-sans">
+                      <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0">
+                        <p className="text-[13px] sm:text-[14px] text-[#6f777f]">Email</p>
+                        <p className="text-[14px] sm:text-[16px] font-medium text-[#1f2327] truncate break-all">
                           {investor.email}
                         </p>
                       </div>
 
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <p className="text-[16px] sm:text-[18px] text-[#6f777f]">Phone</p>
-                        <p className="text-[16px] sm:text-[18px] font-medium text-[#1f2327] truncate">
+                      <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0">
+                        <p className="text-[13px] sm:text-[14px] text-[#6f777f]">Phone</p>
+                        <p className="text-[14px] sm:text-[16px] font-medium text-[#1f2327] truncate">
                           {investor.phone}
                         </p>
                       </div>
 
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <p className="text-[16px] sm:text-[18px] text-[#6f777f]">Country</p>
-                        <p className="text-[16px] sm:text-[18px] font-medium text-[#1f2327] truncate">
+                      <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0">
+                        <p className="text-[13px] sm:text-[14px] text-[#6f777f]">Country</p>
+                        <p className="text-[14px] sm:text-[16px] font-medium text-[#1f2327] truncate">
                           {investor.country}
                         </p>
                       </div>
 
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <p className="text-[16px] sm:text-[18px] text-[#6f777f]">Nationality</p>
-                        <p className="text-[16px] sm:text-[18px] font-medium text-[#1f2327] truncate">
+                      <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0">
+                        <p className="text-[13px] sm:text-[14px] text-[#6f777f]">Nationality</p>
+                        <p className="text-[14px] sm:text-[16px] font-medium text-[#1f2327] truncate">
                           {investor.personalInfo.nationality || 'Emirati'}
                         </p>
                       </div>
 
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <p className="text-[16px] sm:text-[18px] text-[#6f777f]">Language</p>
-                        <p className="text-[16px] sm:text-[18px] font-medium text-[#1f2327] truncate">
+                      <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0">
+                        <p className="text-[13px] sm:text-[14px] text-[#6f777f]">Language</p>
+                        <p className="text-[14px] sm:text-[16px] font-medium text-[#1f2327] truncate">
                           {investor.personalInfo.language || 'Arabic, English'}
                         </p>
                       </div>
 
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <p className="text-[16px] sm:text-[18px] text-[#6f777f]">Occupation</p>
-                        <p className="text-[16px] sm:text-[18px] font-medium text-[#1f2327] truncate">
+                      <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0">
+                        <p className="text-[13px] sm:text-[14px] text-[#6f777f]">Occupation</p>
+                        <p className="text-[14px] sm:text-[16px] font-medium text-[#1f2327] truncate">
                           {investor.personalInfo.occupation || 'Property investor'}
                         </p>
                       </div>
 
-                      <div className="col-span-2 flex flex-col gap-1 min-w-0">
-                        <p className="text-[16px] sm:text-[18px] text-[#6f777f]">Budget</p>
-                        <p className="text-[16px] sm:text-[18px] font-medium text-[#1f2327]">
+                      <div className="col-span-1 sm:col-span-2 flex flex-col gap-0.5 sm:gap-1 min-w-0">
+                        <p className="text-[13px] sm:text-[14px] text-[#6f777f]">Budget</p>
+                        <p className="text-[14px] sm:text-[16px] font-medium text-[#1f2327]">
                           {investor.personalInfo.budget || 'AED 1.5M – 4M'}
                         </p>
                       </div>
 
-                      <div className="col-span-2 flex flex-col gap-3 pt-2">
-                        <p className="text-[16px] sm:text-[18px] text-[#6f777f]">Preferred areas</p>
+                      <div className="col-span-1 sm:col-span-2 flex flex-col gap-2 pt-1 sm:pt-2">
+                        <p className="text-[13px] sm:text-[14px] text-[#6f777f]">Preferred areas</p>
                         <div className="flex flex-wrap gap-2">
                           {(investor.personalInfo.preferredAreas?.length ? investor.personalInfo.preferredAreas : ['Downtown Dubai', 'Dubai Marina', 'Business Bay']).map((area) => (
                             <div
                               key={area}
-                              className="border border-[#d3d5d7] rounded-[8px] h-[44px] px-3 py-2 flex items-center gap-1.5 text-[15px] sm:text-[16px] text-[#1f2327] font-medium bg-white"
+                              className="border border-[#d3d5d7] rounded-[8px] h-[38px] sm:h-[42px] px-3 py-1.5 flex items-center gap-1.5 text-[13px] sm:text-[15px] text-[#1f2327] font-medium bg-white"
                             >
-                              <ExternalLink className="size-4 text-[#1f2327] shrink-0" />
+                              <ExternalLink className="size-3.5 sm:size-4 text-[#1f2327] shrink-0" />
                               <span>{area}</span>
                             </div>
                           ))}
@@ -740,13 +739,13 @@ function InvestorProfileInner({ investor: initialInvestor }: { investor: Platfor
                   </div>
 
                   {/* Notes Card */}
-                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-6 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-5">
+                  <div className="rounded-[12px] border border-[#d3d5d7] bg-white p-4 sm:p-6 drop-shadow-[0px_1px_1.5px_rgba(16,24,40,0.05),0px_1px_1px_rgba(16,24,40,0.05)] flex flex-col gap-4 sm:gap-5">
                     <div className="flex items-center justify-between gap-2">
-                      <h3 className="text-[22px] sm:text-[24px] font-bold text-[#1f2327]">Notes</h3>
+                      <h3 className="text-[18px] sm:text-[22px] font-bold text-[#1f2327]">Notes</h3>
                       <button
                         type="button"
                         onClick={() => setActiveTab('notes')}
-                        className="text-[18px] sm:text-[20px] font-normal text-[#00c2cb] underline cursor-pointer hover:opacity-80"
+                        className="text-[13px] sm:text-[15px] font-normal text-[#00c2cb] underline cursor-pointer hover:opacity-80"
                       >
                         View all notes
                       </button>
