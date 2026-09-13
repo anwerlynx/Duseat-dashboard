@@ -36,6 +36,16 @@ interface PlatformShellProps {
   query?: string
   onQueryChange?: (value: string) => void
   actions?: React.ReactNode
+  selectedCount?: number
+  selectedLabel?: string
+  selectedActions?: React.ReactNode
+  onClearSelection?: () => void
+  quickActions?: {
+    label: string
+    icon?: React.ReactNode
+    onClick: () => void
+    variant?: 'primary' | 'secondary' | 'danger'
+  }[]
 }
 
 export function PlatformShell({
@@ -50,6 +60,11 @@ export function PlatformShell({
   query = '',
   onQueryChange,
   actions,
+  selectedCount = 0,
+  selectedLabel = 'items',
+  selectedActions,
+  onClearSelection,
+  quickActions,
 }: PlatformShellProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -206,7 +221,34 @@ export function PlatformShell({
                 <span className="hidden md:inline text-[#68727D]">Updated just now</span>
               </button>
 
-              {actions && <div className="hidden sm:flex items-center gap-2">{actions}</div>}
+              {actions && <div className="flex items-center gap-2">{actions}</div>}
+
+              {/* Quick Page Actions Dropdown if provided */}
+              {quickActions && quickActions.length > 0 && (
+                <div className="flex items-center">
+                  <Dropdown
+                    align="end"
+                    floating
+                    options={quickActions.map((qa) => ({
+                      label: qa.label,
+                      value: qa.label,
+                      icon: qa.icon,
+                      destructive: qa.variant === 'danger',
+                    }))}
+                    onSelect={(val) => {
+                      const found = quickActions.find((qa) => qa.label === val)
+                      if (found) found.onClick()
+                    }}
+                    trigger={
+                      <span className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#00c2cb] bg-[#e5f6f7] px-3 text-[13px] font-semibold text-[#00838f] hover:bg-[#00c2cb] hover:text-white transition-colors cursor-pointer font-sans shadow-2xs">
+                        <span>Page Actions</span>
+                        <ChevronRight className="size-3.5 rotate-90 opacity-70" />
+                      </span>
+                    }
+                    ariaLabel="Page Actions"
+                  />
+                </div>
+              )}
 
               {/* Messaging - Hidden on mobile (< md) */}
               <div className="hidden md:flex">
@@ -241,6 +283,37 @@ export function PlatformShell({
               />
             </div>
           </div>
+
+          {/* Sticky Contextual Selection Action Bar - Always visible when items are selected */}
+          {selectedCount > 0 && (
+            <div className="flex w-full flex-wrap items-center justify-between gap-2.5 border-t border-[#00c2cb]/40 bg-[#e5f6f7]/95 px-3 sm:px-6 lg:px-8 py-2.5 text-[13px] backdrop-blur-md transition-all shadow-xs animate-in slide-in-from-top duration-200">
+              <div className="flex items-center gap-2">
+                <span className="flex size-5 items-center justify-center rounded-full bg-[#00c2cb] text-white text-[11px] font-bold shadow-2xs">
+                  {selectedCount}
+                </span>
+                <span className="font-bold text-[#1f2327]">
+                  {selectedCount} {selectedLabel} selected
+                </span>
+                <span className="hidden sm:inline text-[11.5px] text-[#6f777f]">
+                  • Take immediate action from topbar:
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {selectedActions}
+                {onClearSelection && (
+                  <button
+                    type="button"
+                    onClick={onClearSelection}
+                    className="flex h-[32px] items-center gap-1.5 rounded-[6px] border border-[#d3d5d7] bg-white px-2.5 text-[12px] font-semibold text-[#6f777f] hover:bg-[#eff1f3] hover:text-[#1f2327] transition-colors cursor-pointer"
+                  >
+                    <X className="size-3.5" />
+                    <span>Clear Selection</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </header>
         <main className="min-w-0 flex-1 w-full overflow-x-clip">{children}</main>
       </div>
